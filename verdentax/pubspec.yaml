@@ -1,0 +1,122 @@
+name: verdentax
+description: "Application de Collecte des Impôts Moderne"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.7
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Core Dependencies
+  cupertino_icons: ^1.0.8
+  
+  # HTTP & API
+  dio: ^5.4.3+1
+  retrofit: ^4.9.2
+  json_annotation: ^4.9.0
+  
+  # State Management
+  provider: ^6.1.5+1
+  flutter_riverpod: ^2.6.1
+  
+  # Storage & Security
+  flutter_secure_storage: ^9.2.4
+  shared_preferences: ^2.5.4
+  
+  # UI & Design
+  flutter_screenutil: ^5.9.0
+  shimmer: ^3.0.0
+  lottie: ^3.3.2
+  
+  # Maps & Location
+  geolocator: ^11.1.0
+  geocoding: ^3.0.0
+  google_maps_flutter: ^2.5.0
+  
+  # QR Code & Camera
+  mobile_scanner: ^3.5.7
+  qr_flutter: ^4.1.0
+  
+  # Permissions
+  permission_handler: ^11.4.0
+  
+  # Connectivity
+  connectivity_plus: ^6.1.5
+  
+  # Authentication
+  local_auth: ^2.3.0
+  
+  # Utilities
+  logger: ^2.6.2
+  uuid: ^4.5.2
+  intl: ^0.20.2
+  jiffy: ^6.4.4
+  
+  # PDF & Printing
+  pdf: ^3.11.3
+  printing: ^5.14.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  
+  # Code Generation
+  build_runner: ^2.4.11
+  retrofit_generator: ^8.1.1
+  json_serializable: ^6.8.0
+  
+  # Testing
+  mockito: ^5.4.4
+  integration_test:
+    sdk: flutter
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/lottie/
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package

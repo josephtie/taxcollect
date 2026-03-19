@@ -1,0 +1,13 @@
+// Export des services
+export { BaseService } from './baseService'
+export { transactionService } from './transactionService'
+export { agentService } from './agentService'
+export { clotureService } from './clotureService'
+export { userService } from './userService'
+export { authService } from './authService'
+export { contribuableService, zoneService } from './contribuableService'
+export { supervisionService } from './supervisionService'
+export { quartierService, communeService } from './quartierService'
+export { taxeService } from './taxeService'
+export { permissionService } from './permissionService'
+export { default as logicalDeletionService } from './logicalDeletionService'

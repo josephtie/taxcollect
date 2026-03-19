@@ -1,0 +1,6 @@
+FROM quay.io/keycloak/keycloak:25.0.1
+  
+  # Télécharge et installe le SPI metrics
+RUN curl -L -o /opt/keycloak/providers/keycloak-metrics-spi.jar \
+https://github.com/aerogear/keycloak-metrics-spi/releases/download/4.0.0/keycloak-metrics-spi-4.0.0.jar
+

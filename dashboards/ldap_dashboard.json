@@ -1,0 +1,90 @@
+{
+  "id": null,
+  "title": "OpenLDAP Dashboard",
+  "tags": ["openldap", "monitoring"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "LDAP Bind Operations",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "ldap_bind_total",
+          "legendFormat": "bind total",
+          "interval": "",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "graph",
+      "title": "LDAP Search Operations",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "ldap_search_total",
+          "legendFormat": "search total",
+          "interval": "",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "graph",
+      "title": "LDAP Add/Delete Operations",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "ldap_add_total",
+          "legendFormat": "add total",
+          "refId": "A"
+        },
+        {
+          "expr": "ldap_delete_total",
+          "legendFormat": "delete total",
+          "refId": "B"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "graph",
+      "title": "LDAP Failed Bind Attempts",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "ldap_bind_failures_total",
+          "legendFormat": "bind failures",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      }
+    }
+  ]
+}

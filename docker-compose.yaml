@@ -9,7 +9,7 @@ services:
     environment:
       LDAP_ORGANISATION: "mairie"
       LDAP_DOMAIN: "mairie.com"
-      LDAP_ADMIN_PASSWORD: "admin"
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD:-admin}
     ports:
       - "389:389"
     volumes:
@@ -17,6 +17,11 @@ services:
       - ldap_config:/etc/ldap/slapd.d
     networks:
       - keycloaknet
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost:389", "-D", "cn=admin,dc=mairie,dc=com", "-w", "${LDAP_ADMIN_PASSWORD:-admin}", "-b", "dc=mairie,dc=com"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   phpldapadmin:
     image: osixia/phpldapadmin:0.9.0
@@ -29,7 +34,8 @@ services:
     networks:
       - keycloaknet
     depends_on:
-      - openldap
+      openldap:
+        condition: service_healthy
 
   keycloak:
     image: quay.io/keycloak/keycloak:25.0.1
@@ -37,24 +43,30 @@ services:
     restart: always
     command: ["start-dev"]
     environment:
-      KEYCLOAK_ADMIN: "admin"
-      KEYCLOAK_ADMIN_PASSWORD: "admin"
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_METRICS_ENABLED: "true"
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/taxCollect
+      KC_DB_USERNAME: ${DB_USERNAME:-directus}
+      KC_DB_PASSWORD: ${DB_PASSWORD:-directus}
     ports:
       - "8080:8080"
     networks:
       - keycloaknet
     depends_on:
-      - openldap
-      - postgres
+      openldap:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:15
     container_name: postgresTax
     restart: always
     environment:
-      POSTGRES_USER: directus
-      POSTGRES_PASSWORD: directus
+      POSTGRES_USER: ${DB_USERNAME:-directus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-directus}
       POSTGRES_DB: taxCollect
     volumes:
       - pg_data:/var/lib/postgresql/data
@@ -62,13 +74,45 @@ services:
       - "5440:5432"
     networks:
       - keycloaknet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-directus} -d taxCollect"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taxcollect-backend
+    restart: always
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/taxCollect
+      DB_USERNAME: ${DB_USERNAME:-directus}
+      DB_PASSWORD: ${DB_PASSWORD:-directus}
+      LDAP_URL: ldap://openldap:389
+      LDAP_PASSWORD: ${LDAP_ADMIN_PASSWORD:-admin}
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/mairie
+      KEYCLOAK_ADMIN_HOST: http://keycloak:8080
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+      SPRING_PROFILES_ACTIVE: docker
+      JPA_DDL_AUTO: validate
+      JPA_SHOW_SQL: "false"
+      SPRINGDOC_SWAGGER_UI_ENABLED: "false"
+    ports:
+      - "9090:9090"
+    networks:
+      - keycloaknet
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
 
 volumes:
   ldap_data:
   ldap_config:
   pg_data:
-
 
 networks:
   keycloaknet:

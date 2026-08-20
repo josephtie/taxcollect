@@ -103,7 +103,7 @@
               <div class="flex space-x-2">
                 <button
                   @click="editQuartier(quartier)"
-                  class="text-blue-600 hover:text-blue-900"
+                  class="text-primary-600 hover:text-primary-900"
                 >
                   <Edit class="w-4 h-4" />
                 </button>

@@ -1,3 +1,4 @@
+import '../config/theme_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -426,7 +427,7 @@ class _GeolocationScreenState extends State<GeolocationScreen>
                 'Agents Actifs',
                 '${_statistics!.activeAgents}',
                 Icons.people,
-                Colors.blue,
+                AppTheme.goldColor,
               ),
             ),
             SizedBox(width: 12.w),
@@ -687,7 +688,7 @@ class _GeolocationScreenState extends State<GeolocationScreen>
       case GpsTrackingMode.none:
         return Colors.grey;
       case GpsTrackingMode.passive:
-        return Colors.blue;
+        return AppTheme.goldColor;
       case GpsTrackingMode.active:
         return Colors.orange;
       case GpsTrackingMode.continuous:
@@ -1262,7 +1263,7 @@ class AlertCard extends StatelessWidget {
   Color _getSeverityColor(AlertSeverity severity) {
     switch (severity) {
       case AlertSeverity.low:
-        return Colors.blue;
+        return AppTheme.goldColor;
       case AlertSeverity.medium:
         return Colors.orange;
       case AlertSeverity.high:

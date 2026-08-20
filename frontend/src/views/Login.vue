@@ -141,16 +141,16 @@
 
     <!-- Demo credentials info -->
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div class="bg-primary-50 border border-primary-200 rounded-lg p-4">
         <div class="flex">
           <div class="flex-shrink-0">
-            <Info class="h-5 w-5 text-blue-400" />
+            <Info class="h-5 w-5 text-primary-400" />
           </div>
           <div class="ml-3">
-            <h3 class="text-sm font-medium text-blue-800">
+            <h3 class="text-sm font-medium text-primary-800">
               Identifiants de démonstration
             </h3>
-            <div class="mt-2 text-sm text-blue-700">
+            <div class="mt-2 text-sm text-primary-700">
               <p><strong>Admin:</strong> admin / password</p>
               <p><strong>Trésor:</strong> tresor / password</p>
               <p><strong>Agent:</strong> alix / alix123</p>

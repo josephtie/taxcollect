@@ -1,3 +1,4 @@
+import '../config/theme_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -286,7 +287,7 @@ class _RecensementScreenState extends State<RecensementScreen>
                 _buildActionCard(
                   'Nouveau Contribuable',
                   Icons.person_add,
-                  Colors.blue,
+                  AppTheme.goldColor,
                   () => _showRecensementWizard(),
                 ),
                 _buildActionCard(
@@ -465,7 +466,7 @@ class _RecensementScreenState extends State<RecensementScreen>
                 'Total Contribuables',
                 '${_statistics!.totalContribuables}',
                 Icons.people,
-                Colors.blue,
+                AppTheme.goldColor,
               ),
             ),
             SizedBox(width: 12.w),
@@ -736,7 +737,7 @@ class _RecensementScreenState extends State<RecensementScreen>
   Color _getTypeColor(ContribuableType type) {
     switch (type) {
       case ContribuableType.personnePhysique:
-        return Colors.blue;
+        return AppTheme.goldColor;
       case ContribuableType.personneMorale:
         return Colors.purple;
       case ContribuableType.commercant:

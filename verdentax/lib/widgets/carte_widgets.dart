@@ -1,3 +1,4 @@
+import '../config/theme_config.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -582,7 +583,7 @@ class CartePreviewWidget extends StatelessWidget {
                     _buildActionButton(
                       'Modifier',
                       Icons.edit,
-                      Colors.blue,
+                      AppTheme.goldColor,
                       onEdit!,
                     ),
                   
@@ -683,7 +684,7 @@ class CartePreviewWidget extends StatelessWidget {
       case CarteStatus.damaged:
         return Colors.brown;
       case CarteStatus.draft:
-        return Colors.blue;
+        return AppTheme.goldColor;
     }
     return Colors.grey; // Default value
   }
@@ -1014,7 +1015,7 @@ class _CarteFormWidgetState extends State<CarteFormWidget> {
   Color _getSecurityLevelColor(QRSecurityLevel level) {
     switch (level) {
       case QRSecurityLevel.basic:
-        return Colors.blue;
+        return AppTheme.goldColor;
       case QRSecurityLevel.standard:
         return Colors.green;
       case QRSecurityLevel.high:

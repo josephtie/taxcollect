@@ -1,3 +1,4 @@
+import '../config/theme_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -280,7 +281,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     'Contribuables',
                     '${_recensementStats?.totalContribuables ?? 0}',
                     Icons.people,
-                    Colors.blue,
+                    AppTheme.goldColor,
                   ),
                 ),
                 SizedBox(width: 12.w),
@@ -385,7 +386,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _buildActionCard(
                   'Nouveau Contribuable',
                   Icons.person_add,
-                  Colors.blue,
+                  AppTheme.goldColor,
                   () => _navigateToRecensement(),
                 ),
                 _buildActionCard(
@@ -510,7 +511,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         title: 'Nouveau contribuable',
                         subtitle: '${contribuable.fullName} - ${contribuable.displayType}',
                         time: _formatTime(contribuable.dateCreation),
-                        color: Colors.blue,
+                        color: AppTheme.goldColor,
                       );
                     }),
                   ],
@@ -750,7 +751,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     'Aujourd\'hui',
                     '${_getTodayTransactionsCount()}',
                     Icons.today,
-                    Colors.blue,
+                    AppTheme.goldColor,
                   ),
                 ),
                 SizedBox(width: 12.w),

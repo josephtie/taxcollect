@@ -8,7 +8,7 @@ import '../services/services.dart';
 // Export all widgets for easy import
 // export 'recensement_wizard.dart'; // Temporarily disabled due to GeolocationService dependency
 // export 'map_widget.dart'; // Temporarily disabled due to GeolocationService dependency
-// export 'carte_widgets.dart'; // Temporarily disabled due to compilation errors
+export 'carte_widgets.dart';
 
 class ContribuableCard extends StatelessWidget {
   final ContribuableForm contribuable;
@@ -238,7 +238,7 @@ class ContribuableCard extends StatelessWidget {
   Color _getTypeColor(ContribuableType type) {
     switch (type) {
       case ContribuableType.personnePhysique:
-        return Colors.blue;
+        return AppTheme.goldColor;
       case ContribuableType.personneMorale:
         return Colors.purple;
       case ContribuableType.commercant:
@@ -762,7 +762,7 @@ class QuickActionsBottomSheet extends StatelessWidget {
                 context,
                 'Nouveau Contribuable',
                 Icons.person_add,
-                Colors.blue,
+                AppTheme.goldColor,
                 onNewContribuable,
               ),
               _buildActionItem(

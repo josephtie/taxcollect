@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../config/app_config.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF1976D2);
-  static const Color secondaryColor = Color(0xFFFFC107);
+  // Charte graphique
+  static const Color inkColor = Color(0xFF1F1F1F); // Noir profond
+  static const Color goldColor = Color(0xFFD4A017); // Or / jaune doré
+
+  static const Color primaryColor = inkColor;
+  static const Color secondaryColor = goldColor;
   static const Color successColor = Color(0xFF4CAF50);
   static const Color warningColor = Color(0xFFFF9800);
   static const Color errorColor = Color(0xFFF44336);
   static const Color backgroundColor = Color(0xFFF5F5F5);
   static const Color surfaceColor = Colors.white;
-  static const Color onSurfaceColor = Color(0xFF212121);
+  static const Color onSurfaceColor = inkColor;
   static const Color onPrimaryColor = Colors.white;
 
   static ThemeData get lightTheme {
@@ -35,17 +40,18 @@ class AppTheme {
         centerTitle: true,
         systemOverlayStyle: SystemUiOverlayStyle.light,
         titleTextStyle: TextStyle(
+          fontFamily: 'Montserrat',
           color: onPrimaryColor,
           fontSize: 18,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
         ),
       ),
 
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: onPrimaryColor,
+          backgroundColor: goldColor,
+          foregroundColor: inkColor,
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -57,8 +63,8 @@ class AppTheme {
       // Outlined Button Theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primaryColor,
-          side: const BorderSide(color: primaryColor),
+          foregroundColor: inkColor,
+          side: const BorderSide(color: goldColor),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -91,7 +97,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: const BorderSide(color: goldColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -133,15 +139,15 @@ class AppTheme {
 
       // Floating Action Button Theme
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: primaryColor,
-        foregroundColor: onPrimaryColor,
+        backgroundColor: goldColor,
+        foregroundColor: inkColor,
         elevation: 4,
       ),
 
       // Bottom Navigation Bar Theme
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: surfaceColor,
-        selectedItemColor: primaryColor,
+        selectedItemColor: goldColor,
         unselectedItemColor: Color(0xFF757575),
         type: BottomNavigationBarType.fixed,
         elevation: 8,
@@ -179,79 +185,79 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
       ),
 
-      // Text Theme
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
+      // Text Theme - Titres: Montserrat Bold / Texte: Inter (repli Aptos/Calibri indisponibles sur mobile)
+      textTheme: TextTheme(
+        displayLarge: GoogleFonts.montserrat(
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: onSurfaceColor,
         ),
-        displayMedium: TextStyle(
+        displayMedium: GoogleFonts.montserrat(
           fontSize: 28,
           fontWeight: FontWeight.bold,
           color: onSurfaceColor,
         ),
-        displaySmall: TextStyle(
+        displaySmall: GoogleFonts.montserrat(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: onSurfaceColor,
         ),
-        headlineLarge: TextStyle(
+        headlineLarge: GoogleFonts.montserrat(
           fontSize: 22,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
           color: onSurfaceColor,
         ),
-        headlineMedium: TextStyle(
+        headlineMedium: GoogleFonts.montserrat(
           fontSize: 20,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
           color: onSurfaceColor,
         ),
-        headlineSmall: TextStyle(
+        headlineSmall: GoogleFonts.montserrat(
           fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: onSurfaceColor,
+        ),
+        titleLarge: GoogleFonts.montserrat(
+          fontSize: 16,
           fontWeight: FontWeight.w600,
           color: onSurfaceColor,
         ),
-        titleLarge: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: onSurfaceColor,
-        ),
-        titleMedium: TextStyle(
+        titleMedium: GoogleFonts.montserrat(
           fontSize: 14,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: onSurfaceColor,
         ),
-        titleSmall: TextStyle(
+        titleSmall: GoogleFonts.montserrat(
           fontSize: 12,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: onSurfaceColor,
         ),
-        bodyLarge: TextStyle(
+        bodyLarge: GoogleFonts.inter(
           fontSize: 16,
           color: onSurfaceColor,
         ),
-        bodyMedium: TextStyle(
+        bodyMedium: GoogleFonts.inter(
           fontSize: 14,
           color: onSurfaceColor,
         ),
-        bodySmall: TextStyle(
+        bodySmall: GoogleFonts.inter(
           fontSize: 12,
-          color: Color(0xFF757575),
+          color: const Color(0xFF757575),
         ),
-        labelLarge: TextStyle(
+        labelLarge: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: onSurfaceColor,
         ),
-        labelMedium: TextStyle(
+        labelMedium: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: onSurfaceColor,
         ),
-        labelSmall: TextStyle(
+        labelSmall: GoogleFonts.inter(
           fontSize: 10,
           fontWeight: FontWeight.w500,
-          color: Color(0xFF757575),
+          color: const Color(0xFF757575),
         ),
       ),
     );

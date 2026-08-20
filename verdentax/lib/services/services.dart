@@ -8,3 +8,4 @@ export 'recensement_service.dart';
 export 'location_service.dart';
 export 'agent_service.dart';
 export 'transaction_service.dart';
+export 'carte_contribuable_service.dart';

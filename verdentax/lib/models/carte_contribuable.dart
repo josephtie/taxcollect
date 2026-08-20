@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:math';
+import 'recensement.dart';
 
 /// Types de cartes contribuables
 enum CarteType {
@@ -40,99 +42,332 @@ enum QRSecurityLevel {
 
 /// Types d'erreurs de vérification
 enum VerificationError {
-  notFound('Non trouvée'),
-  invalid('Invalide'),
-  expired('Expirée'),
-  suspended('Suspendue'),
-  revoked('Révoquée'),
-  damaged('Endommagée'),
-  qrCodeInvalid('Code QR invalide'),
-  checksumFailed('Checksum échoué'),
-  networkError('Erreur réseau'),
-  unknown('Erreur inconnue');
+  notFound('not_found', 'Non trouvée'),
+  invalid('invalid', 'Invalide'),
+  invalidFormat('invalid_format', 'Format invalide'),
+  invalidSignature('invalid_signature', 'Signature invalide'),
+  expired('expired', 'Expirée'),
+  suspended('suspended', 'Suspendue'),
+  revoked('revoked', 'Révoquée'),
+  damaged('damaged', 'Endommagée'),
+  qrCodeInvalid('qr_code_invalid', 'Code QR invalide'),
+  checksumFailed('checksum_failed', 'Checksum échoué'),
+  networkError('network_error', 'Erreur réseau'),
+  serverError('server_error', 'Erreur serveur'),
+  unknown('unknown', 'Erreur inconnue');
 
-  const VerificationError(this.message);
+  const VerificationError(this.code, this.label);
+  final String code;
+  final String label;
+  String get message => label;
+}
+
+/// Payload du QR Code sécurisé
+class QRCodePayload {
+  final String cid;
+  final String uid;
+  final String? sig;
+  final DateTime? exp;
+  final String? ver;
+  final DateTime? issuedDate;
+
+  QRCodePayload({
+    required this.cid,
+    required this.uid,
+    this.sig,
+    this.exp,
+    this.ver,
+    this.issuedDate,
+  });
+
+  bool get isExpired => exp != null && DateTime.now().isAfter(exp!);
+
+  String get displayExpiration {
+    if (exp == null) return 'N/A';
+    return '${exp!.day.toString().padLeft(2, '0')}/'
+        '${exp!.month.toString().padLeft(2, '0')}/'
+        '${exp!.year}';
+  }
+
+  int get daysUntilExpiration {
+    if (exp == null) return -1;
+    final days = exp!.difference(DateTime.now()).inDays;
+    return days > 0 ? days : 0;
+  }
+
+  String toJsonString() {
+    return jsonEncode({
+      'cid': cid,
+      'uid': uid,
+      'sig': sig,
+      'exp': exp?.millisecondsSinceEpoch,
+      'ver': ver ?? '1.0',
+      'issuedDate': issuedDate?.toIso8601String(),
+    });
+  }
+
+  factory QRCodePayload.fromJson(Map<String, dynamic> json) {
+    return QRCodePayload(
+      cid: json['cid'] ?? '',
+      uid: json['uid'] ?? '',
+      sig: json['sig'],
+      exp: json['exp'] != null
+          ? (json['exp'] is int
+              ? DateTime.fromMillisecondsSinceEpoch(json['exp'])
+              : DateTime.parse(json['exp'].toString()))
+          : null,
+      ver: json['ver'],
+      issuedDate: json['issuedDate'] != null
+          ? DateTime.parse(json['issuedDate'].toString())
+          : null,
+    );
+  }
+}
+
+/// Service de sécurité pour les QR Codes
+class QRCodeSecurityService {
+  static String generateNumeroCarte() {
+    final now = DateTime.now();
+    final random = Random.secure();
+    final suffix = random.nextInt(999999).toString().padLeft(6, '0');
+    return 'CRT-${now.year}-$suffix';
+  }
+
+  static String generateMatriculeUnique() {
+    final now = DateTime.now();
+    final random = Random.secure();
+    final suffix = random.nextInt(99999999).toString().padLeft(8, '0');
+    return 'MAT-${now.year}-$suffix';
+  }
+
+  static QRCodePayload generateQRPayload({
+    required String contribuableId,
+    required String uniqueId,
+    DateTime? expirationDate,
+  }) {
+    return QRCodePayload(
+      cid: contribuableId,
+      uid: uniqueId,
+      sig: _generateSignature(contribuableId, uniqueId),
+      exp: expirationDate ?? DateTime.now().add(const Duration(days: 365)),
+      ver: '1.0',
+      issuedDate: DateTime.now(),
+    );
+  }
+
+  static QRCodePayload? parseQRCode(String qrData) {
+    try {
+      final json = jsonDecode(qrData);
+      if (json is Map<String, dynamic>) {
+        return QRCodePayload.fromJson(json);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static bool verifyQRSignature(QRCodePayload payload) {
+    if (payload.sig == null || payload.sig!.isEmpty) return false;
+    final expected = _generateSignature(payload.cid, payload.uid);
+    return payload.sig == expected;
+  }
+
+  static String _generateSignature(String cid, String uid) {
+    final data = '$cid-$uid-${DateTime.now().year}';
+    final bytes = utf8.encode(data);
+    return bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+  }
+}
+
+/// Demande de vérification de carte
+class CarteVerificationRequest {
+  final String qrCodeData;
+  final String? agentId;
+  final double? latitude;
+  final double? longitude;
+  final String? deviceId;
+  final Map<String, dynamic>? metadata;
+
+  CarteVerificationRequest({
+    required this.qrCodeData,
+    this.agentId,
+    this.latitude,
+    this.longitude,
+    this.deviceId,
+    this.metadata,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'qrCodeData': qrCodeData,
+      'agentId': agentId,
+      'latitude': latitude,
+      'longitude': longitude,
+      'deviceId': deviceId,
+      'metadata': metadata,
+    };
+  }
+}
+
+/// Historique de vérification de carte
+class CarteVerificationHistory {
+  final String id;
+  final String carteId;
+  final String agentId;
+  final bool isValid;
   final String message;
+  final VerificationError? error;
+  final DateTime verifiedAt;
+  final double? latitude;
+  final double? longitude;
+  final String? deviceId;
+  final Map<String, dynamic>? metadata;
+
+  CarteVerificationHistory({
+    required this.id,
+    required this.carteId,
+    required this.agentId,
+    required this.isValid,
+    required this.message,
+    this.error,
+    required this.verifiedAt,
+    this.latitude,
+    this.longitude,
+    this.deviceId,
+    this.metadata,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'carteId': carteId,
+      'agentId': agentId,
+      'isValid': isValid,
+      'message': message,
+      'error': error?.name,
+      'verifiedAt': verifiedAt.toIso8601String(),
+      'latitude': latitude,
+      'longitude': longitude,
+      'deviceId': deviceId,
+      'metadata': metadata,
+    };
+  }
 }
 
 /// Résultats de vérification de carte
 class CarteVerificationResult {
   final bool isValid;
+  final String message;
   final CarteContribuable? carte;
+  final ContribuableForm? contribuable;
+  final QRCodePayload? payload;
   final VerificationError? error;
-  final DateTime timestamp;
-  final String? details;
+  final DateTime verifiedAt;
+  final String? verifiedBy;
+  final Map<String, dynamic>? verificationMetadata;
 
   CarteVerificationResult({
     required this.isValid,
+    required this.message,
     this.carte,
+    this.contribuable,
+    this.payload,
     this.error,
-    required this.timestamp,
-    this.details,
+    required this.verifiedAt,
+    this.verifiedBy,
+    this.verificationMetadata,
   });
 
-  factory CarteVerificationResult.success(CarteContribuable carte, {String? details}) {
+  factory CarteVerificationResult.success({
+    QRCodePayload? payload,
+    CarteContribuable? carte,
+    ContribuableForm? contribuable,
+    String? verifiedBy,
+    Map<String, dynamic>? metadata,
+  }) {
     return CarteVerificationResult(
       isValid: true,
+      message: 'Carte vérifiée avec succès',
       carte: carte,
-      timestamp: DateTime.now(),
-      details: details,
+      contribuable: contribuable,
+      payload: payload,
+      verifiedAt: DateTime.now(),
+      verifiedBy: verifiedBy,
+      verificationMetadata: metadata,
     );
   }
 
-  factory CarteVerificationResult.failure(VerificationError error, {String? details}) {
+  factory CarteVerificationResult.failure({
+    required String message,
+    VerificationError? error,
+    Map<String, dynamic>? metadata,
+  }) {
     return CarteVerificationResult(
       isValid: false,
+      message: message,
       error: error,
-      timestamp: DateTime.now(),
-      details: details,
+      verifiedAt: DateTime.now(),
+      verificationMetadata: metadata,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'isValid': isValid,
+      'message': message,
       'carte': carte?.toJson(),
+      'contribuable': contribuable?.toJson(),
+      'payload': payload?.toJsonString(),
       'error': error?.name,
-      'timestamp': timestamp.toIso8601String(),
-      'details': details,
+      'verifiedAt': verifiedAt.toIso8601String(),
+      'verifiedBy': verifiedBy,
+      'verificationMetadata': verificationMetadata,
     };
   }
 
   factory CarteVerificationResult.fromJson(Map<String, dynamic> json) {
     return CarteVerificationResult(
-      isValid: json['isValid'],
+      isValid: json['isValid'] ?? false,
+      message: json['message'] ?? '',
       carte: json['carte'] != null ? CarteContribuable.fromJson(json['carte']) : null,
-      error: json['error'] != null ? VerificationError.values.firstWhere(
-        (e) => e.name == json['error'],
-        orElse: () => VerificationError.unknown,
-      ) : null,
-      timestamp: DateTime.parse(json['timestamp']),
-      details: json['details'],
+      contribuable: json['contribuable'] != null
+          ? ContribuableForm.fromJson(json['contribuable'])
+          : null,
+      payload: json['payload'] != null
+          ? QRCodePayload.fromJson(jsonDecode(json['payload']))
+          : null,
+      error: json['error'] != null
+          ? VerificationError.values.firstWhere(
+              (e) => e.name == json['error'],
+              orElse: () => VerificationError.unknown,
+            )
+          : null,
+      verifiedAt: json['verifiedAt'] != null
+          ? DateTime.parse(json['verifiedAt'])
+          : DateTime.now(),
+      verifiedBy: json['verifiedBy'],
+      verificationMetadata: json['verificationMetadata'],
     );
   }
 }
 
 /// Demande de création de carte
 class CarteCreationRequest {
-  final int contribuableId;
+  final String contribuableId;
   final CarteType type;
   final QRSecurityLevel securityLevel;
-  final String? photoPath;
-  final String? signaturePath;
-  final Map<String, dynamic>? additionalData;
-  final String requestedBy;
-  final DateTime requestedAt;
+  final DateTime? dateExpiration;
+  final String? agentId;
+  final String? zoneId;
 
   CarteCreationRequest({
     required this.contribuableId,
     required this.type,
     required this.securityLevel,
-    this.photoPath,
-    this.signaturePath,
-    this.additionalData,
-    required this.requestedBy,
-    required this.requestedAt,
+    this.dateExpiration,
+    this.agentId,
+    this.zoneId,
   });
 
   Map<String, dynamic> toJson() {
@@ -140,17 +375,15 @@ class CarteCreationRequest {
       'contribuableId': contribuableId,
       'type': type.code,
       'securityLevel': securityLevel.code,
-      'photoPath': photoPath,
-      'signaturePath': signaturePath,
-      'additionalData': additionalData,
-      'requestedBy': requestedBy,
-      'requestedAt': requestedAt.toIso8601String(),
+      'dateExpiration': dateExpiration?.toIso8601String(),
+      'agentId': agentId,
+      'zoneId': zoneId,
     };
   }
 
   factory CarteCreationRequest.fromJson(Map<String, dynamic> json) {
     return CarteCreationRequest(
-      contribuableId: json['contribuableId'],
+      contribuableId: json['contribuableId']?.toString() ?? '',
       type: CarteType.values.firstWhere(
         (t) => t.code == json['type'],
         orElse: () => CarteType.pvc,
@@ -159,11 +392,11 @@ class CarteCreationRequest {
         (s) => s.code == json['securityLevel'],
         orElse: () => QRSecurityLevel.standard,
       ),
-      photoPath: json['photoPath'],
-      signaturePath: json['signaturePath'],
-      additionalData: json['additionalData'],
-      requestedBy: json['requestedBy'],
-      requestedAt: DateTime.parse(json['requestedAt']),
+      dateExpiration: json['dateExpiration'] != null
+          ? DateTime.parse(json['dateExpiration'])
+          : null,
+      agentId: json['agentId'],
+      zoneId: json['zoneId'],
     );
   }
 }
@@ -171,112 +404,92 @@ class CarteCreationRequest {
 /// Carte contribuable principale
 class CarteContribuable {
   final String id;
-  final String numero;
-  final int contribuableId;
-  final String contribuableNom;
-  final String contribuablePrenom;
+  final String contribuableId;
+  final String numeroCarte;
+  final String matriculeUnique;
+  final String qrCodeData;
   final CarteType type;
   final CarteStatus status;
   final QRSecurityLevel securityLevel;
-  final String qrCode;
-  final String qrHash;
-  final String? photoPath;
-  final String? signaturePath;
   final DateTime dateEmission;
-  final DateTime? dateExpiration;
-  final DateTime? dateDerniereVerification;
-  final int nombreVerifications;
-  final String? derniereLocalisation;
+  final DateTime dateExpiration;
+  final String? photoUrl;
+  final String? agentId;
+  final String? zoneId;
   final Map<String, dynamic>? metadata;
-  final String createdBy;
   final DateTime createdAt;
-  final String? updatedBy;
   final DateTime? updatedAt;
 
   CarteContribuable({
     required this.id,
-    required this.numero,
     required this.contribuableId,
-    required this.contribuableNom,
-    required this.contribuablePrenom,
+    required this.numeroCarte,
+    required this.matriculeUnique,
+    required this.qrCodeData,
     required this.type,
     required this.status,
     required this.securityLevel,
-    required this.qrCode,
-    required this.qrHash,
-    this.photoPath,
-    this.signaturePath,
     required this.dateEmission,
-    this.dateExpiration,
-    this.dateDerniereVerification,
-    this.nombreVerifications = 0,
-    this.derniereLocalisation,
+    required this.dateExpiration,
+    this.photoUrl,
+    this.agentId,
+    this.zoneId,
     this.metadata,
-    required this.createdBy,
     required this.createdAt,
-    this.updatedBy,
     this.updatedAt,
   });
 
   // Getters
-  String get contribuableFullName => '$contribuablePrenom $contribuableNom';
   String get displayType => type.label;
   String get displayStatus => status.label;
-  String get displaySecurityLevel => securityLevel.label;
-  bool get isExpired => dateExpiration != null && DateTime.now().isAfter(dateExpiration!);
+  String get displayMatricule => matriculeUnique;
+  bool get isExpired => DateTime.now().isAfter(dateExpiration);
   bool get isValid => status == CarteStatus.active && !isExpired;
+
+  bool get isNearExpiration {
+    final days = daysUntilExpiration;
+    return days >= 0 && days <= 30;
+  }
+
   int get daysUntilExpiration {
-    if (dateExpiration == null) return -1;
-    final days = dateExpiration!.difference(DateTime.now()).inDays;
+    final days = dateExpiration.difference(DateTime.now()).inDays;
     return days > 0 ? days : 0;
   }
 
   CarteContribuable copyWith({
     String? id,
-    String? numero,
-    int? contribuableId,
-    String? contribuableNom,
-    String? contribuablePrenom,
+    String? contribuableId,
+    String? numeroCarte,
+    String? matriculeUnique,
+    String? qrCodeData,
     CarteType? type,
     CarteStatus? status,
     QRSecurityLevel? securityLevel,
-    String? qrCode,
-    String? qrHash,
-    String? photoPath,
-    String? signaturePath,
     DateTime? dateEmission,
     DateTime? dateExpiration,
-    DateTime? dateDerniereVerification,
-    int? nombreVerifications,
-    String? derniereLocalisation,
+    String? photoUrl,
+    String? agentId,
+    String? zoneId,
     Map<String, dynamic>? metadata,
-    String? createdBy,
     DateTime? createdAt,
-    String? updatedBy,
     DateTime? updatedAt,
   }) {
     return CarteContribuable(
       id: id ?? this.id,
-      numero: numero ?? this.numero,
       contribuableId: contribuableId ?? this.contribuableId,
-      contribuableNom: contribuableNom ?? this.contribuableNom,
-      contribuablePrenom: contribuablePrenom ?? this.contribuablePrenom,
+      numeroCarte: numeroCarte ?? this.numeroCarte,
+      matriculeUnique: matriculeUnique ?? this.matriculeUnique,
+      qrCodeData: qrCodeData ?? this.qrCodeData,
       type: type ?? this.type,
       status: status ?? this.status,
       securityLevel: securityLevel ?? this.securityLevel,
-      qrCode: qrCode ?? this.qrCode,
-      qrHash: qrHash ?? this.qrHash,
-      photoPath: photoPath ?? this.photoPath,
-      signaturePath: signaturePath ?? this.signaturePath,
       dateEmission: dateEmission ?? this.dateEmission,
       dateExpiration: dateExpiration ?? this.dateExpiration,
-      dateDerniereVerification: dateDerniereVerification ?? this.dateDerniereVerification,
-      nombreVerifications: nombreVerifications ?? this.nombreVerifications,
-      derniereLocalisation: derniereLocalisation ?? this.derniereLocalisation,
+      photoUrl: photoUrl ?? this.photoUrl,
+      agentId: agentId ?? this.agentId,
+      zoneId: zoneId ?? this.zoneId,
       metadata: metadata ?? this.metadata,
-      createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
-      updatedBy: updatedBy ?? this.updatedBy,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -284,37 +497,31 @@ class CarteContribuable {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'numero': numero,
       'contribuableId': contribuableId,
-      'contribuableNom': contribuableNom,
-      'contribuablePrenom': contribuablePrenom,
+      'numeroCarte': numeroCarte,
+      'matriculeUnique': matriculeUnique,
+      'qrCodeData': qrCodeData,
       'type': type.code,
       'status': status.code,
       'securityLevel': securityLevel.code,
-      'qrCode': qrCode,
-      'qrHash': qrHash,
-      'photoPath': photoPath,
-      'signaturePath': signaturePath,
       'dateEmission': dateEmission.toIso8601String(),
-      'dateExpiration': dateExpiration?.toIso8601String(),
-      'dateDerniereVerification': dateDerniereVerification?.toIso8601String(),
-      'nombreVerifications': nombreVerifications,
-      'derniereLocalisation': derniereLocalisation,
+      'dateExpiration': dateExpiration.toIso8601String(),
+      'photoUrl': photoUrl,
+      'agentId': agentId,
+      'zoneId': zoneId,
       'metadata': metadata,
-      'createdBy': createdBy,
       'createdAt': createdAt.toIso8601String(),
-      'updatedBy': updatedBy,
       'updatedAt': updatedAt?.toIso8601String(),
     };
   }
 
   factory CarteContribuable.fromJson(Map<String, dynamic> json) {
     return CarteContribuable(
-      id: json['id'],
-      numero: json['numero'],
-      contribuableId: json['contribuableId'],
-      contribuableNom: json['contribuableNom'],
-      contribuablePrenom: json['contribuablePrenom'],
+      id: json['id'] ?? '',
+      contribuableId: json['contribuableId']?.toString() ?? '',
+      numeroCarte: json['numeroCarte'] ?? '',
+      matriculeUnique: json['matriculeUnique'] ?? '',
+      qrCodeData: json['qrCodeData'] ?? '',
       type: CarteType.values.firstWhere(
         (t) => t.code == json['type'],
         orElse: () => CarteType.pvc,
@@ -327,64 +534,15 @@ class CarteContribuable {
         (s) => s.code == json['securityLevel'],
         orElse: () => QRSecurityLevel.standard,
       ),
-      qrCode: json['qrCode'],
-      qrHash: json['qrHash'],
-      photoPath: json['photoPath'],
-      signaturePath: json['signaturePath'],
-      dateEmission: DateTime.parse(json['dateEmission']),
-      dateExpiration: json['dateExpiration'] != null ? DateTime.parse(json['dateExpiration']) : null,
-      dateDerniereVerification: json['dateDerniereVerification'] != null ? DateTime.parse(json['dateDerniereVerification']) : null,
-      nombreVerifications: json['nombreVerifications'] ?? 0,
-      derniereLocalisation: json['derniereLocalisation'],
+      dateEmission: json['dateEmission'] != null ? DateTime.parse(json['dateEmission']) : DateTime.now(),
+      dateExpiration: json['dateExpiration'] != null ? DateTime.parse(json['dateExpiration']) : DateTime.now().add(const Duration(days: 365)),
+      photoUrl: json['photoUrl'],
+      agentId: json['agentId'],
+      zoneId: json['zoneId'],
       metadata: json['metadata'],
-      createdBy: json['createdBy'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedBy: json['updatedBy'],
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
     );
-  }
-
-  /// Valider la carte
-  bool validate() {
-    if (qrCode.isEmpty || qrHash.isEmpty) return false;
-    if (status != CarteStatus.active) return false;
-    if (isExpired) return false;
-    return true;
-  }
-
-  /// Mettre à jour les informations de vérification
-  CarteContribuable updateVerification(String? localisation) {
-    return copyWith(
-      dateDerniereVerification: DateTime.now(),
-      nombreVerifications: nombreVerifications + 1,
-      derniereLocalisation: localisation,
-    );
-  }
-
-  /// Générer un hash de vérification
-  String generateVerificationHash() {
-    final data = '$id-$numero-$contribuableId-$qrCode-${DateTime.now().millisecondsSinceEpoch}';
-    final bytes = utf8.encode(data);
-    return bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
-  }
-
-  /// Vérifier si la carte peut être renouvelée
-  bool canBeRenewed() {
-    return status == CarteStatus.active || 
-           status == CarteStatus.expired ||
-           status == CarteStatus.damaged;
-  }
-
-  /// Obtenir le statut de renouvellement
-  String getRenewalStatus() {
-    if (status == CarteStatus.draft) return 'En préparation';
-    if (status == CarteStatus.active && !isExpired) return 'Valide';
-    if (status == CarteStatus.expired) return 'Expirée - Renouvellement requis';
-    if (status == CarteStatus.suspended) return 'Suspendue';
-    if (status == CarteStatus.revoked) return 'Révoquée';
-    if (status == CarteStatus.lost) return 'Perdue - Remplacement requis';
-    if (status == CarteStatus.damaged) return 'Endommagée - Remplacement requis';
-    return 'Inconnu';
   }
 }
 
@@ -394,30 +552,29 @@ class CarteStatistics {
   final int cartesActives;
   final int cartesExpirees;
   final int cartesSuspendues;
-  final int cartesRevoquees;
-  final int cartesPerdues;
-  final int cartesEndommagees;
-  final int cartesBrouillon;
-  final Map<CarteType, int> repartitionParType;
-  final Map<QRSecurityLevel, int> repartitionParSecurite;
-  final DateTime dernieresMisesAJour;
+  final int cartesExpirantDans30Jours;
+  final int cartesEmisesAujourdhui;
+  final int cartesNonSynchronisees;
+  final int cartesRevokes;
+  final Map<String, int> repartitionParType;
+  final Map<String, int> repartitionParStatut;
+  final Map<String, int> repartitionParZone;
+  final List<CarteContribuable> recentesCartes;
 
   CarteStatistics({
     required this.totalCartes,
     required this.cartesActives,
     required this.cartesExpirees,
     required this.cartesSuspendues,
-    required this.cartesRevoquees,
-    required this.cartesPerdues,
-    required this.cartesEndommagees,
-    required this.cartesBrouillon,
+    required this.cartesExpirantDans30Jours,
+    required this.cartesEmisesAujourdhui,
+    required this.cartesNonSynchronisees,
+    required this.cartesRevokes,
     required this.repartitionParType,
-    required this.repartitionParSecurite,
-    required this.dernieresMisesAJour,
+    required this.repartitionParStatut,
+    required this.repartitionParZone,
+    required this.recentesCartes,
   });
-
-  double get tauxActivation => totalCartes > 0 ? cartesActives / totalCartes : 0.0;
-  double get tauxExpiration => totalCartes > 0 ? cartesExpirees / totalCartes : 0.0;
 
   Map<String, dynamic> toJson() {
     return {
@@ -425,106 +582,34 @@ class CarteStatistics {
       'cartesActives': cartesActives,
       'cartesExpirees': cartesExpirees,
       'cartesSuspendues': cartesSuspendues,
-      'cartesRevoquees': cartesRevoquees,
-      'cartesPerdues': cartesPerdues,
-      'cartesEndommagees': cartesEndommagees,
-      'cartesBrouillon': cartesBrouillon,
-      'repartitionParType': repartitionParType.map((k, v) => MapEntry(k.code, v)),
-      'repartitionParSecurite': repartitionParSecurite.map((k, v) => MapEntry(k.code, v)),
-      'dernieresMisesAJour': dernieresMisesAJour.toIso8601String(),
-      'tauxActivation': tauxActivation,
-      'tauxExpiration': tauxExpiration,
+      'cartesExpirantDans30Jours': cartesExpirantDans30Jours,
+      'cartesEmisesAujourdhui': cartesEmisesAujourdhui,
+      'cartesNonSynchronisees': cartesNonSynchronisees,
+      'cartesRevokes': cartesRevokes,
+      'repartitionParType': repartitionParType,
+      'repartitionParStatut': repartitionParStatut,
+      'repartitionParZone': repartitionParZone,
+      'recentesCartes': recentesCartes.map((c) => c.toJson()).toList(),
     };
   }
 
   factory CarteStatistics.fromJson(Map<String, dynamic> json) {
     return CarteStatistics(
-      totalCartes: json['totalCartes'],
-      cartesActives: json['cartesActives'],
-      cartesExpirees: json['cartesExpirees'],
-      cartesSuspendues: json['cartesSuspendues'],
-      cartesRevoquees: json['cartesRevoquees'],
-      cartesPerdues: json['cartesPerdues'],
-      cartesEndommagees: json['cartesEndommagees'],
-      cartesBrouillon: json['cartesBrouillon'],
-      repartitionParType: Map.from(json['repartitionParType'] ?? {})
-          .map((k, v) => MapEntry(
-            CarteType.values.firstWhere(
-              (t) => t.code == k,
-              orElse: () => CarteType.pvc,
-            ),
-            v,
-          )),
-      repartitionParSecurite: Map.from(json['repartitionParSecurite'] ?? {})
-          .map((k, v) => MapEntry(
-            QRSecurityLevel.values.firstWhere(
-              (s) => s.code == k,
-              orElse: () => QRSecurityLevel.standard,
-            ),
-            v,
-          )),
-      dernieresMisesAJour: DateTime.parse(json['dernieresMisesAJour']),
-    );
-  }
-}
-
-/// Historique des opérations sur carte
-class CarteOperationHistory {
-  final String id;
-  final String carteId;
-  final String operation; // creation, update, verification, suspension, revocation
-  final String? ancienStatut;
-  final String? nouveauStatut;
-  final String? raison;
-  final String operateurId;
-  final String operateurNom;
-  final DateTime timestamp;
-  final String? localisation;
-  final Map<String, dynamic>? metadata;
-
-  CarteOperationHistory({
-    required this.id,
-    required this.carteId,
-    required this.operation,
-    this.ancienStatut,
-    this.nouveauStatut,
-    this.raison,
-    required this.operateurId,
-    required this.operateurNom,
-    required this.timestamp,
-    this.localisation,
-    this.metadata,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'carteId': carteId,
-      'operation': operation,
-      'ancienStatut': ancienStatut,
-      'nouveauStatut': nouveauStatut,
-      'raison': raison,
-      'operateurId': operateurId,
-      'operateurNom': operateurNom,
-      'timestamp': timestamp.toIso8601String(),
-      'localisation': localisation,
-      'metadata': metadata,
-    };
-  }
-
-  factory CarteOperationHistory.fromJson(Map<String, dynamic> json) {
-    return CarteOperationHistory(
-      id: json['id'],
-      carteId: json['carteId'],
-      operation: json['operation'],
-      ancienStatut: json['ancienStatut'],
-      nouveauStatut: json['nouveauStatut'],
-      raison: json['raison'],
-      operateurId: json['operateurId'],
-      operateurNom: json['operateurNom'],
-      timestamp: DateTime.parse(json['timestamp']),
-      localisation: json['localisation'],
-      metadata: json['metadata'],
+      totalCartes: json['totalCartes'] ?? 0,
+      cartesActives: json['cartesActives'] ?? 0,
+      cartesExpirees: json['cartesExpirees'] ?? 0,
+      cartesSuspendues: json['cartesSuspendues'] ?? 0,
+      cartesExpirantDans30Jours: json['cartesExpirantDans30Jours'] ?? 0,
+      cartesEmisesAujourdhui: json['cartesEmisesAujourdhui'] ?? 0,
+      cartesNonSynchronisees: json['cartesNonSynchronisees'] ?? 0,
+      cartesRevokes: json['cartesRevokes'] ?? 0,
+      repartitionParType: Map<String, int>.from(json['repartitionParType'] ?? {}),
+      repartitionParStatut: Map<String, int>.from(json['repartitionParStatut'] ?? {}),
+      repartitionParZone: Map<String, int>.from(json['repartitionParZone'] ?? {}),
+      recentesCartes: (json['recentesCartes'] as List<dynamic>?)
+          ?.map((c) => CarteContribuable.fromJson(c))
+          .toList() ??
+          [],
     );
   }
 }

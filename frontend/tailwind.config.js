@@ -7,18 +7,34 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Charte graphique
+        ink: '#1F1F1F',
+        gold: {
+          50: '#fdf9ec',
+          100: '#faf0cd',
+          200: '#f4df97',
+          300: '#edc95f',
+          400: '#e5b437',
+          500: '#D4A017',
+          600: '#b7820f',
+          700: '#925f10',
+          800: '#795015',
+          900: '#674217',
+          950: '#3c2309',
+          DEFAULT: '#D4A017',
+        },
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
+          50: '#fdf9ec',
+          100: '#faf0cd',
+          200: '#f4df97',
+          300: '#edc95f',
+          400: '#e5b437',
+          500: '#D4A017',
+          600: '#b7820f',
+          700: '#925f10',
+          800: '#795015',
+          900: '#674217',
+          950: '#3c2309',
         },
         gray: {
           50: '#f9fafb',
@@ -71,7 +87,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        sans: ['Aptos', 'Calibri', 'Inter', 'ui-sans-serif', 'system-ui'],
+        display: ['Montserrat', 'Inter', 'ui-sans-serif', 'system-ui'],
       },
       boxShadow: {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',

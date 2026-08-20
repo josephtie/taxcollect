@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
-import '../config/config.dart';
 import '../models/models.dart';
+import 'services.dart';
 
 // Extension for firstWhereOrNull
 extension FirstWhereOrNullExtension<T> on Iterable<T> {
@@ -16,9 +13,6 @@ extension FirstWhereOrNullExtension<T> on Iterable<T> {
     return null;
   }
 }
-
-import '../models/carte_contribuable.dart';
-import '../services/services.dart';
 
 class CarteContribuableService {
   static final CarteContribuableService _instance = CarteContribuableService._internal();
@@ -424,6 +418,9 @@ class CarteContribuableService {
                      c.createdAt.month == now.month &&
                      c.createdAt.year == now.year)
           .length;
+      final cartesRevokes = _carteCache.values
+          .where((c) => c.status == CarteStatus.revoked)
+          .length;
       
       final repartitionParType = <String, int>{};
       for (final type in CarteType.values) {
@@ -455,7 +452,8 @@ class CarteContribuableService {
         cartesSuspendues: cartesSuspendues,
         cartesExpirantDans30Jours: cartesExpirantDans30Jours,
         cartesEmisesAujourdhui: cartesEmisesAujourdhui,
-        cartesNonSynchronisees: 0, // Would calculate from sync status
+        cartesNonSynchronisees: 0,
+        cartesRevokes: cartesRevokes,
         repartitionParType: repartitionParType,
         repartitionParStatut: repartitionParStatut,
         repartitionParZone: repartitionParZone,

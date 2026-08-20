@@ -1,3 +1,4 @@
+import '../config/theme_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -56,7 +57,7 @@ class _TransactionScreenState extends State<TransactionScreen>
         title: Text(widget.contribuable != null 
           ? 'Transaction - ${widget.contribuable!.fullName}'
           : 'Nouvelle Transaction'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppTheme.goldColor,
         foregroundColor: Colors.white,
         bottom: TabBar(
           controller: _tabController,
@@ -92,13 +93,13 @@ class _TransactionScreenState extends State<TransactionScreen>
             Container(
               padding: EdgeInsets.all(16.h),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: AppTheme.goldColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                border: Border.all(color: AppTheme.goldColor.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.person, color: Colors.blue, size: 24.sp),
+                  Icon(Icons.person, color: AppTheme.goldColor, size: 24.sp),
                   SizedBox(width: 12.w),
                   Expanded(
                     child: Column(
@@ -109,7 +110,7 @@ class _TransactionScreenState extends State<TransactionScreen>
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blue,
+                            color: AppTheme.goldColor,
                           ),
                         ),
                         if (widget.contribuable!.telephone != null)
@@ -255,7 +256,7 @@ class _TransactionScreenState extends State<TransactionScreen>
                 onPressed: _isLoading ? null : _submitTransaction,
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 16.h),
-                  backgroundColor: Colors.blue,
+                  backgroundColor: AppTheme.goldColor,
                   foregroundColor: Colors.white,
                 ),
                 child: _isLoading
@@ -376,7 +377,7 @@ class _TransactionScreenState extends State<TransactionScreen>
             'Nombre de Transactions',
             '${_transactions.length}',
             Icons.receipt_long,
-            Colors.blue,
+            AppTheme.goldColor,
           ),
           
           SizedBox(height: 24.h),

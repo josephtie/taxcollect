@@ -370,9 +370,9 @@
 
           <!-- Comments Section -->
           <div v-if="selectedCloture.commentaireAgent || selectedCloture.commentaireTresor" class="space-y-4">
-            <div v-if="selectedCloture.commentaireAgent" class="bg-blue-50 rounded-lg p-4">
-              <h5 class="font-medium text-blue-900 mb-2">Commentaire Agent</h5>
-              <p class="text-sm text-blue-800">{{ selectedCloture.commentaireAgent }}</p>
+            <div v-if="selectedCloture.commentaireAgent" class="bg-primary-50 rounded-lg p-4">
+              <h5 class="font-medium text-primary-900 mb-2">Commentaire Agent</h5>
+              <p class="text-sm text-primary-800">{{ selectedCloture.commentaireAgent }}</p>
             </div>
             
             <div v-if="selectedCloture.commentaireTresor" class="bg-yellow-50 rounded-lg p-4">

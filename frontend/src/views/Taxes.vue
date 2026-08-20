@@ -43,16 +43,16 @@
       <!-- Taxes Content -->
       <div class="flex-1 p-6">
         <!-- Alert for read-only users -->
-        <div v-if="!canCreateTaxe" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div v-if="!canCreateTaxe" class="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
           <div class="flex">
             <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+              <svg class="h-5 w-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
               </svg>
             </div>
             <div class="ml-3">
-              <h3 class="text-sm font-medium text-blue-800">Mode consultation</h3>
-              <div class="mt-2 text-sm text-blue-700">
+              <h3 class="text-sm font-medium text-primary-800">Mode consultation</h3>
+              <div class="mt-2 text-sm text-primary-700">
                 <p>Vous pouvez consulter les taxes mais pas les modifier. Contactez un administrateur pour toute modification.</p>
               </div>
             </div>
@@ -65,7 +65,7 @@
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                  <div class="w-8 h-8 bg-primary-500 rounded-md flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -237,7 +237,7 @@
                     <div class="text-sm text-gray-500 max-w-xs truncate">{{ taxe.description || '-' }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <span v-if="taxe.typeCalcul === 'TAUX'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span v-if="taxe.typeCalcul === 'TAUX'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                       {{ (taxe.taux * 100).toFixed(1) }}%
                     </span>
                     <span v-else-if="taxe.typeCalcul === 'MONTANT'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">

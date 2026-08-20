@@ -1,3 +1,4 @@
+import '../config/theme_config.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -576,7 +577,7 @@ class _CarteManagementScreenState extends State<CarteManagementScreen>
                     'Total Cartes',
                     '${_statistics!.totalCartes}',
                     Icons.credit_card,
-                    Colors.blue,
+                    AppTheme.goldColor,
                   ),
                 ),
                 SizedBox(width: 12.w),
@@ -986,6 +987,8 @@ class CarteListItem extends StatelessWidget {
         return Colors.grey;
       case CarteStatus.damaged:
         return Colors.brown;
+      case CarteStatus.draft:
+        return AppTheme.goldColor;
     }
   }
 

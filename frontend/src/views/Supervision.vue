@@ -102,8 +102,8 @@
             <div class="space-y-3">
               <div v-for="agent in availableAgents" :key="agent.id" class="flex items-center justify-between p-3 border rounded-lg">
                 <div class="flex items-center">
-                  <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span class="text-sm font-medium text-blue-600">{{ agent.initials }}</span>
+                  <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                    <span class="text-sm font-medium text-primary-600">{{ agent.initials }}</span>
                   </div>
                   <div class="ml-3">
                     <p class="text-sm font-medium text-gray-900">{{ agent.nom }}</p>

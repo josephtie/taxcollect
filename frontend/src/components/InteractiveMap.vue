@@ -123,7 +123,7 @@ const showPopup = (zone, marker) => {
         <p class="text-sm text-gray-600">${zone.contribuables} contribuables</p>
         <p class="text-sm text-gray-600">${zone.collecteurs} collecteurs</p>
         <button onclick="window.selectZoneFromMap(${zone.id})" 
-                class="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">
+                class="mt-2 px-3 py-1 bg-primary-500 text-white text-xs rounded hover:bg-primary-600">
           Voir détails
         </button>
       </div>

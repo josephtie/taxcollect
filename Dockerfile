@@ -23,7 +23,7 @@ RUN chown -R appuser:appgroup /app
 
 USER appuser
 
-EXPOSE 9090
+EXPOSE 9091
 
 ENV JAVA_OPTS="-Xmx512m -Xms256m"
 ENV SPRING_PROFILES_ACTIVE=prod

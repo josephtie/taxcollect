@@ -4,10 +4,10 @@ package com.nectuxingenieries.collect.tax.dto;
 import lombok.Data;
 
 @Data
-public  class LoginRequest {
+public class LoginRequest {
     private String username;
     private String password;
-
+    private String clientId;
 
     public String getUsername() {
         return username;
@@ -23,5 +23,13 @@ public  class LoginRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 }

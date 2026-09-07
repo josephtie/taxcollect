@@ -3,6 +3,8 @@ package com.nectuxingenieries.collect.tax.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
+
 public class RecensementDTO {
 
     private Long id;
@@ -44,6 +46,7 @@ public class RecensementDTO {
     private String statut;
     private Boolean necessiteValidation;
     private Integer version;
+    private BigDecimal baseImposable;
 
     public RecensementDTO() {}
 
@@ -109,4 +112,7 @@ public class RecensementDTO {
 
     public Integer getVersion() { return version; }
     public void setVersion(Integer version) { this.version = version; }
+
+    public BigDecimal getBaseImposable() { return baseImposable; }
+    public void setBaseImposable(BigDecimal baseImposable) { this.baseImposable = baseImposable; }
 }

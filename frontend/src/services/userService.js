@@ -82,6 +82,11 @@ class UserService extends BaseService {
       ...filters
     })
   }
+
+  // Récupérer les sessions d'un utilisateur
+  async getUserSessions(userId) {
+    return this.get(`/${userId}/sessions`)
+  }
 }
 
 export const userService = new UserService()

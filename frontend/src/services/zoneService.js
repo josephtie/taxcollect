@@ -40,9 +40,9 @@ class ZoneService extends BaseService {
     return this.get('/including-deleted')
   }
 
-  // Récupérer les zones d'un quartier
-  async getQuartierZones(quartierId) {
-    return this.get(`/quartier/${quartierId}`)
+  // Récupérer les zones d'une commune
+  async getCommuneZones(communeId) {
+    return this.get(`/commune/${communeId}`)
   }
 
   // Rechercher des zones

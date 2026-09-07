@@ -49,24 +49,6 @@ class TransactionService extends BaseService {
     return this.post('', transactionData)
   }
 
-  // Mettre à jour une transaction
-  async updateTransaction(id, transactionData) {
-    return this.put(`/${id}`, transactionData)
-  }
-
-  // Supprimer une transaction
-  async deleteTransaction(id) {
-    return this.delete(`/${id}`)
-  }
-
-  // Récupérer les transactions par période
-  async getTransactionsByDateRange(startDate, endDate) {
-    return this.get('/range', {
-      debut: startDate.toISOString(),
-      fin: endDate.toISOString()
-    })
-  }
-
   // Récupérer les transactions d'un agent par période
   async getTransactionsByAgentAndDateRange(agentId, startDate, endDate) {
     return this.get(`/agent/${agentId}/range`, {
@@ -75,14 +57,9 @@ class TransactionService extends BaseService {
     })
   }
 
-  // Synchroniser les transactions hors-ligne
-  async syncTransaction(transactionData) {
-    return this.post('/sync', transactionData)
-  }
-
-  // Vérifier l'intégrité d'une transaction
-  async verifyTransaction(id) {
-    return this.get(`/${id}/verify`)
+  // Filtrer les transactions avec pagination
+  async filterTransactions(params = {}) {
+    return this.get('/filter', params)
   }
 
   // Vérifier l'intégrité d'une transaction avec hash
@@ -113,6 +90,11 @@ class TransactionService extends BaseService {
   // Compter les transactions hors-ligne
   async countOfflineTransactions() {
     return this.get('/offline/count')
+  }
+
+  // Exporter les transactions (CSV ou Excel)
+  async exportTransactions(format = 'csv', params = {}) {
+    return this.download('/export', { format, ...params })
   }
 }
 

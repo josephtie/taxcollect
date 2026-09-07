@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import { permissionService } from './services/permissionService'
+import { permissionDirective, roleDirective } from './directives/permission'
 
 // Import des styles
 import './style.css'
@@ -68,6 +69,24 @@ const routes = [
     }
   },
   {
+    path: '/secteurs',
+    name: 'Secteurs',
+    component: () => import('./views/Secteurs.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissions: ['dashboard.view']
+    }
+  },
+  {
+    path: '/carte-territoriale',
+    name: 'CarteTerritoriale',
+    component: () => import('./views/CarteTerritoriale.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissions: ['dashboard.view']
+    }
+  },
+  {
     path: '/reversements',
     name: 'Reversements',
     component: () => import('./views/Reversements.vue'),
@@ -113,6 +132,33 @@ const routes = [
     }
   },
   {
+    path: '/analyse-agents',
+    name: 'AnalyseAgents',
+    component: () => import('./views/AnalyseAgents.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissions: ['supervision.view']
+    }
+  },
+  {
+    path: '/analyse-zones',
+    name: 'AnalyseZones',
+    component: () => import('./views/AnalyseZones.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissions: ['supervision.view']
+    }
+  },
+  {
+    path: '/carte-recensement',
+    name: 'CarteRecensement',
+    component: () => import('./views/CarteRecensement.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissions: ['supervision.view']
+    }
+  },
+  {
     path: '/taxes',
     name: 'Taxes',
     component: () => import('./views/Taxes.vue'),
@@ -122,10 +168,43 @@ const routes = [
     }
   },
   {
+    path: '/payments',
+    name: 'Payments',
+    component: () => import('./views/Payments.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissions: ['payments.view']
+    }
+  },
+  {
+    path: '/reconciliation',
+    name: 'Reconciliation',
+    component: () => import('./views/Reconciliation.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissions: ['reconciliation.view']
+    }
+  },
+  {
+    path: '/assessments',
+    name: 'Assessments',
+    component: () => import('./views/Assessments.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissions: ['assessments.view']
+    }
+  },
+  {
     path: '/login',
     name: 'Login',
     component: () => import('./views/Login.vue'),
     meta: { requiresAuth: false }
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('./views/Profile.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 
@@ -188,6 +267,10 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+
+// Enregistrer les directives globales
+app.directive('permission', permissionDirective)
+app.directive('role', roleDirective)
 
 // Initialisation des stores au démarrage
 app.mount('#app')

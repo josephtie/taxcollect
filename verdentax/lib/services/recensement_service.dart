@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
@@ -47,6 +48,7 @@ class RecensementService {
     String? photoPiece,
     String? photoContribuable,
     required String agentId,
+    double? baseImposable,
   }) async {
     try {
       _logger.i('Creating new contribuable: $telephone');
@@ -96,6 +98,7 @@ class RecensementService {
         photoPiece: photoPiece,
         photoContribuable: photoContribuable,
         necessiteValidation: necessiteValidation,
+        baseImposable: baseImposable,
       );
 
       // Save locally first
@@ -555,7 +558,7 @@ class RecensementService {
   Future<void> _syncContribuable(ContribuableForm contribuable) async {
     try {
       final response = await _apiService.post<Map<String, dynamic>>(
-        '/api/recensement/contribuables',
+        '${AppConfig.contribuablesEndpoint}',
         data: contribuable.toJson(),
       );
 
@@ -575,7 +578,7 @@ class RecensementService {
   Future<ContribuableForm?> _getContribuableFromServer(int id) async {
     try {
       final response = await _apiService.get<Map<String, dynamic>>(
-        '/api/recensement/contribuables/$id',
+        '${AppConfig.contribuablesEndpoint}/$id',
       );
       
       if (response != null) {
@@ -591,7 +594,7 @@ class RecensementService {
   Future<List<ContribuableForm>> _getContribuablesByAgentFromServer(String agentId) async {
     try {
       final response = await _apiService.get<List<dynamic>>(
-        '/api/recensement/contribuables/agent/$agentId',
+        '${AppConfig.contribuablesEndpoint}/zone/${agentId}',
       );
       
       if (response != null) {
@@ -628,7 +631,7 @@ class RecensementService {
       if (zoneId != null) queryParams['zoneId'] = zoneId;
 
       final response = await _apiService.get<List<dynamic>>(
-        '/api/recensement/contribuables/search',
+        '${AppConfig.contribuablesEndpoint}/search',
         queryParameters: queryParams,
       );
       
@@ -672,7 +675,7 @@ class RecensementService {
   Future<RecensementStatistics> _getServerStatistics() async {
     try {
       final response = await _apiService.get<Map<String, dynamic>>(
-        '/api/recensement/statistics',
+        '${AppConfig.contribuablesEndpoint}/stats',
       );
       
       if (response != null) {
@@ -710,7 +713,7 @@ class RecensementService {
   Future<List<ContribuableHistorique>> _getServerHistorique(int contribuableId) async {
     try {
       final response = await _apiService.get<List<dynamic>>(
-        '/api/recensement/contribuables/$contribuableId/historique',
+        '${AppConfig.contribuablesEndpoint}/$contribuableId/historique',
       );
       
       if (response != null) {
@@ -753,7 +756,7 @@ class RecensementService {
       if (_connectivityService.canPerformOnlineOperation()) {
         try {
           await _apiService.post<Map<String, dynamic>>(
-            '/api/recensement/contribuables/historique',
+            '${AppConfig.contribuablesEndpoint}/historique',
             data: historique.toJson(),
           );
         } catch (e) {
@@ -768,4 +771,49 @@ class RecensementService {
   // Getters for services
   StorageService get _storageService => StorageService();
   ConnectivityService get _connectivityService => ConnectivityService();
+
+  // Upload photo to server
+  Future<String?> uploadPhoto(File imageFile, String endpoint) async {
+    try {
+      if (!_connectivityService.canPerformOnlineOperation()) {
+        _logger.w('Cannot upload photo: no connectivity');
+        return null;
+      }
+
+      final dio = _apiService.dio;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(imageFile.path),
+      });
+
+      final response = await dio.post(
+        '${AppConfig.baseUrl}$endpoint',
+        data: formData,
+        options: Options(
+          headers: {'Content-Type': 'multipart/form-data'},
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final url = response.data['url'];
+        if (url != null) {
+          _logger.i('Photo uploaded successfully: $url');
+          return url as String;
+        }
+      }
+      return null;
+    } catch (e) {
+      _logger.e('Error uploading photo: $e');
+      return null;
+    }
+  }
+
+  // Upload contribuable photo
+  Future<String?> uploadContribuablePhoto(File imageFile) async {
+    return uploadPhoto(imageFile, '/api/taxcollect/upload/contribuable-photo');
+  }
+
+  // Upload piece identite photo
+  Future<String?> uploadPieceIdentite(File imageFile) async {
+    return uploadPhoto(imageFile, '/api/taxcollect/upload/piece-identite');
+  }
 }

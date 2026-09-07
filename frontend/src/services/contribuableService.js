@@ -5,9 +5,12 @@ class ContribuableService extends BaseService {
     super('/api/taxcollect/contribuable')
   }
 
-  // Récupérer tous les contribuables
-  async getAllContribuables() {
-    return this.get()
+  // Récupérer tous les contribuables (avec pagination optionnelle)
+  async getAllContribuables(params = {}) {
+    if (params.page !== undefined || params.size !== undefined) {
+      return this.get('/page', { page: params.page || 0, size: params.size || 20, ...params })
+    }
+    return this.get('/all')
   }
 
   // Récupérer un contribuable par ID
@@ -47,7 +50,7 @@ class ContribuableService extends BaseService {
 
   // Rechercher des contribuables
   async searchContribuables(query, filters = {}) {
-    return this.get('/search', { q: query, ...filters })
+    return this.get('/search', { searchTerm: query, ...filters })
   }
 }
 

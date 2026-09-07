@@ -24,11 +24,18 @@ Solution FinTech Publique complète pour la digitalisation de la collecte des ta
 ### Mobile (Flutter)
 - **Framework**: Flutter
 - **State Management**: Provider
-- **Local Storage**: SQLite pour le mode hors-ligne
+- **Local Storage**: Hive pour le mode hors-ligne
 - **GPS**: Geolocator
 - **QR Code**: mobile_scanner
 
 ## Fonctionnalités Implémentées
+
+### Concepts métier
+
+- **Transaction**: Acte de collecte effectué par un agent sur le terrain. Chaque transaction génère un reçu unique avec hash de sécurité. C'est l'unité atomique d'encaissement (un agent, un contribuable, un montant, un mode de paiement, GPS).
+- **TaxeCollect**: Taxe due par un contribuable de manière périodique (mensuelle, annuelle). Une taxe peut être partiellement payée via plusieurs transactions. TaxeCollect représente l'obligation fiscale, Transaction représente l'acte de paiement.
+
+> **Relation**: Une `Transaction` peut être rattachée à une `TaxeCollect` (paiement d'une échéance) ou être un encaissement spontané (sans taxe préalable).
 
 ### ✅ Base de données & Schéma
 - **Agents**: Gestion des agents avec zones géographiques
@@ -68,13 +75,13 @@ Solution FinTech Publique complète pour la digitalisation de la collecte des ta
 #### Services Mobile
 - **ApiService**: Gestion des appels API et synchronisation
 - **GPSService**: Géolocalisation haute précision
-- **Stockage Local**: SQLite pour transactions hors-ligne
+- **Stockage Local**: Hive pour transactions hors-ligne
 
 ## Sécurité
 
 ### 🔐 Authentification & Autorisation
 - JWT tokens avec expiration
-- Rôles: AGENT, TRESOR, ADMIN
+- Rôles: AGENT, TRESOR, ADMIN, SUPERVISEUR
 - Validation par zone géographique
 
 ### 🔒 Intégrité des Données
@@ -116,7 +123,7 @@ docker-compose up -d postgres
 
 ### Mobile
 ```bash
-cd mobile
+cd verdentax
 flutter pub get
 flutter run
 ```
@@ -188,7 +195,7 @@ cloture_caisse (id, agent_id, date_cloture, montant_total_espece,
 
 ### Tests Mobile
 ```bash
-cd mobile
+cd verdentax
 flutter test
 ```
 
@@ -196,9 +203,18 @@ flutter test
 
 ### Docker
 ```bash
-# Build et déploiement complet
+# Copier .env.example vers .env et remplir les valeurs
+cp .env.example .env
+
+# Build et déploiement complet (PostgreSQL, LDAP, Keycloak, Backend, Frontend)
 docker-compose up -d
 ```
+
+### Sécurité des secrets
+- **Ne jamais committer** de mots de passe ou secrets dans le dépôt
+- Tous les secrets sont passés via des variables d'environnement (voir `.env.example`)
+- Le fichier `.env` est ignoré par git
+- En production, utiliser un gestionnaire de secrets (Vault, AWS Secrets Manager, etc.)
 
 ### Production
 - Backend: Serveur d'application avec PostgreSQL

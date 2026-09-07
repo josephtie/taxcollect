@@ -45,11 +45,34 @@ Future<void> _initializeServices() async {
     // Initialize auth service with dependencies
     authService = AuthService();
     await authService.initialize();
-    
+
+    // Auto-sync offline transactions when connectivity is restored
+    connectivityService.connectivityStream.listen((result) {
+      if (connectivityService.canPerformOnlineOperation()) {
+        _syncOfflineData();
+      }
+    });
+    // Also try sync on startup if already online
+    if (connectivityService.canPerformOnlineOperation()) {
+      _syncOfflineData();
+    }
+
     debugPrint('✅ All services initialized successfully');
   } catch (e) {
     debugPrint('❌ Error initializing services: $e');
     // Continue with partial initialization for development
+  }
+}
+
+Future<void> _syncOfflineData() async {
+  try {
+    final transactionService = TransactionService();
+    final synced = await transactionService.synchronizeAllOfflineTransactions();
+    if (synced.isNotEmpty) {
+      debugPrint('✅ Synced ${synced.length} offline transactions');
+    }
+  } catch (e) {
+    debugPrint('⚠️ Error syncing offline data: $e');
   }
 }
 

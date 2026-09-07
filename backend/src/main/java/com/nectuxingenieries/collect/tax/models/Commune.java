@@ -1,8 +1,9 @@
 package com.nectuxingenieries.collect.tax.models;
 
-
 import jakarta.persistence.*;
-
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.locationtech.jts.geom.MultiPolygon;
 import java.util.List;
 
 @Entity
@@ -17,14 +18,20 @@ public class Commune extends Auditable {
     private String nom;
 
     @OneToMany(mappedBy = "commune")
-    private List<Quartier> quartiers;
+    private List<Zone> zones;
+
+    @Column(name = "geometry", columnDefinition = "geometry(MultiPolygon, 4326)")
+    @JdbcTypeCode(SqlTypes.GEOMETRY)
+    private MultiPolygon geometry;
 
     // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }
-    public List<Quartier> getQuartiers() { return quartiers; }
-    public void setQuartiers(List<Quartier> quartiers) { this.quartiers = quartiers; }
+    public List<Zone> getZones() { return zones; }
+    public void setZones(List<Zone> zones) { this.zones = zones; }
+    public MultiPolygon getGeometry() { return geometry; }
+    public void setGeometry(MultiPolygon geometry) { this.geometry = geometry; }
 }
 

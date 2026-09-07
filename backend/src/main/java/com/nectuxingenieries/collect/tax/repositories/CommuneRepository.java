@@ -21,4 +21,7 @@ public interface CommuneRepository extends BaseRepository<Commune, Long>, JpaSpe
     
     @Query("SELECT c FROM Commune c WHERE LOWER(c.nom) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND c.deletedAt IS NULL ORDER BY c.nom ASC")
     List<Commune> searchByNom(@Param("searchTerm") String searchTerm);
+
+    @Query(value = "SELECT * FROM commune c WHERE c.deleted_at IS NULL AND c.geometry IS NOT NULL AND ST_Contains(c.geometry, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)) LIMIT 1", nativeQuery = true)
+    Commune findByGeometryContaining(@Param("lat") double latitude, @Param("lng") double longitude);
 }

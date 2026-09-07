@@ -4,10 +4,11 @@ import com.nectuxingenieries.collect.tax.dto.AgentsDto;
 import com.nectuxingenieries.collect.tax.exceptions.InvalidOperationException;
 import com.nectuxingenieries.collect.tax.exceptions.NotFoundException;
 import com.nectuxingenieries.collect.tax.models.Agents;
-import com.nectuxingenieries.collect.tax.models.ZoneCollecte;
+import com.nectuxingenieries.collect.tax.models.StatutAgent;
+import com.nectuxingenieries.collect.tax.models.Zone;
 import com.nectuxingenieries.collect.tax.models.mappers.AgentsMapper;
 import com.nectuxingenieries.collect.tax.repositories.AgentRepository;
-import com.nectuxingenieries.collect.tax.repositories.ZoneCollecteRepository;
+import com.nectuxingenieries.collect.tax.repositories.ZoneRepository;
 import com.nectuxingenieries.collect.tax.security.LogicalDeletionPermissions;
 import com.nectuxingenieries.collect.tax.services.impl.AgentServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,14 +40,14 @@ class AgentServiceImplTest {
     private LogicalDeletionPermissions permissions;
 
     @Mock
-    private ZoneCollecteRepository zoneCollecteRepository;
+    private ZoneRepository zoneRepository;
 
     @InjectMocks
     private AgentServiceImpl agentService;
 
     private Agents agent;
-    private ZoneCollecte zone1;
-    private ZoneCollecte zone2;
+    private Zone zone1;
+    private Zone zone2;
     private AgentsDto agentDto;
 
     @BeforeEach
@@ -57,14 +58,14 @@ class AgentServiceImplTest {
         agent.setPrenom("Joseph");
         agent.setEmail("joseph@taxcollect.cd");
         agent.setTelephone("+243812345678");
-        agent.setStatut("ACTIF");
-        agent.setZoneCollectes(new ArrayList<>());
+        agent.setStatut(StatutAgent.ACTIF);
+        agent.setZones(new ArrayList<>());
 
-        zone1 = new ZoneCollecte();
+        zone1 = new Zone();
         zone1.setId(10L);
         zone1.setNom("Marché central");
 
-        zone2 = new ZoneCollecte();
+        zone2 = new Zone();
         zone2.setId(20L);
         zone2.setNom("Quartier commercial");
 
@@ -77,15 +78,15 @@ class AgentServiceImplTest {
     @Test
     void assignZoneToAgent_shouldAddZone_whenNotAlreadyAssigned() {
         when(agentRepository.findById(1L)).thenReturn(Optional.of(agent));
-        when(zoneCollecteRepository.findById(10L)).thenReturn(Optional.of(zone1));
+        when(zoneRepository.findById(10L)).thenReturn(Optional.of(zone1));
         when(agentRepository.save(any(Agents.class))).thenReturn(agent);
         when(agentMapper.toDto(any(Agents.class))).thenReturn(agentDto);
 
         AgentsDto result = agentService.assignZoneToAgent(1L, 10L);
 
         assertNotNull(result);
-        assertEquals(1, agent.getZoneCollectes().size());
-        assertTrue(agent.getZoneCollectes().stream().anyMatch(z -> z.getId().equals(10L)));
+        assertEquals(1, agent.getZones().size());
+        assertTrue(agent.getZones().stream().anyMatch(z -> z.getId().equals(10L)));
         verify(agentRepository).save(agent);
     }
 
@@ -100,7 +101,7 @@ class AgentServiceImplTest {
     @Test
     void assignZoneToAgent_shouldThrowNotFound_whenZoneDoesNotExist() {
         when(agentRepository.findById(1L)).thenReturn(Optional.of(agent));
-        when(zoneCollecteRepository.findById(99L)).thenReturn(Optional.empty());
+        when(zoneRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> agentService.assignZoneToAgent(1L, 99L));
         verify(agentRepository, never()).save(any());
@@ -108,9 +109,9 @@ class AgentServiceImplTest {
 
     @Test
     void assignZoneToAgent_shouldThrowInvalidOperation_whenZoneAlreadyAssigned() {
-        agent.getZoneCollectes().add(zone1);
+        agent.getZones().add(zone1);
         when(agentRepository.findById(1L)).thenReturn(Optional.of(agent));
-        when(zoneCollecteRepository.findById(10L)).thenReturn(Optional.of(zone1));
+        when(zoneRepository.findById(10L)).thenReturn(Optional.of(zone1));
 
         assertThrows(InvalidOperationException.class, () -> agentService.assignZoneToAgent(1L, 10L));
         verify(agentRepository, never()).save(any());
@@ -118,37 +119,37 @@ class AgentServiceImplTest {
 
     @Test
     void assignZoneToAgent_shouldInitializeZoneList_whenNull() {
-        agent.setZoneCollectes(null);
+        agent.setZones(null);
         when(agentRepository.findById(1L)).thenReturn(Optional.of(agent));
-        when(zoneCollecteRepository.findById(10L)).thenReturn(Optional.of(zone1));
+        when(zoneRepository.findById(10L)).thenReturn(Optional.of(zone1));
         when(agentRepository.save(any(Agents.class))).thenReturn(agent);
         when(agentMapper.toDto(any(Agents.class))).thenReturn(agentDto);
 
         AgentsDto result = agentService.assignZoneToAgent(1L, 10L);
 
         assertNotNull(result);
-        assertNotNull(agent.getZoneCollectes());
-        assertEquals(1, agent.getZoneCollectes().size());
+        assertNotNull(agent.getZones());
+        assertEquals(1, agent.getZones().size());
     }
 
     @Test
     void assignZoneToAgent_shouldAllowMultipleZones() {
-        agent.getZoneCollectes().add(zone1);
+        agent.getZones().add(zone1);
         when(agentRepository.findById(1L)).thenReturn(Optional.of(agent));
-        when(zoneCollecteRepository.findById(20L)).thenReturn(Optional.of(zone2));
+        when(zoneRepository.findById(20L)).thenReturn(Optional.of(zone2));
         when(agentRepository.save(any(Agents.class))).thenReturn(agent);
         when(agentMapper.toDto(any(Agents.class))).thenReturn(agentDto);
 
         AgentsDto result = agentService.assignZoneToAgent(1L, 20L);
 
         assertNotNull(result);
-        assertEquals(2, agent.getZoneCollectes().size());
+        assertEquals(2, agent.getZones().size());
     }
 
     @Test
     void removeZoneFromAgent_shouldRemoveZone_whenAssigned() {
-        agent.getZoneCollectes().add(zone1);
-        agent.getZoneCollectes().add(zone2);
+        agent.getZones().add(zone1);
+        agent.getZones().add(zone2);
         when(agentRepository.findById(1L)).thenReturn(Optional.of(agent));
         when(agentRepository.save(any(Agents.class))).thenReturn(agent);
         when(agentMapper.toDto(any(Agents.class))).thenReturn(agentDto);
@@ -156,8 +157,8 @@ class AgentServiceImplTest {
         AgentsDto result = agentService.removeZoneFromAgent(1L, 10L);
 
         assertNotNull(result);
-        assertEquals(1, agent.getZoneCollectes().size());
-        assertFalse(agent.getZoneCollectes().stream().anyMatch(z -> z.getId().equals(10L)));
+        assertEquals(1, agent.getZones().size());
+        assertFalse(agent.getZones().stream().anyMatch(z -> z.getId().equals(10L)));
         verify(agentRepository).save(agent);
     }
 
@@ -171,7 +172,7 @@ class AgentServiceImplTest {
 
     @Test
     void removeZoneFromAgent_shouldThrowInvalidOperation_whenZoneNotAssigned() {
-        agent.getZoneCollectes().add(zone1);
+        agent.getZones().add(zone1);
         when(agentRepository.findById(1L)).thenReturn(Optional.of(agent));
 
         assertThrows(InvalidOperationException.class, () -> agentService.removeZoneFromAgent(1L, 20L));
@@ -180,7 +181,7 @@ class AgentServiceImplTest {
 
     @Test
     void removeZoneFromAgent_shouldThrowInvalidOperation_whenZoneListNull() {
-        agent.setZoneCollectes(null);
+        agent.setZones(null);
         when(agentRepository.findById(1L)).thenReturn(Optional.of(agent));
 
         assertThrows(InvalidOperationException.class, () -> agentService.removeZoneFromAgent(1L, 10L));
@@ -193,10 +194,10 @@ class AgentServiceImplTest {
         when(agentRepository.save(any(Agents.class))).thenReturn(agent);
         when(agentMapper.toDto(any(Agents.class))).thenReturn(agentDto);
 
-        AgentsDto result = agentService.updateStatus(1L, "SUSPENDU");
+        AgentsDto result = agentService.updateStatus(1L, StatutAgent.SUSPENDU);
 
         assertNotNull(result);
-        assertEquals("SUSPENDU", agent.getStatut());
+        assertEquals(StatutAgent.SUSPENDU, agent.getStatut());
         verify(agentRepository).save(agent);
     }
 
@@ -204,14 +205,14 @@ class AgentServiceImplTest {
     void updateStatus_shouldThrowNotFound_whenAgentDoesNotExist() {
         when(agentRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> agentService.updateStatus(99L, "SUSPENDU"));
+        assertThrows(NotFoundException.class, () -> agentService.updateStatus(99L, StatutAgent.SUSPENDU));
         verify(agentRepository, never()).save(any());
     }
 
     @Test
     void getAgentsByZone_shouldReturnAgents() {
-        agent.getZoneCollectes().add(zone1);
-        when(agentRepository.findByZoneCollecteId(10L)).thenReturn(Arrays.asList(agent));
+        agent.getZones().add(zone1);
+        when(agentRepository.findByZoneId(10L)).thenReturn(Arrays.asList(agent));
         when(agentMapper.toDto(any(Agents.class))).thenReturn(agentDto);
 
         List<AgentsDto> result = agentService.getAgentsByZone(10L);
@@ -222,7 +223,7 @@ class AgentServiceImplTest {
 
     @Test
     void getAgentsByZone_shouldReturnEmptyList_whenNoAgents() {
-        when(agentRepository.findByZoneCollecteId(99L)).thenReturn(List.of());
+        when(agentRepository.findByZoneId(99L)).thenReturn(List.of());
 
         List<AgentsDto> result = agentService.getAgentsByZone(99L);
 

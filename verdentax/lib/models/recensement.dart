@@ -78,6 +78,7 @@ class ContribuableForm {
   bool necessiteValidation;
   String agentId;
   int version;
+  double? baseImposable;
 
   ContribuableForm({
     this.id,
@@ -102,6 +103,7 @@ class ContribuableForm {
     this.syncStatus = SyncStatus.pending,
     this.necessiteValidation = false,
     this.version = 1,
+    this.baseImposable,
   }) : dateCreation = DateTime.now(),
        dateModification = DateTime.now();
 
@@ -175,6 +177,7 @@ class ContribuableForm {
       'necessiteValidation': necessiteValidation,
       'agentId': agentId,
       'version': version,
+      'baseImposable': baseImposable,
     };
   }
 
@@ -214,6 +217,7 @@ class ContribuableForm {
       ),
       necessiteValidation: json['necessiteValidation'] ?? false,
       version: json['version'] ?? 1,
+      baseImposable: json['baseImposable']?.toDouble(),
     );
   }
 
@@ -239,6 +243,7 @@ class ContribuableForm {
     bool? necessiteValidation,
     String? agentId,
     int? version,
+    double? baseImposable,
   }) {
     return ContribuableForm(
       telephone: telephone ?? this.telephone,
@@ -262,6 +267,7 @@ class ContribuableForm {
       syncStatus: syncStatus ?? this.syncStatus,
       necessiteValidation: necessiteValidation ?? this.necessiteValidation,
       version: version ?? this.version,
+      baseImposable: baseImposable ?? this.baseImposable,
     );
   }
 }

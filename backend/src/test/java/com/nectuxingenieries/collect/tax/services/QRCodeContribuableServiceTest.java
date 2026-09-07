@@ -6,7 +6,7 @@ import com.nectuxingenieries.collect.tax.exceptions.InvalidOperationException;
 import com.nectuxingenieries.collect.tax.exceptions.NotFoundException;
 import com.nectuxingenieries.collect.tax.models.Contribuable;
 import com.nectuxingenieries.collect.tax.models.QRCodeContribuable;
-import com.nectuxingenieries.collect.tax.models.ZoneCollecte;
+import com.nectuxingenieries.collect.tax.models.Zone;
 import com.nectuxingenieries.collect.tax.repositories.ContribuableRepository;
 import com.nectuxingenieries.collect.tax.repositories.QRCodeContribuableRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +44,7 @@ class QRCodeContribuableServiceTest {
 
     @BeforeEach
     void setUp() {
-        ZoneCollecte zone = new ZoneCollecte();
+        Zone zone = new Zone();
         zone.setId(1L);
         zone.setNom("Marché central");
 
@@ -52,7 +52,7 @@ class QRCodeContribuableServiceTest {
         contribuable.setId(10L);
         contribuable.setNom("Mwamba");
         contribuable.setPrenom("Augustin");
-        contribuable.setZoneCollecte(zone);
+        contribuable.setZone(zone);
 
         qrCode = new QRCodeContribuable();
         qrCode.setId(1L);

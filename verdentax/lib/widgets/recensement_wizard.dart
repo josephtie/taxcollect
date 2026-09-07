@@ -1,6 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:logger/logger.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../config/config.dart';
 import '../models/models.dart';
 import '../services/services.dart';
@@ -34,6 +42,7 @@ class _RecensementWizardState extends State<RecensementWizard> {
   final _telephoneController = TextEditingController();
   final _activiteController = TextEditingController();
   final _numeroPieceController = TextEditingController();
+  final _baseImposableController = TextEditingController();
   
   ContribuableType _selectedType = ContribuableType.personnePhysique;
   TypePieceIdentite _selectedTypePiece = TypePieceIdentite.cni;
@@ -48,6 +57,7 @@ class _RecensementWizardState extends State<RecensementWizard> {
   
   bool _useCurrentLocation = true;
   bool _necessiteValidation = false;
+  ContribuableForm? _savedContribuable;
 
   @override
   void initState() {
@@ -55,6 +65,7 @@ class _RecensementWizardState extends State<RecensementWizard> {
     if (widget.initialContribuable != null) {
       _initializeFromContribuable(widget.initialContribuable!);
     }
+    _loadZones();
   }
 
   void _initializeFromContribuable(ContribuableForm contribuable) {
@@ -63,6 +74,9 @@ class _RecensementWizardState extends State<RecensementWizard> {
     _telephoneController.text = contribuable.telephone;
     _activiteController.text = contribuable.activite;
     _numeroPieceController.text = contribuable.numeroPiece;
+    if (contribuable.baseImposable != null) {
+      _baseImposableController.text = contribuable.baseImposable!.toStringAsFixed(0);
+    }
     
     _selectedType = contribuable.type;
     _selectedTypePiece = contribuable.typePiece;
@@ -78,6 +92,9 @@ class _RecensementWizardState extends State<RecensementWizard> {
 
   @override
   Widget build(BuildContext context) {
+    if (_savedContribuable != null) {
+      return _buildConfirmationScreen();
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -107,11 +124,11 @@ class _RecensementWizardState extends State<RecensementWizard> {
                 });
               },
               children: [
-                _buildStep1(),
-                _buildStep2(),
-                _buildStep3(),
-                _buildStep4(),
-                _buildStep5(),
+                _buildStep1Identite(),
+                _buildStep2Activite(),
+                _buildStep3Zone(),
+                _buildStep4Identification(),
+                _buildStep5Geolocalisation(),
               ],
             ),
           ),
@@ -146,9 +163,9 @@ class _RecensementWizardState extends State<RecensementWizard> {
     );
   }
 
-  Widget _buildStep1() {
+  Widget _buildStep1Identite() {
     return _buildStepContent(
-      title: 'Informations de Base',
+      title: 'Identité',
       child: Form(
         key: _formKey,
         child: Column(
@@ -207,15 +224,97 @@ class _RecensementWizardState extends State<RecensementWizard> {
                 return null;
               },
             ),
-            SizedBox(height: 16.h),
-            
-            // Activity
-            TextFormField(
-              controller: _activiteController,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStep2Activite() {
+    return _buildStepContent(
+      title: 'Activité',
+      child: Column(
+        children: [
+          TextFormField(
+            controller: _activiteController,
+            decoration: const InputDecoration(
+              labelText: 'Type d\'activité *',
+              hintText: 'Entrez l\'activité principale',
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Ce champ est obligatoire';
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: 16.h),
+          
+          // Marché
+          TextFormField(
+            initialValue: _selectedMarche,
+            decoration: const InputDecoration(
+              labelText: 'Marché',
+              hintText: 'Entrez le nom du marché',
+            ),
+            onChanged: (value) {
+              _selectedMarche = value;
+            },
+          ),
+          SizedBox(height: 16.h),
+          
+          // Quartier
+          TextFormField(
+            initialValue: _selectedQuartier,
+            decoration: const InputDecoration(
+              labelText: 'Quartier',
+              hintText: 'Entrez le nom du quartier',
+            ),
+            onChanged: (value) {
+              _selectedQuartier = value;
+            },
+          ),
+          SizedBox(height: 16.h),
+          
+          // Base imposable annuelle
+          TextFormField(
+            controller: _baseImposableController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Base imposable annuelle (FCFA)',
+              hintText: 'Laisser vide pour estimation automatique',
+              helperText: 'Chiffre d\'affaires annuel estimé. Utilisé pour le calcul des avis.',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep3Zone() {
+    return _buildStepContent(
+      title: 'Zone de Collecte',
+      child: Column(
+        children: [
+          if (_loadingZones)
+            const Center(child: CircularProgressIndicator())
+          else
+            DropdownButtonFormField<String>(
+              initialValue: _selectedZoneId,
               decoration: const InputDecoration(
-                labelText: 'Activité *',
-                hintText: 'Entrez l\'activité principale',
+                labelText: 'Zone *',
               ),
+              items: _getZoneOptions().map((zone) {
+                return DropdownMenuItem(
+                  value: zone.id?.toString() ?? '',
+                  child: Text(zone.nom.isNotEmpty ? zone.nom : 'Zone inconnue'),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedZoneId = value;
+                });
+              },
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Ce champ est obligatoire';
@@ -223,13 +322,52 @@ class _RecensementWizardState extends State<RecensementWizard> {
                 return null;
               },
             ),
-          ],
-        ),
+          SizedBox(height: 16.h),
+          
+          // Validation status indicator
+          Container(
+            padding: EdgeInsets.all(12.h),
+            decoration: BoxDecoration(
+              color: _necessiteValidation
+                  ? Colors.orange.shade50
+                  : Colors.green.shade50,
+              border: Border.all(
+                color: _necessiteValidation
+                    ? Colors.orange.shade200
+                    : Colors.green.shade200,
+              ),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _necessiteValidation ? Icons.warning : Icons.check_circle,
+                  color: _necessiteValidation ? Colors.orange : Colors.green,
+                  size: 20.sp,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    _necessiteValidation
+                        ? 'Cette zone nécessite une validation administrative'
+                        : 'Enregistrement direct possible',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: _necessiteValidation
+                          ? Colors.orange.shade800
+                          : Colors.green.shade800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStep2() {
+  Widget _buildStep4Identification() {
     return _buildStepContent(
       title: 'Identification',
       child: Column(
@@ -276,11 +414,24 @@ class _RecensementWizardState extends State<RecensementWizard> {
           ),
           SizedBox(height: 24.h),
           
-          // Scan piece button
+          // Photo piece button (facultatif)
+          Row(
+            children: [
+              Icon(Icons.camera_alt, size: 20.sp, color: Colors.grey.shade600),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  'Photo de la pièce (facultatif)',
+                  style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade700),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
           ElevatedButton.icon(
-            onPressed: _scanPieceIdentite,
+            onPressed: _takePiecePhoto,
             icon: const Icon(Icons.camera_alt),
-            label: const Text('Scanner la pièce'),
+            label: Text(_photoPiece != null ? 'Reprendre la photo' : 'Photographier la pièce'),
             style: ElevatedButton.styleFrom(
               minimumSize: Size(double.infinity, 48.h),
             ),
@@ -297,15 +448,7 @@ class _RecensementWizardState extends State<RecensementWizard> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8.r),
-                child: Image.network(
-                  _photoPiece!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(Icons.error, color: Colors.red),
-                    );
-                  },
-                ),
+                child: _buildPhotoPreview(_photoPiece!, _photoPieceFile),
               ),
             ),
           ],
@@ -314,64 +457,12 @@ class _RecensementWizardState extends State<RecensementWizard> {
     );
   }
 
-  Widget _buildStep3() {
+  Widget _buildStep5Geolocalisation() {
     return _buildStepContent(
-      title: 'Localisation',
+      title: 'Géolocalisation',
       child: Column(
         children: [
-          // Zone selection
-          DropdownButtonFormField<String>(
-            initialValue: _selectedZoneId,
-            decoration: const InputDecoration(
-              labelText: 'Zone *',
-            ),
-            items: _getZoneOptions().map((zone) {
-              return DropdownMenuItem(
-                value: zone['id'],
-                child: Text(zone['name'] ?? 'Zone inconnue'),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedZoneId = value;
-              });
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Ce champ est obligatoire';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 16.h),
-          
-          // Marche
-          TextFormField(
-            initialValue: _selectedMarche,
-            decoration: const InputDecoration(
-              labelText: 'Marché',
-              hintText: 'Entrez le nom du marché',
-            ),
-            onChanged: (value) {
-              _selectedMarche = value;
-            },
-          ),
-          SizedBox(height: 16.h),
-          
-          // Quartier
-          TextFormField(
-            initialValue: _selectedQuartier,
-            decoration: const InputDecoration(
-              labelText: 'Quartier',
-              hintText: 'Entrez le nom du quartier',
-            ),
-            onChanged: (value) {
-              _selectedQuartier = value;
-            },
-          ),
-          SizedBox(height: 24.h),
-          
-          // Location
+          // GPS Location
           SwitchListTile(
             title: const Text('Utiliser ma position actuelle'),
             subtitle: const Text('Géolocalisation automatique'),
@@ -417,27 +508,57 @@ class _RecensementWizardState extends State<RecensementWizard> {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStep4() {
-    return _buildStepContent(
-      title: 'Photos',
-      child: Column(
-        children: [
-          // Contribuable photo
-          Text(
-            'Photo du Contribuable',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: 16.h),
           
+          if (!_useCurrentLocation) ...[
+            SizedBox(height: 16.h),
+            Text(
+              'Saisie manuelle (GPS indisponible)',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            SizedBox(height: 8.h),
+            TextFormField(
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Latitude',
+                hintText: 'Ex: 5.360000',
+              ),
+              onChanged: (value) {
+                _latitude = double.tryParse(value);
+              },
+            ),
+            SizedBox(height: 8.h),
+            TextFormField(
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Longitude',
+                hintText: 'Ex: -4.008000',
+              ),
+              onChanged: (value) {
+                _longitude = double.tryParse(value);
+              },
+            ),
+          ],
+          
+          SizedBox(height: 32.h),
+          
+          // Photo contribuable (facultatif)
+          Row(
+            children: [
+              Icon(Icons.camera_alt, size: 20.sp, color: Colors.grey.shade600),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  'Photo du contribuable (facultatif)',
+                  style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade700),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
           ElevatedButton.icon(
             onPressed: _takeContribuablePhoto,
             icon: const Icon(Icons.camera_alt),
-            label: const Text('Prendre une photo'),
+            label: Text(_photoContribuable != null ? 'Reprendre la photo' : 'Prendre une photo'),
             style: ElevatedButton.styleFrom(
               minimumSize: Size(double.infinity, 48.h),
             ),
@@ -454,127 +575,24 @@ class _RecensementWizardState extends State<RecensementWizard> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8.r),
-                child: Image.network(
-                  _photoContribuable!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(Icons.error, color: Colors.red),
-                    );
-                  },
-                ),
+                child: _buildPhotoPreview(_photoContribuable!, _photoContribuableFile),
               ),
             ),
           ],
           
-          SizedBox(height: 32.h),
-          
-          // Piece photo (if not already taken)
-          if (_photoPiece == null) ...[
-            Text(
-              'Photo de la Pièce d\'Identité',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            SizedBox(height: 16.h),
-            
-            ElevatedButton.icon(
-              onPressed: _takePiecePhoto,
-              icon: const Icon(Icons.camera_alt),
-              label: const Text('Photographier la pièce'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 48.h),
-              ),
-            ),
-          ],
+          // Offline indicator
+          SizedBox(height: 24.h),
+          SwitchListTile(
+            title: const Text('Enregistrer hors ligne'),
+            subtitle: const Text('Synchronisation automatique dès connexion disponible'),
+            value: !context.watch<ConnectivityService>().isOnline,
+            onChanged: null,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStep5() {
-    return _buildStepContent(
-      title: 'Validation',
-      child: Column(
-        children: [
-          // Summary
-          Text(
-            'Résumé des Informations',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          SizedBox(height: 24.h),
-          
-          _buildSummaryItem('Type', _selectedType.label),
-          _buildSummaryItem('Nom', _nomController.text),
-          if (_selectedType == ContribuableType.personnePhysique)
-            _buildSummaryItem('Prénoms', _prenomsController.text),
-          _buildSummaryItem('Téléphone', _telephoneController.text),
-          _buildSummaryItem('Activité', _activiteController.text),
-          _buildSummaryItem('Type de pièce', _selectedTypePiece.label),
-          _buildSummaryItem('Numéro de pièce', _numeroPieceController.text),
-          _buildSummaryItem('Zone', _selectedZoneId ?? 'Non sélectionnée'),
-          if (_selectedMarche != null)
-            _buildSummaryItem('Marché', _selectedMarche!),
-          if (_selectedQuartier != null)
-            _buildSummaryItem('Quartier', _selectedQuartier!),
-          
-          if (_latitude != null && _longitude != null) ...[
-            _buildSummaryItem('Position', '${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}'),
-          ],
-          
-          // Validation status
-          SizedBox(height: 24.h),
-          Container(
-            padding: EdgeInsets.all(16.h),
-            decoration: BoxDecoration(
-              color: _necessiteValidation 
-                  ? Colors.orange.shade50 
-                  : Colors.green.shade50,
-              border: Border.all(
-                color: _necessiteValidation 
-                    ? Colors.orange.shade200 
-                    : Colors.green.shade200,
-              ),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  _necessiteValidation 
-                      ? Icons.warning 
-                      : Icons.check_circle,
-                  color: _necessiteValidation 
-                      ? Colors.orange 
-                      : Colors.green,
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Text(
-                    _necessiteValidation 
-                        ? 'Ce contribuable nécessite une validation administrative'
-                        : 'Ce contribuable peut être enregistré directement',
-                    style: TextStyle(
-                      color: _necessiteValidation 
-                          ? Colors.orange.shade800 
-                          : Colors.green.shade800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Offline option
-          SizedBox(height: 16.h),
-          SwitchListTile(
-            title: const Text('Enregistrer hors ligne'),
-            subtitle: const Text('Synchronisation automatique dès connexion disponible'),
-            value: !context.watch<ConnectivityService>().isOnline,
-            onChanged: null, // Read-only based on connectivity
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSummaryItem(String label, String value) {
     return Padding(
@@ -602,6 +620,25 @@ class _RecensementWizardState extends State<RecensementWizard> {
         ],
       ),
     );
+  }
+
+  Widget _buildPhotoPreview(String photoPath, File? localFile) {
+    if (localFile != null && photoPath == localFile.path) {
+      return Image.file(localFile, fit: BoxFit.cover);
+    }
+    if (photoPath.startsWith('http')) {
+      return Image.network(
+        photoPath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(child: Icon(Icons.error, color: Colors.red));
+        },
+      );
+    }
+    if (photoPath.startsWith('/')) {
+      return Image.file(File(photoPath), fit: BoxFit.cover);
+    }
+    return const Center(child: Icon(Icons.image, color: Colors.grey));
   }
 
   Widget _buildStepContent({required String title, required Widget child}) {
@@ -705,14 +742,24 @@ class _RecensementWizardState extends State<RecensementWizard> {
            _selectedZoneId?.toLowerCase().contains('zone_speciale') == true;
   }
 
-  List<Map<String, String>> _getZoneOptions() {
-    // This would come from the API or local database
-    return [
-      {'id': 'zone1', 'name': 'Zone Centre-ville'},
-      {'id': 'zone2', 'name': 'Zone Marché Central'},
-      {'id': 'zone3', 'name': 'Zone Portuaire'},
-      {'id': 'zone4', 'name': 'Zone Industrielle'},
-    ];
+  List<ZoneCollectDto> _zones = [];
+  bool _loadingZones = false;
+
+  Future<void> _loadZones() async {
+    if (_zones.isNotEmpty || _loadingZones) return;
+    setState(() => _loadingZones = true);
+    try {
+      final locationService = LocationService();
+      _zones = await locationService.getAllZones();
+    } catch (e) {
+      _logger.e('Error loading zones: $e');
+    } finally {
+      if (mounted) setState(() => _loadingZones = false);
+    }
+  }
+
+  List<ZoneCollectDto> _getZoneOptions() {
+    return _zones;
   }
 
   void _nextStep() async {
@@ -724,6 +771,7 @@ class _RecensementWizardState extends State<RecensementWizard> {
       if (_currentStep == 0 && !_validateStep1()) return;
       if (_currentStep == 1 && !_validateStep2()) return;
       if (_currentStep == 2 && !_validateStep3()) return;
+      if (_currentStep == 3 && !_validateStep4()) return;
       
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -744,11 +792,15 @@ class _RecensementWizardState extends State<RecensementWizard> {
   }
 
   bool _validateStep2() {
-    return _numeroPieceController.text.isNotEmpty;
+    return _activiteController.text.isNotEmpty;
   }
 
   bool _validateStep3() {
     return _selectedZoneId != null && _selectedZoneId!.isNotEmpty;
+  }
+
+  bool _validateStep4() {
+    return _numeroPieceController.text.isNotEmpty;
   }
 
   Future<void> _saveContribuable() async {
@@ -776,18 +828,15 @@ class _RecensementWizardState extends State<RecensementWizard> {
         photoPiece: _photoPiece,
         photoContribuable: _photoContribuable,
         agentId: authService.currentUser?.id ?? 'unknown',
+        baseImposable: double.tryParse(_baseImposableController.text.trim()),
       );
 
       widget.onSave(contribuable);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Contribuable ${contribuable.numeroContribuable} créé avec succès'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).pop();
+        setState(() {
+          _savedContribuable = contribuable;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -805,18 +854,338 @@ class _RecensementWizardState extends State<RecensementWizard> {
     }
   }
 
+  final Logger _logger = Logger();
+  File? _photoPieceFile;
+  File? _photoContribuableFile;
+
   Future<void> _scanPieceIdentite() async {
-    // Implement OCR scanning
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fonctionnalité de scan OCR à implémenter')),
+    await _takePiecePhoto();
+  }
+
+  Widget _buildConfirmationScreen() {
+    final contribuable = _savedContribuable!;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Recensement réussi'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(24.h),
+        child: Column(
+          children: [
+            // Success icon
+            Container(
+              width: 80.w,
+              height: 80.h,
+              decoration: BoxDecoration(
+                color: Colors.green.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.check_circle, color: Colors.green, size: 48.sp),
+            ),
+            SizedBox(height: 24.h),
+            
+            Text(
+              'Contribuable enregistré',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              contribuable.numeroContribuable,
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            SizedBox(height: 32.h),
+            
+            // QR Code
+            Container(
+              padding: EdgeInsets.all(16.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: Colors.grey.shade300),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'QR Code du Contribuable',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  SizedBox(height: 16.h),
+                  QrImageView(
+                    data: contribuable.qrCode,
+                    version: QrVersions.auto,
+                    size: 200.h,
+                    gapless: true,
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    contribuable.qrCode,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.grey.shade600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 24.h),
+            
+            // Contribuable info summary
+            Container(
+              padding: EdgeInsets.all(16.h),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Column(
+                children: [
+                  _buildSummaryItem('Nom', '${contribuable.prenoms ?? ''} ${contribuable.nom ?? ''}'),
+                  _buildSummaryItem('Téléphone', contribuable.telephone),
+                  _buildSummaryItem('Activité', contribuable.activite),
+                  _buildSummaryItem('Type', contribuable.type.label),
+                  _buildSummaryItem('Statut', contribuable.statut.label),
+                  if (contribuable.baseImposable != null)
+                    _buildSummaryItem('Base imposable', '${contribuable.baseImposable!.toStringAsFixed(0)} FCFA/an'),
+                  if (contribuable.necessiteValidation)
+                    _buildSummaryItem('Validation', 'Requise'),
+                ],
+              ),
+            ),
+            SizedBox(height: 32.h),
+            
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _printReceipt(contribuable),
+                    icon: const Icon(Icons.print),
+                    label: const Text('Imprimer le reçu'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: Size(0, 48.h),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.check),
+                    label: const Text('Terminer'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(0, 48.h),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            
+            // New recensement button
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _savedContribuable = null;
+                  _nomController.clear();
+                  _prenomsController.clear();
+                  _telephoneController.clear();
+                  _activiteController.clear();
+                  _numeroPieceController.clear();
+                  _baseImposableController.clear();
+                  _photoPiece = null;
+                  _photoContribuable = null;
+                  _photoPieceFile = null;
+                  _photoContribuableFile = null;
+                  _latitude = null;
+                  _longitude = null;
+                  _selectedZoneId = null;
+                  _selectedMarche = null;
+                  _selectedQuartier = null;
+                  _currentStep = 0;
+                });
+                _pageController.jumpToPage(0);
+              },
+              icon: const Icon(Icons.person_add),
+              label: const Text('Nouveau recensement'),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  Future<void> _printReceipt(ContribuableForm contribuable) async {
+    try {
+      final doc = pw.Document();
+      
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // Header
+                pw.Center(
+                  child: pw.Text(
+                    'REÇU DE RECENSEMENT',
+                    style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Center(
+                  child: pw.Text(
+                    'TaxCollect — Collecte des Impôts',
+                    style: pw.TextStyle(fontSize: 12, color: PdfColors.grey600),
+                  ),
+                ),
+                pw.Divider(),
+                pw.SizedBox(height: 24),
+                
+                // Contribuable info
+                pw.Text('Informations du Contribuable',
+                  style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 12),
+                pw.Table(
+                  border: pw.TableBorder.all(color: PdfColors.grey300),
+                  children: [
+                    pw.TableRow(children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text('N° Contribuable')),
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text(contribuable.numeroContribuable, style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                    ]),
+                    pw.TableRow(children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text('Nom')),
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text('${contribuable.prenoms ?? ''} ${contribuable.nom ?? ''}')),
+                    ]),
+                    pw.TableRow(children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text('Téléphone')),
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text(contribuable.telephone)),
+                    ]),
+                    pw.TableRow(children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text('Type')),
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text(contribuable.type.label)),
+                    ]),
+                    pw.TableRow(children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text('Activité')),
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text(contribuable.activite)),
+                    ]),
+                    pw.TableRow(children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text('Zone')),
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text(contribuable.zoneId)),
+                    ]),
+                    pw.TableRow(children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text('Pièce d\'identité')),
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text('${contribuable.typePiece.label} — ${contribuable.numeroPiece}')),
+                    ]),
+                    pw.TableRow(children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text('Statut')),
+                      pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Text(contribuable.statut.label)),
+                    ]),
+                  ],
+                ),
+                pw.SizedBox(height: 24),
+                
+                // QR Code
+                pw.Center(
+                  child: pw.Column(
+                    children: [
+                      pw.Text('QR Code', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                      pw.SizedBox(height: 8),
+                      pw.Text(contribuable.qrCode, style: pw.TextStyle(fontSize: 10, color: PdfColors.grey600)),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 32),
+                
+                // Date and agent
+                pw.Divider(),
+                pw.SizedBox(height: 12),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Date: ${_formatDate(contribuable.dateCreation)}'),
+                    pw.Text('Agent: ${contribuable.agentId}'),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      );
+      
+      await Printing.layoutPdf(
+        onLayout: (format) => doc.save(),
+        name: 'recu_${contribuable.numeroContribuable}',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur génération PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   Future<void> _getCurrentLocation() async {
     try {
-      final geolocationService = GeolocationService();
-      final position = await geolocationService.getCurrentPositionLatLng();
-      
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Service de localisation désactivé'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Permission de localisation refusée'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
       if (mounted) {
         setState(() {
           _latitude = position.latitude;
@@ -836,17 +1205,89 @@ class _RecensementWizardState extends State<RecensementWizard> {
   }
 
   Future<void> _takeContribuablePhoto() async {
-    // Implement photo capture
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fonctionnalité photo à implémenter')),
+    await _capturePhoto(
+      isContribuablePhoto: true,
+      uploadEndpoint: '/api/taxcollect/upload/contribuable-photo',
     );
   }
 
   Future<void> _takePiecePhoto() async {
-    // Implement photo capture
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fonctionnalité photo à implémenter')),
+    await _capturePhoto(
+      isContribuablePhoto: false,
+      uploadEndpoint: '/api/taxcollect/upload/piece-identite',
     );
+  }
+
+  Future<void> _capturePhoto({
+    required bool isContribuablePhoto,
+    required String uploadEndpoint,
+  }) async {
+    try {
+      final picker = ImagePicker();
+      final XFile? photo = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 70,
+        maxWidth: 1024,
+      );
+
+      if (photo == null) return;
+
+      final file = File(photo.path);
+      setState(() {
+        if (isContribuablePhoto) {
+          _photoContribuableFile = file;
+        } else {
+          _photoPieceFile = file;
+        }
+      });
+
+      // Try to upload if online
+      final recensementService = RecensementService();
+      final connectivityService = ConnectivityService();
+      if (connectivityService.canPerformOnlineOperation()) {
+        String? url;
+        if (isContribuablePhoto) {
+          url = await recensementService.uploadContribuablePhoto(file);
+        } else {
+          url = await recensementService.uploadPieceIdentite(file);
+        }
+        if (url != null && mounted) {
+          setState(() {
+            if (isContribuablePhoto) {
+              _photoContribuable = url;
+            } else {
+              _photoPiece = url;
+            }
+          });
+        }
+      } else {
+        // Store local path for offline sync
+        if (mounted) {
+          setState(() {
+            if (isContribuablePhoto) {
+              _photoContribuable = photo.path;
+            } else {
+              _photoPiece = photo.path;
+            }
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Photo enregistrée localement. Elle sera synchronisée plus tard.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la capture: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override

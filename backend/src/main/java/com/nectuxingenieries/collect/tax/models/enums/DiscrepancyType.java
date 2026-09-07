@@ -1,0 +1,7 @@
+package com.nectuxingenieries.collect.tax.models.enums;
+
+public enum DiscrepancyType {
+    NONE, PAID_INTERNAL_NOT_PROVIDER, PAID_PROVIDER_NOT_INTERNAL,
+    AMOUNT_MISMATCH, DUPLICATE_TRANSACTION, UNKNOWN_TRANSACTION,
+    PENDING_TOO_LONG, REFUND_MISMATCH
+}

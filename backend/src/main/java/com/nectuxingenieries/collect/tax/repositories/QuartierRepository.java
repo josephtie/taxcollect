@@ -13,12 +13,15 @@ import java.util.List;
 @Repository
 public interface QuartierRepository extends BaseRepository<Quartier, Long>, JpaSpecificationExecutor<Quartier> {
 
-    @Query("SELECT q FROM Quartier q WHERE q.commune.id = ?1 AND q.deletedAt IS NULL")
-    List<Quartier> findByCommuneId(Long communeId);
+    @Query("SELECT q FROM Quartier q WHERE q.zone.id = ?1 AND q.deletedAt IS NULL")
+    List<Quartier> findByZoneId(Long zoneId);
     
-    @Query("SELECT q FROM Quartier q WHERE q.commune.id = ?1 AND q.deletedAt IS NULL")
-    Page<Quartier> findByCommuneId(Long communeId, Pageable pageable);
+    @Query("SELECT q FROM Quartier q WHERE q.zone.id = ?1 AND q.deletedAt IS NULL")
+    Page<Quartier> findByZoneId(Long zoneId, Pageable pageable);
     
     @Query("SELECT q FROM Quartier q WHERE LOWER(q.nom) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND q.deletedAt IS NULL ORDER BY q.nom ASC")
     List<Quartier> searchByNom(@Param("searchTerm") String searchTerm);
+
+    @Query(value = "SELECT * FROM quartier q WHERE q.deleted_at IS NULL AND q.geometry IS NOT NULL AND ST_Contains(q.geometry, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)) LIMIT 1", nativeQuery = true)
+    Quartier findByGeometryContaining(@Param("lat") double latitude, @Param("lng") double longitude);
 }

@@ -98,9 +98,82 @@ public class TaxeServiceImpl extends BaseServiceImpl<Taxe, Long, TaxeDto, TaxeRe
     }
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] exportTaxes(String format, String categorie) {
-        // TODO: Implémenter l'exportation
-        return new byte[0];
+        List<Taxe> taxes = taxeRepository.findAll().stream()
+                .filter(t -> t.getDeletedAt() == null)
+                .filter(t -> categorie == null || categorie.isBlank()
+                        || (t.getCategorie() != null && t.getCategorie().name().equalsIgnoreCase(categorie)))
+                .toList();
+
+        if ("xlsx".equalsIgnoreCase(format)) {
+            return exportTaxesToXlsx(taxes);
+        } else {
+            return exportTaxesToCsv(taxes);
+        }
+    }
+
+    private byte[] exportTaxesToCsv(List<Taxe> taxes) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Nom,Description,Categorie,Periodicite,TypeCalcul,Taux,MontantFixe\n");
+        for (Taxe t : taxes) {
+            sb.append(String.format("%s,%s,%s,%s,%s,%s,%s\n",
+                    escapeCsv(t.getNom()),
+                    escapeCsv(t.getDescription()),
+                    t.getCategorie() != null ? t.getCategorie().name() : "",
+                    t.getPeriodicite() != null ? t.getPeriodicite().name() : "",
+                    t.getTypeCalcul() != null ? t.getTypeCalcul().name() : "",
+                    t.getTaux() != null ? t.getTaux().toPlainString() : "",
+                    t.getMontantFixe() != null ? t.getMontantFixe().toPlainString() : ""
+            ));
+        }
+        return sb.toString().getBytes();
+    }
+
+    private byte[] exportTaxesToXlsx(List<Taxe> taxes) {
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Taxes");
+
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
+            String[] headers = {"Nom", "Description", "Categorie", "Periodicite", "TypeCalcul", "Taux", "MontantFixe"};
+            for (int i = 0; i < headers.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+                sheet.setColumnWidth(i, 4000);
+            }
+
+            int rowIdx = 1;
+            for (Taxe t : taxes) {
+                org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(t.getNom() != null ? t.getNom() : "");
+                row.createCell(1).setCellValue(t.getDescription() != null ? t.getDescription() : "");
+                row.createCell(2).setCellValue(t.getCategorie() != null ? t.getCategorie().name() : "");
+                row.createCell(3).setCellValue(t.getPeriodicite() != null ? t.getPeriodicite().name() : "");
+                row.createCell(4).setCellValue(t.getTypeCalcul() != null ? t.getTypeCalcul().name() : "");
+                row.createCell(5).setCellValue(t.getTaux() != null ? t.getTaux().doubleValue() : 0);
+                row.createCell(6).setCellValue(t.getMontantFixe() != null ? t.getMontantFixe().doubleValue() : 0);
+            }
+
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            workbook.write(baos);
+            return baos.toByteArray();
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Erreur lors de la génération du fichier Excel", e);
+        }
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     @Override

@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:logger/logger.dart';
 import '../config/config.dart';
 import '../models/models.dart';
 import 'api_service.dart';
+import 'connectivity_service.dart';
+import 'storage_service.dart';
 
 /// Service pour gérer les transactions et leurs relations
 class TransactionService {
@@ -12,7 +13,6 @@ class TransactionService {
   TransactionService._internal();
 
   final Logger _logger = Logger();
-  final Random _random = Random();
   
   // Cache pour les données de transactions
   final List<TransactionDTO> _transactionsCache = [];
@@ -46,19 +46,14 @@ class TransactionService {
     String? agentNom,
     String? agentPrenom,
     String? zoneNom,
+    int? taxeCollectId,
   }) async {
     try {
       // Validation des données
       _validateTransactionData(montant, contribuableId, agentId, zoneId);
       
-      // Génération du numéro de reçu
-      final numeroRecu = _generateNumeroRecu();
-      
-      // Génération du hash de transaction
-      final hashTransaction = _generateTransactionHash(montant, contribuableId, agentId);
-      
+      // Le numéro de reçu et le hash sont générés côté backend
       final transaction = TransactionDTO(
-        numeroRecu: numeroRecu,
         montant: montant,
         contribuableId: contribuableId,
         agentId: agentId,
@@ -66,7 +61,6 @@ class TransactionService {
         modePaiement: modePaiement,
         statut: TransactionStatus.enAttente,
         referencePaiement: referencePaiement,
-        hashTransaction: hashTransaction,
         latitude: latitude,
         longitude: longitude,
         adresseCollecte: adresseCollecte,
@@ -77,8 +71,15 @@ class TransactionService {
         agentNom: agentNom,
         agentPrenom: agentPrenom,
         zoneNom: zoneNom,
+        taxeCollectId: taxeCollectId,
       );
-      
+
+      final connectivityService = ConnectivityService();
+      if (!connectivityService.canPerformOnlineOperation()) {
+        // Mode offline: stocker localement pour sync ultérieure
+        return await _saveTransactionOffline(transaction);
+      }
+
       final apiService = ApiService();
       final createdTransaction = await apiService.createTransaction(transaction);
       
@@ -206,25 +207,90 @@ class TransactionService {
   /// Synchroniser toutes les transactions offline
   Future<List<TransactionDTO>> synchronizeAllOfflineTransactions() async {
     try {
-      final apiService = ApiService();
-      return await apiService.synchronizeAllOfflineTransactions();
+      final storageService = StorageService();
+      final keys = await storageService.getOfflineDataKeys();
+      final transactionKeys = keys.where((k) => k.startsWith('txn_')).toList();
+      final synced = <TransactionDTO>[];
+
+      for (final key in transactionKeys) {
+        final data = await storageService.getOfflineData(key);
+        if (data == null) continue;
+
+        final transaction = TransactionDTO.fromJson(data);
+        try {
+          final apiService = ApiService();
+          final created = await apiService.createTransaction(
+            transaction.copyWith(offline: false),
+          );
+          await storageService.removeOfflineData(key);
+          synced.add(created);
+          _logger.i('Synced offline transaction: ${created.numeroRecu}');
+        } catch (e) {
+          _logger.w('Failed to sync transaction $key: $e');
+        }
+      }
+
+      return synced;
     } catch (e) {
       _logger.e('Error synchronizing offline transactions: $e');
       return [];
     }
   }
   
-  /// Obtenir les transactions offline
+  /// Obtenir les transactions offline (stockées localement)
   Future<List<TransactionDTO>> getOfflineTransactions() async {
     try {
-      final apiService = ApiService();
-      final response = await apiService.get<List<dynamic>>(
-        '${AppConfig.transactionsEndpoint}/offline',
-      );
-      return response.map((json) => TransactionDTO.fromJson(json)).toList();
+      final storageService = StorageService();
+      final keys = await storageService.getOfflineDataKeys();
+      final transactionKeys = keys.where((k) => k.startsWith('txn_')).toList();
+      final transactions = <TransactionDTO>[];
+
+      for (final key in transactionKeys) {
+        final data = await storageService.getOfflineData(key);
+        if (data != null) {
+          transactions.add(TransactionDTO.fromJson(data));
+        }
+      }
+
+      return transactions;
     } catch (e) {
       _logger.e('Error getting offline transactions: $e');
       return [];
+    }
+  }
+
+  /// Compter les transactions offline en attente de sync
+  Future<int> countLocalOfflineTransactions() async {
+    try {
+      final storageService = StorageService();
+      final keys = await storageService.getOfflineDataKeys();
+      return keys.where((k) => k.startsWith('txn_')).length;
+    } catch (e) {
+      _logger.e('Error counting offline transactions: $e');
+      return 0;
+    }
+  }
+
+  /// Enregistrer une transaction en local pour sync ultérieure
+  Future<TransactionDTO> _saveTransactionOffline(TransactionDTO transaction) async {
+    try {
+      final storageService = StorageService();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final localKey = 'txn_${timestamp}_${transaction.contribuableId}';
+
+      final localTransaction = transaction.copyWith(
+        numeroRecu: 'LOCAL-$localKey',
+        offline: true,
+        statut: TransactionStatus.enAttente,
+      );
+
+      await storageService.storeOfflineData(localKey, localTransaction.toJson());
+      _logger.i('Transaction saved offline: $localKey');
+
+      return localTransaction;
+    } catch (e) {
+      _logger.e('Error saving transaction offline: $e');
+      rethrow;
     }
   }
   
@@ -350,18 +416,6 @@ class TransactionService {
     if (montant > 999999999) {
       throw Exception('Le montant est trop élevé');
     }
-  }
-  
-  String _generateNumeroRecu() {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final random = _random.nextInt(10000);
-    return 'VTX${timestamp.toString().substring(-6)}${random.toString().padLeft(4, '0')}';
-  }
-  
-  String _generateTransactionHash(double montant, int contribuableId, int agentId) {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final data = '$montant-$contribuableId-$agentId-$timestamp';
-    return data.hashCode.toString();
   }
   
   /// Rafraîchir le cache

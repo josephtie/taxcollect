@@ -1,10 +1,12 @@
 package com.nectuxingenieries.collect.tax.models.mappers;
 
 import com.nectuxingenieries.collect.tax.models.Agents;
+import com.nectuxingenieries.collect.tax.models.StatutAgent;
 import com.nectuxingenieries.collect.tax.dto.AgentsDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring")
 public interface AgentsMapper {

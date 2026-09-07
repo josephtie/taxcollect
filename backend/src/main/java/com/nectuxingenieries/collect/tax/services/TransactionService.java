@@ -6,10 +6,12 @@ import com.nectuxingenieries.collect.tax.models.*;
 import com.nectuxingenieries.collect.tax.dto.TransactionDTO;
 import com.nectuxingenieries.collect.tax.models.enums.ModePaiement;
 import com.nectuxingenieries.collect.tax.models.enums.StatutTransaction;
+import com.nectuxingenieries.collect.tax.models.enums.StatutPayment;
 import com.nectuxingenieries.collect.tax.repositories.TransactionRepository;
 import com.nectuxingenieries.collect.tax.repositories.AgentRepository;
 import com.nectuxingenieries.collect.tax.repositories.ContribuableRepository;
-import com.nectuxingenieries.collect.tax.repositories.ZoneCollecteRepository;
+import com.nectuxingenieries.collect.tax.repositories.ZoneRepository;
+import com.nectuxingenieries.collect.tax.repositories.TaxeCollectRepository;
 import com.nectuxingenieries.collect.tax.utils.ReceiptNumberGenerator;
 import com.nectuxingenieries.collect.tax.utils.TransactionHashUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +43,10 @@ public class TransactionService {
     private ContribuableRepository contribuableRepository;
 
     @Autowired
-    private ZoneCollecteRepository zoneCollecteRepository;
+    private ZoneRepository zoneRepository;
+
+    @Autowired
+    private TaxeCollectRepository taxeCollectRepository;
 
     // Récupérer toutes les transactions (non paginé - pour compatibilité)
     @Transactional(readOnly = true)
@@ -67,8 +72,8 @@ public class TransactionService {
         Contribuable contribuable = contribuableRepository.findById(transactionDTO.getContribuableId())
                 .orElseThrow(() -> new NotFoundException("Contribuable", transactionDTO.getContribuableId()));
 
-        ZoneCollecte zone = zoneCollecteRepository.findById(transactionDTO.getZoneId())
-                .orElseThrow(() -> new NotFoundException("Zone de collecte", transactionDTO.getZoneId()));
+        Zone zone = zoneRepository.findById(transactionDTO.getZoneId())
+                .orElseThrow(() -> new NotFoundException("Zone", transactionDTO.getZoneId()));
 
         // Création de la transaction
         Transaction transaction = new Transaction();
@@ -83,6 +88,13 @@ public class TransactionService {
         transaction.setAdresseCollecte(transactionDTO.getAdresseCollecte());
         transaction.setOffline(transactionDTO.getOffline() != null ? transactionDTO.getOffline() : false);
         transaction.setDateCreation(LocalDateTime.now());
+
+        // Lier la transaction à une TaxeCollect si fournie
+        if (transactionDTO.getTaxeCollectId() != null) {
+            TaxeCollect taxeCollect = taxeCollectRepository.findById(transactionDTO.getTaxeCollectId())
+                    .orElseThrow(() -> new NotFoundException("TaxeCollect", transactionDTO.getTaxeCollectId()));
+            transaction.setTaxeCollect(taxeCollect);
+        }
 
         // Génération du numéro de reçu unique
         String numeroRecu = ReceiptNumberGenerator.generateReceiptNumber();
@@ -111,6 +123,17 @@ public class TransactionService {
         );
         savedTransaction.setHashTransaction(finalHash);
         savedTransaction = transactionRepository.save(savedTransaction);
+
+        // Mise à jour de la TaxeCollect liée
+        if (savedTransaction.getTaxeCollect() != null) {
+            TaxeCollect taxeCollect = savedTransaction.getTaxeCollect();
+            taxeCollect.setPaye(true);
+            taxeCollect.setStatut(StatutPayment.PAYE);
+            taxeCollect.setDatePaiement(savedTransaction.getDateCreation().toLocalDate());
+            taxeCollect.setModePaiement(savedTransaction.getModePaiement());
+            taxeCollect.setNumeroRecu(savedTransaction.getNumeroRecu());
+            taxeCollectRepository.save(taxeCollect);
+        }
 
         return convertToDTO(savedTransaction);
     }
@@ -231,6 +254,10 @@ public class TransactionService {
         dto.setAgentPrenom(transaction.getAgent().getPrenom());
         dto.setZoneNom(transaction.getZone().getNom());
 
+        if (transaction.getTaxeCollect() != null) {
+            dto.setTaxeCollectId(transaction.getTaxeCollect().getId());
+        }
+
         return dto;
     }
 
@@ -276,9 +303,7 @@ public class TransactionService {
         // Montant total via SUM SQL
         BigDecimal montantTotal = (debut != null || fin != null)
                 ? transactionRepository.sumMontantByDateRange(debut, fin)
-                : transactionRepository.findAll().stream()
-                        .map(Transaction::getMontant)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                : transactionRepository.sumMontantAll();
         stats.put("montantTotal", montantTotal != null ? montantTotal : BigDecimal.ZERO);
         
         // Montant moyen
@@ -295,8 +320,9 @@ public class TransactionService {
                 repartitionPaiement.put(((ModePaiement) row[0]).name(), (Long) row[1]);
             }
         } else {
-            for (ModePaiement mode : ModePaiement.values()) {
-                repartitionPaiement.put(mode.name(), 0L);
+            List<Object[]> paiementResults = transactionRepository.countByModePaiementAll();
+            for (Object[] row : paiementResults) {
+                repartitionPaiement.put(((ModePaiement) row[0]).name(), (Long) row[1]);
             }
         }
         stats.put("repartitionPaiement", repartitionPaiement);
@@ -309,8 +335,9 @@ public class TransactionService {
                 repartitionStatut.put(((StatutTransaction) row[0]).name(), (Long) row[1]);
             }
         } else {
-            for (StatutTransaction statut : StatutTransaction.values()) {
-                repartitionStatut.put(statut.name(), 0L);
+            List<Object[]> statutResults = transactionRepository.countByStatutAll();
+            for (Object[] row : statutResults) {
+                repartitionStatut.put(((StatutTransaction) row[0]).name(), (Long) row[1]);
             }
         }
         stats.put("repartitionStatut", repartitionStatut);
@@ -330,6 +357,14 @@ public class TransactionService {
         Specification<Transaction> spec = TransactionSpecifications.withFilters(debut, fin, agentId, paymentMethod, null);
         List<Transaction> transactions = transactionRepository.findAll(spec);
         
+        if ("xlsx".equalsIgnoreCase(format)) {
+            return exportToXlsx(transactions);
+        } else {
+            return exportToCsv(transactions);
+        }
+    }
+    
+    private byte[] exportToCsv(List<Transaction> transactions) {
         StringBuilder sb = new StringBuilder();
         sb.append("NumeroRecu,Montant,Agent,Contribuable,ModePaiement,Statut,DateCreation\n");
         
@@ -348,5 +383,43 @@ public class TransactionService {
         }
         
         return sb.toString().getBytes();
+    }
+    
+    private byte[] exportToXlsx(List<Transaction> transactions) {
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Transactions");
+            
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            
+            org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
+            String[] headers = {"NumeroRecu", "Montant", "Agent", "Contribuable", "ModePaiement", "Statut", "DateCreation"};
+            for (int i = 0; i < headers.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+                sheet.setColumnWidth(i, 4000);
+            }
+            
+            int rowIdx = 1;
+            for (Transaction t : transactions) {
+                org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(t.getNumeroRecu());
+                row.createCell(1).setCellValue(t.getMontant().doubleValue());
+                row.createCell(2).setCellValue(t.getAgent().getNom() + " " + t.getAgent().getPrenom());
+                row.createCell(3).setCellValue(t.getContribuable().getNom() + " " + t.getContribuable().getPrenom());
+                row.createCell(4).setCellValue(t.getModePaiement().name());
+                row.createCell(5).setCellValue(t.getStatut().name());
+                row.createCell(6).setCellValue(t.getDateCreation().toString());
+            }
+            
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            workbook.write(baos);
+            return baos.toByteArray();
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Erreur lors de la génération du fichier Excel", e);
+        }
     }
 }

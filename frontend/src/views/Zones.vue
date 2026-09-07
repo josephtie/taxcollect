@@ -66,7 +66,7 @@
             <div class="flex items-start justify-between mb-4">
               <div>
                 <h3 class="text-lg font-semibold text-gray-900">{{ zone.nom }}</h3>
-                <p class="text-sm text-gray-500">{{ zone.quartier?.nom || 'Non spécifié' }} - {{ zone.quartier?.commune?.nom || '' }}</p>
+                <p class="text-sm text-gray-500">{{ zone.communeNom || 'Non spécifiée' }}</p>
               </div>
               <StatusBadge 
                 :status="zone.statut ? 'ACTIF' : 'INACTIF'" 
@@ -77,7 +77,13 @@
             <div class="space-y-3">
               <div class="flex items-center justify-between">
                 <span class="text-sm text-gray-600">Agents assignés</span>
-                <span class="text-sm font-medium text-gray-900">{{ zone.agents?.length || 0 }}</span>
+                <button
+                  @click="openAgentsModal(zone)"
+                  class="text-sm font-medium text-primary-600 hover:text-primary-900 flex items-center"
+                >
+                  <UserPlus class="w-3.5 h-3.5 mr-1" />
+                  {{ zoneAgentCounts[zone.id] ?? zone.agents?.length ?? 0 }} agent(s)
+                </button>
               </div>
               
               <div class="flex items-center justify-between">
@@ -137,10 +143,20 @@
       </div>
     </main>
 
+    <!-- Agent Affectation Modal -->
+    <AgentAffectationModal
+      :show="showAgentsModal"
+      :territory-type="'ZONE'"
+      :territory-id="agentsModalZone?.id"
+      :territory-name="agentsModalZone?.nom || ''"
+      @close="closeAgentsModal"
+      @updated="onAffectationUpdated"
+    />
+
     <!-- Create/Edit Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <h3 class="modal-header">
           {{ editingZone ? 'Modifier' : 'Créer' }} une Zone
         </h3>
         
@@ -158,19 +174,19 @@
             </div>
             
             <div>
-              <label class="form-label">Quartier</label>
+              <label class="form-label">Commune</label>
               <select
-                v-model="zoneForm.quartierId"
+                v-model="zoneForm.communeId"
                 required
                 class="form-input"
               >
-                <option value="">Sélectionner un quartier</option>
+                <option value="">Sélectionner une commune</option>
                 <option
-                  v-for="quartier in quartiers"
-                  :key="quartier.id"
-                  :value="quartier.id"
+                  v-for="commune in communes"
+                  :key="commune.id"
+                  :value="commune.id"
                 >
-                  {{ quartier.nom }} ({{ quartier.commune?.nom }})
+                  {{ commune.nom }}
                 </option>
               </select>
             </div>
@@ -211,17 +227,19 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { zoneService, quartierService, permissionService } from '@/services'
+import { zoneService, communeService, affectationService, permissionService } from '@/services'
 import Sidebar from '@/components/Sidebar.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import LogicalDeletionActions from '@/components/LogicalDeletionActions.vue'
+import AgentAffectationModal from '@/components/AgentAffectationModal.vue'
 import {
   MapPin,
   CheckCircle,
   Users,
   Plus,
-  Edit
+  Edit,
+  UserPlus
 } from 'lucide-vue-next'
 
 // State
@@ -231,11 +249,16 @@ const editingZone = ref(null)
 const saving = ref(false)
 
 const zones = ref([])
-const quartiers = ref([])
+const communes = ref([])
+
+// Agent management state
+const showAgentsModal = ref(false)
+const agentsModalZone = ref(null)
+const zoneAgentCounts = ref({})
 
 const zoneForm = ref({
   nom: '',
-  quartierId: '',
+  communeId: '',
   statut: true
 })
 
@@ -248,7 +271,8 @@ const activeZones = computed(() => {
 })
 
 const totalAssignedAgents = computed(() => {
-  return zones.value.reduce((sum, zone) => sum + (zone.agents?.length || 0), 0)
+  return Object.values(zoneAgentCounts.value).reduce((sum, count) => sum + count, 0) ||
+    zones.value.reduce((sum, zone) => sum + (zone.agents?.length || 0), 0)
 })
 
 // Methods
@@ -272,8 +296,9 @@ const fetchZones = async () => {
     zones.value = [
       {
         id: 1,
-        nom: 'Centre Ville - Ancienne Administration',
-        quartier: { id: 1, nom: 'Centre Ville', commune: { nom: 'Grand-Bassam' } },
+        nom: 'Zone Nord',
+        communeId: 1,
+        communeNom: 'Grand-Bassam',
         statut: true,
         agents: [
           { id: 1, nom: 'Kouadio Konan', contact: 'kouadio@tax.ci' },
@@ -283,8 +308,9 @@ const fetchZones = async () => {
       },
       {
         id: 2,
-        nom: 'Zone France',
-        quartier: { id: 2, nom: 'Zone France', commune: { nom: 'Grand-Bassam' } },
+        nom: 'Zone Sud',
+        communeId: 1,
+        communeNom: 'Grand-Bassam',
         statut: true,
         agents: [],
         taxes: []
@@ -295,20 +321,14 @@ const fetchZones = async () => {
   }
 }
 
-const fetchQuartiers = async () => {
+const fetchCommunes = async () => {
   try {
-    const response = await quartierService.getAllQuartiers()
-    quartiers.value = response.data
+    const response = await communeService.getAllCommunes()
+    communes.value = response.data
   } catch (error) {
-    console.error('Erreur chargement quartiers:', error)
-    // Fallback avec données mock pour Grand-Bassam
-    quartiers.value = [
-      { id: 1, nom: 'Centre Ville', commune: { nom: 'Grand-Bassam' } },
-      { id: 2, nom: 'Zone France', commune: { nom: 'Grand-Bassam' } },
-      { id: 3, nom: 'Quartier Ghana', commune: { nom: 'Grand-Bassam' } },
-      { id: 4, nom: 'Zone Industrielle', commune: { nom: 'Grand-Bassam' } },
-      { id: 5, nom: 'Quartier Sokoura', commune: { nom: 'Grand-Bassam' } },
-      { id: 6, nom: 'Bord de Mer - France', commune: { nom: 'Grand-Bassam' } }
+    console.error('Erreur chargement communes:', error)
+    communes.value = [
+      { id: 1, nom: 'Grand-Bassam' }
     ]
   }
 }
@@ -322,7 +342,7 @@ const editZone = (zone) => {
   editingZone.value = zone
   zoneForm.value = {
     nom: zone.nom,
-    quartierId: zone.quartier?.id || '',
+    communeId: zone.communeId || '',
     statut: zone.statut
   }
   showCreateModal.value = true
@@ -344,7 +364,7 @@ const saveZone = async () => {
   try {
     const zoneData = {
       nom: zoneForm.value.nom,
-      quartierId: zoneForm.value.quartierId,
+      communeId: zoneForm.value.communeId,
       statut: zoneForm.value.statut
     }
 
@@ -370,7 +390,7 @@ const closeModal = () => {
   editingZone.value = null
   zoneForm.value = {
     nom: '',
-    quartierId: '',
+    communeId: '',
     statut: true
   }
 }
@@ -388,8 +408,42 @@ const handleZoneRestored = (zone) => {
   alert('Zone restaurée avec succès')
 }
 
+// Agent management methods
+const openAgentsModal = async (zone) => {
+  agentsModalZone.value = zone
+  showAgentsModal.value = true
+}
+
+const closeAgentsModal = () => {
+  showAgentsModal.value = false
+  agentsModalZone.value = null
+}
+
+const onAffectationUpdated = async () => {
+  if (agentsModalZone.value) {
+    try {
+      const res = await affectationService.getByTerritory('ZONE', agentsModalZone.value.id)
+      zoneAgentCounts.value[agentsModalZone.value.id] = (res.data || []).length
+    } catch (e) {
+      console.error('Erreur refresh count:', e)
+    }
+  }
+}
+
+const fetchZoneAgentCounts = async () => {
+  for (const zone of zones.value) {
+    try {
+      const res = await affectationService.getByTerritory('ZONE', zone.id)
+      zoneAgentCounts.value[zone.id] = (res.data || []).length
+    } catch (e) {
+      zoneAgentCounts.value[zone.id] = zone.agents?.length || 0
+    }
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
-  await Promise.all([fetchZones(), fetchQuartiers()])
+  await Promise.all([fetchZones(), fetchCommunes()])
+  await fetchZoneAgentCounts()
 })
 </script>

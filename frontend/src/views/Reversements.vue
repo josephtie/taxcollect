@@ -226,7 +226,7 @@
     <!-- Validation Modal -->
     <div v-if="showValidationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <h3 class="modal-header">
           Valider la clôture de caisse
         </h3>
         
@@ -273,7 +273,7 @@
     <!-- Rejection Modal -->
     <div v-if="showRejectionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <h3 class="modal-header">
           Rejeter la clôture de caisse
         </h3>
         
@@ -313,7 +313,7 @@
     <div v-if="showDetailsModal && selectedCloture" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold text-gray-900">
+          <h3 class="modal-header">
             Détails de la Clôture de Caisse
           </h3>
           <button

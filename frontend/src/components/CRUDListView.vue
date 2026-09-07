@@ -131,7 +131,7 @@
     <!-- Create/Edit Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <h3 class="modal-header">
           {{ editingItem ? 'Modifier' : 'Créer' }} {{ modalTitle }}
         </h3>
         

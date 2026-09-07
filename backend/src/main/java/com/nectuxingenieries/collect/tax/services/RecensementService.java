@@ -5,9 +5,9 @@ import com.nectuxingenieries.collect.tax.dto.RecensementStatsDTO;
 import com.nectuxingenieries.collect.tax.exceptions.ConflictException;
 import com.nectuxingenieries.collect.tax.exceptions.NotFoundException;
 import com.nectuxingenieries.collect.tax.models.Contribuable;
-import com.nectuxingenieries.collect.tax.models.ZoneCollecte;
+import com.nectuxingenieries.collect.tax.models.Zone;
 import com.nectuxingenieries.collect.tax.repositories.ContribuableRepository;
-import com.nectuxingenieries.collect.tax.repositories.ZoneCollecteRepository;
+import com.nectuxingenieries.collect.tax.repositories.ZoneRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +30,7 @@ public class RecensementService {
     private ContribuableRepository contribuableRepository;
 
     @Autowired
-    private ZoneCollecteRepository zoneCollecteRepository;
+    private ZoneRepository zoneRepository;
 
     @Autowired
     private QRCodeContribuableService qrCodeContribuableService;
@@ -41,8 +41,8 @@ public class RecensementService {
             throw new ConflictException("Un contribuable avec ce numéro de téléphone existe déjà");
         }
 
-        ZoneCollecte zone = zoneCollecteRepository.findById(dto.getZoneId())
-                .orElseThrow(() -> new NotFoundException("Zone de collecte", dto.getZoneId()));
+        Zone zone = zoneRepository.findById(dto.getZoneId())
+                .orElseThrow(() -> new NotFoundException("Zone", dto.getZoneId()));
 
         Contribuable contribuable = new Contribuable();
         contribuable.setNom(dto.getNom());
@@ -51,7 +51,7 @@ public class RecensementService {
         contribuable.setAdresse(dto.getQuartier() != null ? dto.getQuartier() : dto.getMarche());
         contribuable.setLatitude(dto.getLatitude());
         contribuable.setLongitude(dto.getLongitude());
-        contribuable.setZoneCollecte(zone);
+        contribuable.setZone(zone);
         contribuable.setTypeContribuable(dto.getType());
         contribuable.setActivite(dto.getActivite());
         contribuable.setMarche(dto.getMarche());
@@ -62,6 +62,7 @@ public class RecensementService {
         contribuable.setPhotoContribuable(dto.getPhotoContribuable());
         contribuable.setStatut(dto.getStatut() != null ? dto.getStatut() : "actif");
         contribuable.setNecessiteValidation(dto.getNecessiteValidation() != null ? dto.getNecessiteValidation() : false);
+        contribuable.setBaseImposable(dto.getBaseImposable());
 
         Contribuable saved = contribuableRepository.save(contribuable);
 
@@ -82,9 +83,9 @@ public class RecensementService {
                 .orElseThrow(() -> new NotFoundException("Contribuable", id));
 
         if (dto.getZoneId() != null) {
-            ZoneCollecte zone = zoneCollecteRepository.findById(dto.getZoneId())
-                    .orElseThrow(() -> new NotFoundException("Zone de collecte", dto.getZoneId()));
-            contribuable.setZoneCollecte(zone);
+            Zone zone = zoneRepository.findById(dto.getZoneId())
+                    .orElseThrow(() -> new NotFoundException("Zone", dto.getZoneId()));
+            contribuable.setZone(zone);
         }
 
         if (dto.getNom() != null) contribuable.setNom(dto.getNom());
@@ -102,6 +103,7 @@ public class RecensementService {
         if (dto.getPhotoContribuable() != null) contribuable.setPhotoContribuable(dto.getPhotoContribuable());
         if (dto.getStatut() != null) contribuable.setStatut(dto.getStatut());
         if (dto.getNecessiteValidation() != null) contribuable.setNecessiteValidation(dto.getNecessiteValidation());
+        if (dto.getBaseImposable() != null) contribuable.setBaseImposable(dto.getBaseImposable());
 
         Contribuable saved = contribuableRepository.save(contribuable);
 
@@ -156,7 +158,7 @@ public class RecensementService {
         } else if (query != null && !query.isEmpty()) {
             results = contribuableRepository.searchByNomPrenomOrTelephone(query);
         } else if (zoneId != null) {
-            results = contribuableRepository.findByZoneCollecteId(zoneId);
+            results = contribuableRepository.findByZoneId(zoneId);
         } else {
             results = contribuableRepository.findAll();
         }
@@ -228,7 +230,7 @@ public class RecensementService {
         dto.setNom(contribuable.getNom());
         dto.setPrenoms(contribuable.getPrenom());
         dto.setTelephone(contribuable.getTelephone());
-        dto.setZoneId(contribuable.getZoneCollecte().getId());
+        dto.setZoneId(contribuable.getZone().getId());
         dto.setLatitude(contribuable.getLatitude());
         dto.setLongitude(contribuable.getLongitude());
         dto.setQuartier(contribuable.getQuartier());
@@ -244,6 +246,7 @@ public class RecensementService {
         dto.setStatut(contribuable.getStatut());
         dto.setVersion(1);
         dto.setNecessiteValidation(contribuable.getNecessiteValidation());
+        dto.setBaseImposable(contribuable.getBaseImposable());
         return dto;
     }
 }

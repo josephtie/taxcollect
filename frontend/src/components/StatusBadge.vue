@@ -54,6 +54,11 @@ const statusConfig = computed(() => {
         color: 'danger',
         icon: UserX,
         text: 'Inactif'
+      },
+      'SUSPENDU': {
+        color: 'warning',
+        icon: AlertCircle,
+        text: 'Suspendu'
       }
     }
     return agentConfigs[props.status] || {
@@ -92,6 +97,36 @@ const statusConfig = computed(() => {
       }
     }
     return clotureConfigs[props.status] || {
+      color: 'gray',
+      icon: Clock,
+      text: props.status
+    }
+  }
+
+  if (props.type === 'assessment') {
+    const assessmentConfigs = {
+      'IMPAYE': {
+        color: 'warning',
+        icon: Clock,
+        text: 'Impayé'
+      },
+      'EN_RETARD': {
+        color: 'danger',
+        icon: AlertCircle,
+        text: 'En retard'
+      },
+      'PARTIEL': {
+        color: 'primary',
+        icon: Clock,
+        text: 'Partiel'
+      },
+      'PAYE': {
+        color: 'success',
+        icon: CheckCircle,
+        text: 'Payé'
+      }
+    }
+    return assessmentConfigs[props.status] || {
       color: 'gray',
       icon: Clock,
       text: props.status

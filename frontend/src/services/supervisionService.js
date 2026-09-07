@@ -2,12 +2,12 @@ import { BaseService } from './baseService'
 
 class SupervisionService extends BaseService {
   constructor() {
-    super('/supervision')
+    super('/api/taxcollect/supervision')
   }
 
-  // Récupérer les zones supervisées par l'utilisateur
+  // Récupérer les zones supervisées par l'utilisateur courant
   async getSupervisedZones() {
-    return this.get('/zones')
+    return this.get('/zones/supervised')
   }
 
   // Récupérer les agents disponibles pour l'affectation
@@ -17,7 +17,7 @@ class SupervisionService extends BaseService {
 
   // Affecter un agent à une zone
   async assignAgentToZone(zoneId, agentId) {
-    return this.post(`/assign-agent`, { zoneId, agentId })
+    return this.post('/assign-agent', { zoneId, agentId })
   }
 
   // Retirer un agent d'une zone
@@ -25,37 +25,14 @@ class SupervisionService extends BaseService {
     return this.delete(`/unassign-agent/${zoneId}/${agentId}`)
   }
 
-  // Récupérer les performances des agents
-  async getAgentPerformance(agentId, period = 'month') {
-    return this.get(`/agents/${agentId}/performance?period=${period}`)
+  // Récupérer les zones non assignées au superviseur courant
+  async getUnassignedZones() {
+    return this.get('/zones/unassigned')
   }
 
-  // Récupérer les statistiques de supervision
-  async getSupervisionStats() {
-    return this.get('/stats')
-  }
-
-  // Récupérer les rapports de supervision
-  async getSupervisionReports(filters = {}) {
-    return this.get('/reports', filters)
-  }
-
-  // Exporter les données de supervision
-  async exportSupervisionData(format = 'json') {
-    return this.get(`/export?format=${format}`)
-  }
-
-  // Valider les affectations
-  async validateAssignments(assignments) {
-    return this.post('/validate-assignments', { assignments })
-  }
-
-  // Récupérer l'historique des affectations
-  async getAssignmentHistory(zoneId, agentId) {
-    let url = '/assignment-history'
-    if (zoneId) url += `?zoneId=${zoneId}`
-    if (agentId) url += `${zoneId ? '&' : '?'}agentId=${agentId}`
-    return this.get(url)
+  // Affecter une zone à un superviseur (ADMIN)
+  async assignZoneToSuperviseur(zoneId, superviseurId) {
+    return this.post(`/zones/${zoneId}/assign-superviseur`, { superviseurId })
   }
 }
 

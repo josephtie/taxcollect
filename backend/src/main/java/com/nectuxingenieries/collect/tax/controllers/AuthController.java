@@ -1,7 +1,9 @@
 package com.nectuxingenieries.collect.tax.controllers;
 
 import com.nectuxingenieries.collect.tax.dto.LoginRequest;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
@@ -17,22 +19,42 @@ import java.util.Map;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"}, allowedHeaders = "*", allowCredentials = "true")
+@Tag(name = "Authentification", description = "API d'authentification Keycloak")
 public class AuthController {
 
     private final RestTemplateBuilder restTemplateBuilder;
 
+    @Value("${keycloak.admin.host:http://localhost:8080}")
+    private String keycloakHost;
 
+    @Value("${keycloak.admin.realm:mairie}")
+    private String keycloakRealm;
+
+    @Value("${keycloak.admin.clientId:tax-backend}")
+    private String keycloakClientId;
+
+    @Value("${keycloak.admin.clientSecret:}")
+    private String keycloakClientSecret;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestParam String username, @RequestParam String password) {
-        String tokenUrl = "http://192.168.1.4:8080/realms/mairie/protocol/openid-connect/token";
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        String tokenUrl = String.format("%s/realms/%s/protocol/openid-connect/token", keycloakHost, keycloakRealm);
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("grant_type", "password");
-        form.add("client_id", "tax-backend");
-        form.add("client_secret", "YAFz9Ae0XALx1avlUZAK1WM7MVE7h9wp");
-        form.add("username", username);
-        form.add("password", password);
+        
+        // Use the clientId from the request, or fall back to the default
+        String clientId = loginRequest.getClientId() != null && !loginRequest.getClientId().isBlank() 
+            ? loginRequest.getClientId() : keycloakClientId;
+        form.add("client_id", clientId);
+        
+        // Only add client_secret for confidential clients (tax-backend, keycloak-admin-client)
+        // tax-frontend is a public client and doesn't need a secret
+        if (!"tax-frontend".equals(clientId)) {
+            form.add("client_secret", keycloakClientSecret);
+        }
+        form.add("username", loginRequest.getUsername());
+        form.add("password", loginRequest.getPassword());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -42,7 +64,7 @@ public class AuthController {
         RestTemplate restTemplate = restTemplateBuilder.build();
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, entity, Map.class);
-            return ResponseEntity.ok(response.getBody()); // contient access_token, refresh_token, etc.
+            return ResponseEntity.ok(response.getBody());
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid credentials"));

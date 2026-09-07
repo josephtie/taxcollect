@@ -3,6 +3,7 @@ package com.nectuxingenieries.collect.tax.models;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -33,6 +34,9 @@ public class Contribuable extends Auditable {
 
     @Column(name = "longitude", nullable = true)
     private Double longitude;
+
+    @Column(name = "precision_gps", nullable = true)
+    private Double precisionGps;
 
     @Column(name = "numero_contribuable", unique = true)
     private String numeroContribuable;
@@ -67,9 +71,16 @@ public class Contribuable extends Auditable {
     @Column(name = "necessite_validation")
     private Boolean necessiteValidation = false;
 
+    @Column(name = "base_imposable", precision = 19, scale = 2)
+    private BigDecimal baseImposable;
+
     @ManyToOne
     @JoinColumn(name = "zone_id", nullable = false)
-    private ZoneCollecte zoneCollecte;
+    private Zone zone;
+
+    @ManyToOne
+    @JoinColumn(name = "secteur_id", nullable = true)
+    private Secteur secteur;
 
     @OneToMany(mappedBy = "contribuable")
     private List<TaxeCollect> taxes;
@@ -94,8 +105,12 @@ public class Contribuable extends Auditable {
     public void setLatitude(Double latitude) { this.latitude = latitude; }
     public Double getLongitude() { return longitude; }
     public void setLongitude(Double longitude) { this.longitude = longitude; }
-    public ZoneCollecte getZoneCollecte() { return zoneCollecte; }
-    public void setZoneCollecte(ZoneCollecte zoneCollecte) { this.zoneCollecte = zoneCollecte; }
+    public Double getPrecisionGps() { return precisionGps; }
+    public void setPrecisionGps(Double precisionGps) { this.precisionGps = precisionGps; }
+    public Zone getZone() { return zone; }
+    public void setZone(Zone zone) { this.zone = zone; }
+    public Secteur getSecteur() { return secteur; }
+    public void setSecteur(Secteur secteur) { this.secteur = secteur; }
     public List<TaxeCollect> getTaxes() { return taxes; }
     public void setTaxes(List<TaxeCollect> taxes) { this.taxes = taxes; }
     public List<QRCodeContribuable> getQrCodes() { return qrCodes; }
@@ -133,5 +148,8 @@ public class Contribuable extends Auditable {
 
     public Boolean getNecessiteValidation() { return necessiteValidation; }
     public void setNecessiteValidation(Boolean necessiteValidation) { this.necessiteValidation = necessiteValidation; }
+
+    public BigDecimal getBaseImposable() { return baseImposable; }
+    public void setBaseImposable(BigDecimal baseImposable) { this.baseImposable = baseImposable; }
 }
 

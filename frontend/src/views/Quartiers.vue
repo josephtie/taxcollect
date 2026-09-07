@@ -48,9 +48,9 @@
           />
           
           <StatsCard
-            title="Total Zones"
-            :value="totalZones"
-            :icon="Layers"
+            title="Total Secteurs"
+            :value="totalSecteurs"
+            :icon="Map"
             icon-color="text-warning-600"
             icon-bg-color="bg-warning-50"
           />
@@ -66,7 +66,7 @@
             <div class="flex items-start justify-between mb-4">
               <div>
                 <h3 class="text-lg font-semibold text-gray-900">{{ quartier.nom }}</h3>
-                <p class="text-sm text-gray-500">{{ quartier.commune?.nom || 'Non spécifié' }}</p>
+                <p class="text-sm text-gray-500">{{ quartier.zoneNom || 'Non spécifiée' }} - {{ quartier.communeNom || '' }}</p>
               </div>
               <StatusBadge 
                 :status="quartier.statut ? 'ACTIF' : 'INACTIF'" 
@@ -76,13 +76,19 @@
 
             <div class="space-y-3">
               <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Zones associées</span>
-                <span class="text-sm font-medium text-gray-900">{{ quartier.zones?.length || 0 }}</span>
+                <span class="text-sm text-gray-600">Agents assignés</span>
+                <button
+                  @click="openAgentsModal(quartier)"
+                  class="text-sm font-medium text-primary-600 hover:text-primary-900 flex items-center"
+                >
+                  <UserPlus class="w-3.5 h-3.5 mr-1" />
+                  {{ quartierAgentCounts[quartier.id] || 0 }} agent(s)
+                </button>
               </div>
               
               <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Agents dans les zones</span>
-                <span class="text-sm font-medium text-gray-900">{{ totalAgentsInQuartier(quartier) }}</span>
+                <span class="text-sm text-gray-600">Secteurs associés</span>
+                <span class="text-sm font-medium text-gray-900">{{ quartier.secteurs?.length || 0 }}</span>
               </div>
               
               <div class="flex items-center justify-between">
@@ -143,6 +149,16 @@
       </div>
     </main>
 
+    <!-- Agent Affectation Modal -->
+    <AgentAffectationModal
+      :show="showAgentsModal"
+      :territory-type="'QUARTIER'"
+      :territory-id="agentsModalTerritory?.id"
+      :territory-name="agentsModalTerritory?.nom || ''"
+      @close="closeAgentsModal"
+      @updated="onAffectationUpdated"
+    />
+
     <!-- Create/Edit Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -163,15 +179,15 @@
             </div>
             
             <div>
-              <label class="form-label">Commune</label>
+              <label class="form-label">Zone</label>
               <select
-                v-model="quartierForm.communeId"
+                v-model="quartierForm.zoneId"
                 required
                 class="form-input"
               >
-                <option value="">Sélectionner une commune</option>
-                <option v-for="commune in communes" :key="commune.id" :value="commune.id">
-                  {{ commune.nom }}
+                <option value="">Sélectionner une zone</option>
+                <option v-for="zone in zones" :key="zone.id" :value="zone.id">
+                  {{ zone.nom }} ({{ zone.communeNom }})
                 </option>
               </select>
             </div>
@@ -213,12 +229,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { quartierService, communeService, permissionService } from '@/services'
+import { quartierService, zoneService, affectationService, permissionService } from '@/services'
 import Sidebar from '@/components/Sidebar.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import LogicalDeletionActions from '@/components/LogicalDeletionActions.vue'
-import { Plus, Building, CheckCircle, Layers, Edit } from 'lucide-vue-next'
+import AgentAffectationModal from '@/components/AgentAffectationModal.vue'
+import { Plus, Building, CheckCircle, Map, Edit, UserPlus } from 'lucide-vue-next'
 
 // State
 const loading = ref(false)
@@ -226,12 +243,17 @@ const saving = ref(false)
 const showCreateModal = ref(false)
 const editingQuartier = ref(null)
 const quartiers = ref([])
-const communes = ref([])
+const zones = ref([])
+
+// Agent management state
+const showAgentsModal = ref(false)
+const agentsModalTerritory = ref(null)
+const quartierAgentCounts = ref({})
 
 // Form
 const quartierForm = ref({
   nom: '',
-  communeId: '',
+  zoneId: '',
   statut: true
 })
 
@@ -243,13 +265,13 @@ const activeQuartiers = computed(() => {
   return quartiers.value.filter(q => q.statut).length
 })
 
-const totalZones = computed(() => {
-  return quartiers.value.reduce((sum, quartier) => sum + (quartier.zones?.length || 0), 0)
+const totalSecteurs = computed(() => {
+  return quartiers.value.reduce((sum, quartier) => sum + (quartier.secteurs?.length || 0), 0)
 })
 
 // Methods
 const totalAgentsInQuartier = (quartier) => {
-  return quartier.zones?.reduce((sum, zone) => sum + (zone.agents?.length || 0), 0) || 0
+  return quartierAgentCounts.value[quartier.id] || 0
 }
 
 const fetchQuartiers = async () => {
@@ -264,28 +286,34 @@ const fetchQuartiers = async () => {
       {
         id: 1,
         nom: 'Centre Ville',
-        commune: { id: 1, nom: 'Grand-Bassam' },
+        zoneId: 1,
+        zoneNom: 'Zone Nord',
+        communeNom: 'Grand-Bassam',
         statut: true,
-        zones: [
-          { id: 1, nom: 'Centre Ville - Ancienne Administration', agents: [{}, {}] },
-          { id: 2, nom: 'Zone France', agents: [] }
+        secteurs: [
+          { id: 1, nom: 'Secteur A' },
+          { id: 2, nom: 'Secteur B' }
         ]
       },
       {
         id: 2,
         nom: 'Zone France',
-        commune: { id: 1, nom: 'Grand-Bassam' },
+        zoneId: 1,
+        zoneNom: 'Zone Nord',
+        communeNom: 'Grand-Bassam',
         statut: true,
-        zones: [
-          { id: 3, nom: 'Zone France Nord', agents: [{}] }
+        secteurs: [
+          { id: 3, nom: 'Secteur C' }
         ]
       },
       {
         id: 3,
         nom: 'Quartier Ghana',
-        commune: { id: 1, nom: 'Grand-Bassam' },
+        zoneId: 2,
+        zoneNom: 'Zone Sud',
+        communeNom: 'Grand-Bassam',
         statut: false,
-        zones: []
+        secteurs: []
       }
     ]
   } finally {
@@ -293,16 +321,15 @@ const fetchQuartiers = async () => {
   }
 }
 
-const fetchCommunes = async () => {
+const fetchZones = async () => {
   try {
-    const response = await communeService.getAllCommunes()
-    communes.value = response.data || []
+    const response = await zoneService.getAllZones()
+    zones.value = response.data || []
   } catch (error) {
-    console.error('Erreur chargement communes:', error)
-    // Fallback avec données mock
-    communes.value = [
-      { id: 1, nom: 'Grand-Bassam' },
-      { id: 2, nom: 'Abidjan' }
+    console.error('Erreur chargement zones:', error)
+    zones.value = [
+      { id: 1, nom: 'Zone Nord', communeNom: 'Grand-Bassam' },
+      { id: 2, nom: 'Zone Sud', communeNom: 'Grand-Bassam' }
     ]
   }
 }
@@ -316,7 +343,7 @@ const editQuartier = (quartier) => {
   editingQuartier.value = quartier
   quartierForm.value = {
     nom: quartier.nom,
-    communeId: quartier.commune?.id || '',
+    zoneId: quartier.zoneId || '',
     statut: quartier.statut
   }
   showCreateModal.value = true
@@ -338,7 +365,7 @@ const saveQuartier = async () => {
   try {
     const quartierData = {
       nom: quartierForm.value.nom,
-      communeId: quartierForm.value.communeId,
+      zoneId: quartierForm.value.zoneId,
       statut: quartierForm.value.statut
     }
 
@@ -364,7 +391,7 @@ const closeModal = () => {
   editingQuartier.value = null
   quartierForm.value = {
     nom: '',
-    communeId: '',
+    zoneId: '',
     statut: true
   }
 }
@@ -382,9 +409,43 @@ const handleQuartierRestored = (quartier) => {
   alert('Quartier restauré avec succès')
 }
 
+// Agent management methods
+const openAgentsModal = (quartier) => {
+  agentsModalTerritory.value = quartier
+  showAgentsModal.value = true
+}
+
+const closeAgentsModal = () => {
+  showAgentsModal.value = false
+  agentsModalTerritory.value = null
+}
+
+const onAffectationUpdated = async () => {
+  if (agentsModalTerritory.value) {
+    try {
+      const res = await affectationService.getByTerritory('QUARTIER', agentsModalTerritory.value.id)
+      quartierAgentCounts.value[agentsModalTerritory.value.id] = (res.data || []).length
+    } catch (e) {
+      console.error('Erreur refresh count:', e)
+    }
+  }
+}
+
+const fetchQuartierAgentCounts = async () => {
+  for (const q of quartiers.value) {
+    try {
+      const res = await affectationService.getByTerritory('QUARTIER', q.id)
+      quartierAgentCounts.value[q.id] = (res.data || []).length
+    } catch (e) {
+      quartierAgentCounts.value[q.id] = 0
+    }
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
-  await Promise.all([fetchQuartiers(), fetchCommunes()])
+  await Promise.all([fetchQuartiers(), fetchZones()])
+  await fetchQuartierAgentCounts()
 })
 </script>
 

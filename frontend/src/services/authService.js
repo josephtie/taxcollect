@@ -3,7 +3,7 @@ import { permissionService } from './permissionService'
 
 export const authService = {
   // URL de l'API backend
-  apiUrl: 'http://localhost:9090',
+  apiUrl: 'http://localhost:9091',
 
   // Connexion via l'API backend (qui communique avec Keycloak)
   async login(username, password) {
@@ -125,7 +125,8 @@ export const authService = {
       const role = roles.includes('ADMIN') ? 'ADMIN' : 
                    roles.includes('SUPERVISEUR') ? 'SUPERVISEUR' :
                    roles.includes('TRESOR') ? 'TRESOR' : 
-                   roles.includes('AGENT') ? 'AGENT' : 'USER'
+                   roles.includes('AGENT') ? 'AGENT' :
+                   roles.includes('CONTRIBUABLE') ? 'CONTRIBUABLE' : 'USER'
       console.log('Role determined:', role)
       return role
     }
@@ -137,7 +138,8 @@ export const authService = {
     const role = realmRoles.includes('ADMIN') ? 'ADMIN' : 
                  realmRoles.includes('SUPERVISEUR') ? 'SUPERVISEUR' :
                  realmRoles.includes('TRESOR') ? 'TRESOR' : 
-                 realmRoles.includes('AGENT') ? 'AGENT' : 'USER'
+                 realmRoles.includes('AGENT') ? 'AGENT' :
+                 realmRoles.includes('CONTRIBUABLE') ? 'CONTRIBUABLE' : 'USER'
     
     console.log('Role determined from realm:', role)
     return role

@@ -5,5 +5,12 @@ public enum StatutTransaction {
     VALIDEE,
     ANNULEE,
     SYNCHRONISEE,
-    EN_ERREUR
+    EN_ERREUR,
+    INITIATED,
+    PENDING,
+    SUCCESS,
+    FAILED,
+    EXPIRED,
+    REFUNDED,
+    PARTIALLY_REFUNDED
 }

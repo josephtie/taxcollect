@@ -6,13 +6,13 @@ import com.nectuxingenieries.collect.tax.exceptions.InvalidOperationException;
 import com.nectuxingenieries.collect.tax.models.Agents;
 import com.nectuxingenieries.collect.tax.models.Contribuable;
 import com.nectuxingenieries.collect.tax.models.Transaction;
-import com.nectuxingenieries.collect.tax.models.ZoneCollecte;
+import com.nectuxingenieries.collect.tax.models.Zone;
 import com.nectuxingenieries.collect.tax.models.enums.ModePaiement;
 import com.nectuxingenieries.collect.tax.models.enums.StatutTransaction;
 import com.nectuxingenieries.collect.tax.repositories.AgentRepository;
 import com.nectuxingenieries.collect.tax.repositories.ContribuableRepository;
 import com.nectuxingenieries.collect.tax.repositories.TransactionRepository;
-import com.nectuxingenieries.collect.tax.repositories.ZoneCollecteRepository;
+import com.nectuxingenieries.collect.tax.repositories.ZoneRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,14 +49,14 @@ class TransactionServiceTest {
     private ContribuableRepository contribuableRepository;
 
     @Mock
-    private ZoneCollecteRepository zoneCollecteRepository;
+    private ZoneRepository zoneRepository;
 
     @InjectMocks
     private TransactionService transactionService;
 
     private Agents agent;
     private Contribuable contribuable;
-    private ZoneCollecte zone;
+    private Zone zone;
     private Transaction transaction;
 
     @BeforeEach
@@ -71,7 +71,7 @@ class TransactionServiceTest {
         contribuable.setNom("Smith");
         contribuable.setPrenom("Jane");
 
-        zone = new ZoneCollecte();
+        zone = new Zone();
         zone.setId(1L);
         zone.setNom("Zone A");
 
@@ -100,7 +100,7 @@ class TransactionServiceTest {
 
         when(agentRepository.findById(1L)).thenReturn(Optional.of(agent));
         when(contribuableRepository.findById(1L)).thenReturn(Optional.of(contribuable));
-        when(zoneCollecteRepository.findById(1L)).thenReturn(Optional.of(zone));
+        when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
         when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
 
         TransactionDTO result = transactionService.createTransaction(dto);

@@ -10,4 +10,5 @@ public class UserRepresentationDTO {
     private String email;
     private boolean enabled;
     private LocalDateTime lastLogin;
+    private int sessionCount;
 }

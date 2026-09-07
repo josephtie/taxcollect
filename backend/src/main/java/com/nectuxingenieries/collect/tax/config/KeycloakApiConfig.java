@@ -15,7 +15,7 @@ public class KeycloakApiConfig {
     private String KEYCLOAK_HOST;
     @Value("${keycloak.admin.realm}")
     private String KEYCLOAK_REALM;
-    @Value("${keycloak.admin.clientId}")
+    @Value("${keycloak.admin.clientId:keycloak-admin-client}")
     private String KEYCLOAK_CLIENT_ID;
     @Value("${keycloak.admin.clientSecret}")
     private String KEYCLOAK_CLIENT_SECRET;

@@ -44,6 +44,7 @@ class TransactionDTO {
   final String? agentNom;
   final String? agentPrenom;
   final String? zoneNom;
+  final int? taxeCollectId;
 
   TransactionDTO({
     this.id,
@@ -67,6 +68,7 @@ class TransactionDTO {
     this.agentNom,
     this.agentPrenom,
     this.zoneNom,
+    this.taxeCollectId,
   });
 
   factory TransactionDTO.fromJson(Map<String, dynamic> json) {
@@ -102,6 +104,7 @@ class TransactionDTO {
       agentNom: json['agentNom'],
       agentPrenom: json['agentPrenom'],
       zoneNom: json['zoneNom'],
+      taxeCollectId: json['taxeCollectId'],
     );
   }
 
@@ -128,6 +131,7 @@ class TransactionDTO {
       'agentNom': agentNom,
       'agentPrenom': agentPrenom,
       'zoneNom': zoneNom,
+      'taxeCollectId': taxeCollectId,
     };
   }
 
@@ -163,6 +167,7 @@ class TransactionDTO {
     String? agentNom,
     String? agentPrenom,
     String? zoneNom,
+    int? taxeCollectId,
   }) {
     return TransactionDTO(
       id: id ?? this.id,
@@ -186,6 +191,7 @@ class TransactionDTO {
       agentNom: agentNom ?? this.agentNom,
       agentPrenom: agentPrenom ?? this.agentPrenom,
       zoneNom: zoneNom ?? this.zoneNom,
+      taxeCollectId: taxeCollectId ?? this.taxeCollectId,
     );
   }
 }

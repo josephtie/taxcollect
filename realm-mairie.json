@@ -1,9 +1,9 @@
 {
-  "id": "mairie",
   "realm": "mairie",
   "displayName": "Mairie Tax Collect",
   "displayNameHtml": "<div class=\"kc-logo-text\"><span>Mairie Tax Collect</span></div>",
   "enabled": true,
+  "sslRequired": "none",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
@@ -17,7 +17,6 @@
   "maxDeltaTimeSeconds": 43200,
   "failureFactor": 30,
   "maxTemporaryLockouts": 0,
-  "notRequired": false,
   "rememberMe": false,
   "resetPasswordAllowed": false,
   "verifyEmail": false,
@@ -30,17 +29,15 @@
   "defaultLocale": "fr",
   "eventsEnabled": false,
   "eventsListeners": ["jboss-logging"],
-  "enabledEventTypes": [],
   "adminEventsEnabled": false,
   "adminEventsDetailsEnabled": false,
-  "passwordPolicy": [],
+  "passwordPolicy": "",
   "otpPolicyType": "totp",
   "otpPolicyAlgorithm": "HmacSHA1",
   "otpPolicyInitialCounter": 0,
   "otpPolicyDigits": 6,
   "otpPolicyLookAheadWindow": 1,
   "otpPolicyPeriod": 30,
-  "otpSupportedApplications": ["FreeOTP", "Google Authenticator"],
   "webAuthnPolicyRpEntityName": "keycloak",
   "webAuthnPolicySignatureAlgorithms": ["ES256", "RS256", "EdDSA"],
   "webAuthnPolicyRpId": "",
@@ -53,12 +50,8 @@
   "webAuthnPolicyAvoidSameAuthenticatorRegister": false,
   "offlineSessionMaxLifespanEnabled": false,
   "offlineSessionMaxLifespan": 2592000,
-  "offlineSessionMaxLifespanTouchEnabled": false,
-  "offlineSessionMaxLifespanTouch": 0,
   "clientOfflineSessionMaxLifespanEnabled": false,
   "clientOfflineSessionMaxLifespan": 0,
-  "clientOfflineSessionMaxLifespanTouchEnabled": false,
-  "clientOfflineSessionMaxLifespanTouch": 0,
   "accessTokenLifespan": 300,
   "accessTokenLifespanForImplicitFlow": 900,
   "ssoSessionIdleTimeout": 1800,
@@ -72,57 +65,10 @@
   "actionTokenGeneratedByUserLifespan": 300,
   "oauth2DeviceCodeLifespan": 600,
   "oauth2DevicePollingInterval": 5,
-  "oauth2DeviceVerificationGracePeriod": 0,
-  "refreshTokenMaxReuse": 0,
-  "refreshTokenMaxAge": 0,
-  "refreshTokenExpireByType": "session",
-  "refreshTokenExpireByTypeInactivity": 2592000,
-  "refreshTokenExpireByTypeReuse": 0,
-  "refreshTokenExpireByTypeSession": 2592000,
-  "delegated": false,
-  "delegationEnabled": false,
-  "delegable": false,
-  "directGrantEnabled": true,
-  "serviceAccountsEnabled": true,
-  "authorizationServicesEnabled": true,
-  "authorizationSettings": {
-    "allowRemoteResourceManagement": true,
-    "policyEnforcementMode": "ENFORCING",
-    "allowResourceServerRemoteManagement": true,
-    "decisionStrategy": "AFFIRMATIVE"
-  },
-  "basicAuthFlowDisabled": false,
-  "revokeRefreshToken": false,
-  "refreshTokenMaxReuseEnabled": false,
-  "parRequired": false,
-  "parRequestUriLifespan": 60,
   "clientSessionMaxLifespan": 0,
   "clientSessionIdleTimeout": 0,
-  "clientSessionMaxLifespanTouch": 0,
-  "clientSessionIdleTimeoutTouch": 0,
-  "dockerAuthenticationFlow": "docker auth",
-  "attributes": {
-    "_browser_header.X-Forwarded-For": "x-forwarded-for",
-    "_browser_header.X-Forwarded-Host": "x-forwarded-host",
-    "_browser_header.X-Forwarded-Proto": "x-forwarded-proto",
-    "permanentLockout": "false",
-    "quickLoginCheckMilliSeconds": "1000",
-    "maxFailureWaitSeconds": "900",
-    "minimumQuickLoginWaitSeconds": "60",
-    "waitIncrementSeconds": "60",
-    "maxDeltaTimeSeconds": "43200",
-    "failureFactor": "30",
-    "maxTemporaryLockouts": "0",
-    "bruteForceProtected": "false",
-    "actionTokenGeneratedByUserLifespan": "300",
-    "actionTokenGeneratedByAdminLifespan": "43200",
-    "oauth2DeviceCodeLifespan": "600",
-    "oauth2DevicePollingInterval": "5",
-    "oauth2DeviceVerificationGracePeriod": "0",
-    "oauth2DeviceAuthorizationGrantEnabled": "false",
-    "parRequestUriLifespan": "60",
-    "parRequired": "false"
-  },
+  "revokeRefreshToken": false,
+  "refreshTokenMaxReuse": 0,
   "users": [
     {
       "id": "admin-user-id",
@@ -137,13 +83,6 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "access": {
-        "manageGroupMembership": false,
-        "view": true,
-        "mapRoles": false,
-        "impersonate": false,
-        "manage": false
-      },
       "credentials": [
         {
           "id": "admin-cred-id",
@@ -171,13 +110,6 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "access": {
-        "manageGroupMembership": false,
-        "view": true,
-        "mapRoles": false,
-        "impersonate": false,
-        "manage": false
-      },
       "credentials": [
         {
           "id": "tresor-cred-id",
@@ -205,13 +137,6 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "access": {
-        "manageGroupMembership": false,
-        "view": true,
-        "mapRoles": false,
-        "impersonate": false,
-        "manage": false
-      },
       "credentials": [
         {
           "id": "agent-cred-id",
@@ -224,6 +149,61 @@
       ],
       "realmRoles": ["AGENT"],
       "clientRoles": {},
+      "attributes": {}
+    },
+    {
+      "id": "superviseur-user-id",
+      "createdTimestamp": 1642694400000,
+      "username": "superviseur",
+      "enabled": true,
+      "totp": false,
+      "emailVerified": true,
+      "firstName": "Superviseur",
+      "lastName": "Zone",
+      "email": "superviseur@mairie.com",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "notBefore": 0,
+      "credentials": [
+        {
+          "id": "superviseur-cred-id",
+          "type": "password",
+          "userLabel": "Password",
+          "createdDate": 1642694400000,
+          "secretData": "{\"value\":\"$2a$10$abcdefghijklmnopqrstuv\",\"salt\":\"abcdefghijklmnopqrstuv\",\"additionalParameters\":{}}",
+          "credentialData": "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
+        }
+      ],
+      "realmRoles": ["SUPERVISEUR"],
+      "clientRoles": {},
+      "attributes": {}
+    },
+    {
+      "id": "service-account-keycloak-admin-client",
+      "createdTimestamp": 1642694400000,
+      "username": "service-account-keycloak-admin-client",
+      "enabled": true,
+      "totp": false,
+      "emailVerified": false,
+      "serviceAccountClientId": "keycloak-admin-client",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "notBefore": 0,
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "view-realm",
+          "manage-realm",
+          "manage-clients",
+          "view-clients",
+          "query-users",
+          "query-clients",
+          "query-realms",
+          "view-events",
+          "manage-events"
+        ]
+      },
       "attributes": {}
     }
   ],
@@ -255,29 +235,28 @@
         "clientRole": false,
         "containerId": "mairie",
         "attributes": {}
+      },
+      {
+        "id": "superviseur-role-id",
+        "name": "SUPERVISEUR",
+        "description": "Superviseur de zones avec droits d'affectation d'agents",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "mairie",
+        "attributes": {}
       }
-    ],
-    "client": {}
+    ]
   },
   "clients": [
     {
-      "id": "tax-backend-client-id",
       "clientId": "tax-backend",
       "name": "Tax Collect Backend",
       "description": "Backend API pour la collecte de taxes",
-      "rootUrl": "",
-      "adminUrl": "",
-      "baseUrl": "",
-      "surrogateAuthRequired": false,
       "enabled": true,
-      "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "NMG9dhW6v454x0mlmw8p7aoppraZYLv1",
-      "registrationAccessToken": "",
-      "defaultRoles": [],
+      "secret": "ZSRrPMfQYuHkTjeTT46LBuvCgBAss6oW",
       "redirectUris": ["http://localhost:9090/*", "http://localhost:3000/*"],
       "webOrigins": ["http://localhost:9090", "http://localhost:3000"],
-      "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
       "standardFlowEnabled": true,
@@ -287,27 +266,12 @@
       "publicClient": false,
       "frontchannelLogout": false,
       "protocol": "openid-connect",
-      "attributes": {
-        "saml.assertion.signature": "RSA_SHA256",
-        "saml.multivalued.attributes": "false",
-        "saml.force.post.binding": "false",
-        "saml.encrypt": "false",
-        "saml.server.signature": "false",
-        "saml.server.signature.keyinfo.ext": "false",
-        "exclude.session.state.from.auth.response": "false",
-        "saml_force_name_attribute_format": "false",
-        "saml.client.signature": "false",
-        "tls.client.certificate.bound.access.tokens": "false",
-        "saml.authnstatement": "false",
-        "display.on.consent.screen": "false",
-        "saml.onetimeuse.condition": "false"
-      },
-      "authenticationFlowBindingOverrides": {},
       "fullScopeAllowed": true,
-      "nodeReRegistrationTimeout": -1,
+      "attributes": {
+        "tls.client.certificate.bound.access.tokens": "false"
+      },
       "protocolMappers": [
         {
-          "id": "backend-mapper-1",
           "name": "preferred_username",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-usermodel-property-mapper",
@@ -325,23 +289,14 @@
       "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
     },
     {
-      "id": "keycloak-admin-client-id",
       "clientId": "keycloak-admin-client",
       "name": "Keycloak Admin Client",
       "description": "Client pour l'administration Keycloak",
-      "rootUrl": "",
-      "adminUrl": "",
-      "baseUrl": "",
-      "surrogateAuthRequired": false,
       "enabled": true,
-      "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "NMG9dhW6v454x0mlmw8p7aoppraZYLv1",
-      "registrationAccessToken": "",
-      "defaultRoles": [],
+      "secret": "yp1Lwh1Lic2tJ9paQhzaj4KHkLiFYdnc",
       "redirectUris": ["http://localhost:8080/*"],
       "webOrigins": ["http://localhost:8080"],
-      "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
       "standardFlowEnabled": true,
@@ -351,46 +306,23 @@
       "publicClient": false,
       "frontchannelLogout": false,
       "protocol": "openid-connect",
-      "attributes": {
-        "saml.assertion.signature": "RSA_SHA256",
-        "saml.multivalued.attributes": "false",
-        "saml.force.post.binding": "false",
-        "saml.encrypt": "false",
-        "saml.server.signature": "false",
-        "saml.server.signature.keyinfo.ext": "false",
-        "exclude.session.state.from.auth.response": "false",
-        "saml_force_name_attribute_format": "false",
-        "saml.client.signature": "false",
-        "tls.client.certificate.bound.access.tokens": "false",
-        "saml.authnstatement": "false",
-        "display.on.consent.screen": "false",
-        "saml.onetimeuse.condition": "false"
-      },
-      "authenticationFlowBindingOverrides": {},
       "fullScopeAllowed": true,
-      "nodeReRegistrationTimeout": -1,
-      "protocolMappers": [],
+      "attributes": {
+        "tls.client.certificate.bound.access.tokens": "false"
+      },
       "defaultClientScopes": ["web-origins", "roles", "profile", "email"],
       "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
     },
     {
-      "id": "tax-frontend-client-id",
       "clientId": "tax-frontend",
       "name": "Tax Collect Frontend",
       "description": "Frontend Vue.js pour la collecte de taxes",
       "rootUrl": "http://localhost:3000",
-      "adminUrl": "",
-      "baseUrl": "",
-      "surrogateAuthRequired": false,
       "enabled": true,
-      "alwaysDisplayInConsole": false,
-      "clientAuthenticatorType": "public",
+      "clientAuthenticatorType": "client-secret",
       "secret": "",
-      "registrationAccessToken": "",
-      "defaultRoles": [],
       "redirectUris": ["http://localhost:3000/*", "http://localhost:3000/callback"],
       "webOrigins": ["http://localhost:3000"],
-      "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
       "standardFlowEnabled": true,
@@ -400,27 +332,12 @@
       "publicClient": true,
       "frontchannelLogout": false,
       "protocol": "openid-connect",
-      "attributes": {
-        "saml.assertion.signature": "RSA_SHA256",
-        "saml.multivalued.attributes": "false",
-        "saml.force.post.binding": "false",
-        "saml.encrypt": "false",
-        "saml.server.signature": "false",
-        "saml.server.signature.keyinfo.ext": "false",
-        "exclude.session.state.from.auth.response": "false",
-        "saml_force_name_attribute_format": "false",
-        "saml.client.signature": "false",
-        "tls.client.certificate.bound.access.tokens": "false",
-        "saml.authnstatement": "false",
-        "display.on.consent.screen": "false",
-        "saml.onetimeuse.condition": "false"
-      },
-      "authenticationFlowBindingOverrides": {},
       "fullScopeAllowed": true,
-      "nodeReRegistrationTimeout": -1,
+      "attributes": {
+        "tls.client.certificate.bound.access.tokens": "false"
+      },
       "protocolMappers": [
         {
-          "id": "frontend-mapper-1",
           "name": "preferred_username",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-usermodel-property-mapper",
@@ -438,9 +355,26 @@
       "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
     }
   ],
-  "scopeMappings": [],
-  "clientScopeMappings": {},
-  "clientTemplates": {},
+  "clientScopeMappings": {
+    "realm-management": [
+      {
+        "client": "keycloak-admin-client",
+        "roles": [
+          "manage-users",
+          "view-users",
+          "view-realm",
+          "manage-realm",
+          "manage-clients",
+          "view-clients",
+          "query-users",
+          "query-clients",
+          "query-realms",
+          "view-events",
+          "manage-events"
+        ]
+      }
+    ]
+  },
   "browserSecurityHeaders": {
     "contentSecurityPolicyReportOnly": "",
     "xContentTypeOptions": "nosniff",
@@ -454,26 +388,9 @@
   "groups": [],
   "defaultGroups": [],
   "requiredActions": [],
-  "attackDetection": {
-    "bruteForce": {
-      "maxLoginFailures": 30,
-      "waitIncrement": "1 minute",
-      "quickLoginCheckMilliSeconds": "1000",
-      "minimumQuickLoginWait": "1 minute",
-      "maxDeltaTime": "12 hours",
-      "maxFailureWait": "15 minutes",
-      "failureResetTime": "12 hours",
-      "permanentLockout": "false",
-      "maxTemporaryLockouts": "0"
-    }
-  },
-  "passwordPolicies": [],
-  "identityProviders": [],
-  "identityProviderMappers": [],
   "components": {
     "org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy": [
       {
-        "id": "max-clients-policy",
         "name": "Max Clients Limit",
         "providerId": "max-clients",
         "subType": "anonymous",
@@ -482,7 +399,6 @@
         }
       },
       {
-        "id": "protocol-mappers-policy",
         "name": "Allowed Protocol Mappers",
         "providerId": "allowed-protocol-mappers",
         "subType": "anonymous",
@@ -499,14 +415,12 @@
         }
       },
       {
-        "id": "consent-required-policy",
         "name": "Consent Required",
         "providerId": "consent-required",
         "subType": "anonymous",
         "config": {}
       },
       {
-        "id": "trusted-hosts-policy",
         "name": "Trusted Hosts",
         "providerId": "trusted-hosts",
         "subType": "anonymous",
@@ -515,7 +429,6 @@
         }
       },
       {
-        "id": "scope-policy",
         "name": "Scopes",
         "providerId": "scope",
         "subType": "anonymous",

@@ -1,6 +1,7 @@
 package com.nectuxingenieries.collect.tax.repositories;
 
 import com.nectuxingenieries.collect.tax.models.Agents;
+import com.nectuxingenieries.collect.tax.models.StatutAgent;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,13 +30,13 @@ public interface AgentRepository extends BaseRepository<Agents, Long>, JpaSpecif
      * Trouver des agents par statut (non supprimés)
      */
     @Query("SELECT a FROM Agents a WHERE a.statut = ?1 AND a.deletedAt IS NULL")
-    List<Agents> findByStatut(String statut);
+    List<Agents> findByStatut(StatutAgent statut);
     
     /**
      * Trouver des agents par zone de collecte (non supprimés)
      */
-    @Query("SELECT a FROM Agents a JOIN a.zoneCollectes z WHERE z.id = :zoneId AND a.deletedAt IS NULL")
-    List<Agents> findByZoneCollecteId(@Param("zoneId") Long zoneId);
+    @Query("SELECT a FROM Agents a JOIN a.zones z WHERE z.id = :zoneId AND a.deletedAt IS NULL")
+    List<Agents> findByZoneId(@Param("zoneId") Long zoneId);
     
     /**
      * Trouver des agents actifs (non supprimés)
@@ -47,7 +48,7 @@ public interface AgentRepository extends BaseRepository<Agents, Long>, JpaSpecif
      * Compter les agents par statut (non supprimés)
      */
     @Query("SELECT COUNT(a) FROM Agents a WHERE a.statut = :statut AND a.deletedAt IS NULL")
-    long countByStatut(@Param("statut") String statut);
+    long countByStatut(@Param("statut") StatutAgent statut);
     
     /**
      * Trouver des agents créés entre deux dates (non supprimés)
@@ -72,4 +73,10 @@ public interface AgentRepository extends BaseRepository<Agents, Long>, JpaSpecif
      */
     @Query("SELECT a FROM Agents a WHERE (LOWER(a.nom) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(a.prenom) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) AND a.deletedAt IS NULL")
     List<Agents> searchByNameOrPrenom(@Param("searchTerm") String searchTerm);
+
+    @Query("SELECT a FROM Agents a WHERE a.deletedAt IS NULL AND a.id NOT IN (SELECT a2.id FROM Agents a2 JOIN a2.zones z WHERE z.id IN :zoneIds)")
+    List<Agents> findAgentsNotInZones(@Param("zoneIds") List<Long> zoneIds);
+
+    @Query("SELECT a FROM Agents a WHERE a.deletedAt IS NULL AND SIZE(a.zones) = 0")
+    List<Agents> findAgentsWithoutAnyZone();
 }

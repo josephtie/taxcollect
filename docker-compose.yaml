@@ -9,7 +9,7 @@ services:
     environment:
       LDAP_ORGANISATION: "mairie"
       LDAP_DOMAIN: "mairie.com"
-      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD:-admin}
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD:?LDAP_ADMIN_PASSWORD is required}
     ports:
       - "389:389"
     volumes:
@@ -18,7 +18,7 @@ services:
     networks:
       - keycloaknet
     healthcheck:
-      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost:389", "-D", "cn=admin,dc=mairie,dc=com", "-w", "${LDAP_ADMIN_PASSWORD:-admin}", "-b", "dc=mairie,dc=com"]
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost:389", "-D", "cn=admin,dc=mairie,dc=com", "-w", "${LDAP_ADMIN_PASSWORD}", "-b", "dc=mairie,dc=com"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -41,17 +41,19 @@ services:
     image: quay.io/keycloak/keycloak:25.0.1
     container_name: keycloakTax
     restart: always
-    command: ["start-dev"]
+    command: ["start-dev", "--import-realm"]
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
       KC_METRICS_ENABLED: "true"
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/taxCollect
-      KC_DB_USERNAME: ${DB_USERNAME:-directus}
-      KC_DB_PASSWORD: ${DB_PASSWORD:-directus}
+      KC_DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+      KC_DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
     ports:
       - "8080:8080"
+    volumes:
+      - ./realm-mairie.json:/opt/keycloak/data/import/realm-mairie.json
     networks:
       - keycloaknet
     depends_on:
@@ -61,12 +63,12 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:15
+    image: postgis/postgis:15-3.4
     container_name: postgresTax
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USERNAME:-directus}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-directus}
+      POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME is required}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       POSTGRES_DB: taxCollect
     volumes:
       - pg_data:/var/lib/postgresql/data
@@ -75,7 +77,7 @@ services:
     networks:
       - keycloaknet
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-directus} -d taxCollect"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d taxCollect"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -88,25 +90,90 @@ services:
     restart: always
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/taxCollect
-      DB_USERNAME: ${DB_USERNAME:-directus}
-      DB_PASSWORD: ${DB_PASSWORD:-directus}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       LDAP_URL: ldap://openldap:389
-      LDAP_PASSWORD: ${LDAP_ADMIN_PASSWORD:-admin}
+      LDAP_PASSWORD: ${LDAP_ADMIN_PASSWORD:?LDAP_ADMIN_PASSWORD is required}
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/mairie
       KEYCLOAK_ADMIN_HOST: http://keycloak:8080
-      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:?KEYCLOAK_ADMIN_CLIENT_SECRET is required}
       SPRING_PROFILES_ACTIVE: docker
       JPA_DDL_AUTO: validate
       JPA_SHOW_SQL: "false"
       SPRINGDOC_SWAGGER_UI_ENABLED: "false"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REDIS_HOST: redis
     ports:
-      - "9090:9090"
+      - "9091:9091"
     networks:
       - keycloaknet
     depends_on:
+      keycloak:
+        condition: service_started
+      kafka:
+        condition: service_started
+      redis:
+        condition: service_started
       postgres:
         condition: service_healthy
-      keycloak:
+
+  redis:
+    image: redis:7-alpine
+    container_name: taxcollect-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - keycloaknet
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: taxcollect-kafka
+    restart: always
+    environment:
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+    ports:
+      - "9092:9092"
+    networks:
+      - keycloaknet
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: taxcollect-prometheus
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9095:9090"
+    networks:
+      - keycloaknet
+    depends_on:
+      backend:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: taxcollect-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    networks:
+      - keycloaknet
+    depends_on:
+      backend:
         condition: service_started
 
 volumes:

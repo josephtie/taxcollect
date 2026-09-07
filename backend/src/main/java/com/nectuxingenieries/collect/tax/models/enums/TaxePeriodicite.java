@@ -4,5 +4,6 @@ public enum TaxePeriodicite {
 
     JOURNALIERE,
     MENSUELLE,
+    TRIMESTRIELLE,
     ANNUELLE
 }

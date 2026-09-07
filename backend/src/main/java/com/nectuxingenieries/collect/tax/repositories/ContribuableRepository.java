@@ -28,20 +28,20 @@ public interface ContribuableRepository extends BaseRepository<Contribuable, Lon
     /**
      * Trouver des contribuables par zone de collecte (non supprimés)
      */
-    @Query("SELECT c FROM Contribuable c WHERE c.zoneCollecte.id = ?1 AND c.deletedAt IS NULL")
-    List<Contribuable> findByZoneCollecteId(Long zoneCollecteId);
+    @Query("SELECT c FROM Contribuable c WHERE c.zone.id = ?1 AND c.deletedAt IS NULL")
+    List<Contribuable> findByZoneId(Long zoneId);
     
     /**
      * Trouver des contribuables actifs (non supprimés)
      */
-    @Query("SELECT c FROM Contribuable c WHERE c.zoneCollecte.statut IS TRUE")
+    @Query("SELECT c FROM Contribuable c WHERE c.zone.statut IS TRUE")
     List<Contribuable> findActiveContribuables();
     
     /**
      * Compter les contribuables par zone
      */
-    @Query("SELECT COUNT(c) FROM Contribuable c WHERE c.zoneCollecte.id = :zoneId ")
-    long countByZoneCollecteId(@Param("zoneId") Long zoneId);
+    @Query("SELECT COUNT(c) FROM Contribuable c WHERE c.zone.id = :zoneId ")
+    long countByZoneId(@Param("zoneId") Long zoneId);
     
     /**
      * Trouver des contribuables créés entre deux dates
@@ -90,7 +90,7 @@ public interface ContribuableRepository extends BaseRepository<Contribuable, Lon
     @Query("SELECT COUNT(c) FROM Contribuable c WHERE c.updatedAt >= :start AND c.updatedAt <= :end")
     Long countByUpdatedAtBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-    @Query("SELECT c.zoneCollecte.nom, COUNT(c) FROM Contribuable c GROUP BY c.zoneCollecte.id, c.zoneCollecte.nom")
+    @Query("SELECT c.zone.nom, COUNT(c) FROM Contribuable c GROUP BY c.zone.id, c.zone.nom")
     List<Object[]> countByZone();
 
     @Query("SELECT c FROM Contribuable c WHERE c.telephone = :telephone AND c.deletedAt IS NULL")

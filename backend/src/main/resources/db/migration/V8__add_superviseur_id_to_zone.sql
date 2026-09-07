@@ -1,0 +1,1 @@
+ALTER TABLE zone ADD COLUMN IF NOT EXISTS superviseur_id VARCHAR(255);

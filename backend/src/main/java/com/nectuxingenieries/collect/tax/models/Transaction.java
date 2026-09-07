@@ -38,7 +38,7 @@ public class Transaction extends Auditable {
     @NotNull
     @ManyToOne
     @JoinColumn(name = "zone_id", nullable = false)
-    private ZoneCollecte zone;
+    private Zone zone;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -78,6 +78,44 @@ public class Transaction extends Auditable {
     @JoinColumn(name = "cloture_caisse_id")
     private ClotureCaisse clotureCaisse;
 
+    @ManyToOne
+    @JoinColumn(name = "taxe_collect_id")
+    private TaxeCollect taxeCollect;
+
+    // --- Extensions module paiement ---
+    @Column(name = "transaction_reference", unique = true)
+    private String transactionReference;
+
+    @Column(length = 32)
+    private String provider;
+
+    @Column(name = "provider_transaction_id", length = 128)
+    private String providerTransactionId;
+
+    @Column(name = "provider_request_id", length = 128)
+    private String providerRequestId;
+
+    @Column(length = 8)
+    private String currency;
+
+    @Column(name = "payment_method", length = 32)
+    private String paymentMethod;
+
+    @Column(name = "initiated_at")
+    private LocalDateTime initiatedAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    @Column(name = "failure_reason", length = 255)
+    private String failureReason;
+
+    @Column(name = "idempotency_key", unique = true)
+    private String idempotencyKey;
+
+    @Column(name = "collection_order_id")
+    private Long collectionOrderId;
+
     // Constructors
     public Transaction() {
         this.dateCreation = LocalDateTime.now();
@@ -100,8 +138,8 @@ public class Transaction extends Auditable {
     public Agents getAgent() { return agent; }
     public void setAgent(Agents agent) { this.agent = agent; }
 
-    public ZoneCollecte getZone() { return zone; }
-    public void setZone(ZoneCollecte zone) { this.zone = zone; }
+    public Zone getZone() { return zone; }
+    public void setZone(Zone zone) { this.zone = zone; }
 
     public ModePaiement getModePaiement() { return modePaiement; }
     public void setModePaiement(ModePaiement modePaiement) { this.modePaiement = modePaiement; }
@@ -135,4 +173,40 @@ public class Transaction extends Auditable {
 
     public ClotureCaisse getClotureCaisse() { return clotureCaisse; }
     public void setClotureCaisse(ClotureCaisse clotureCaisse) { this.clotureCaisse = clotureCaisse; }
+
+    public TaxeCollect getTaxeCollect() { return taxeCollect; }
+    public void setTaxeCollect(TaxeCollect taxeCollect) { this.taxeCollect = taxeCollect; }
+
+    public String getTransactionReference() { return transactionReference; }
+    public void setTransactionReference(String transactionReference) { this.transactionReference = transactionReference; }
+
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
+
+    public String getProviderTransactionId() { return providerTransactionId; }
+    public void setProviderTransactionId(String providerTransactionId) { this.providerTransactionId = providerTransactionId; }
+
+    public String getProviderRequestId() { return providerRequestId; }
+    public void setProviderRequestId(String providerRequestId) { this.providerRequestId = providerRequestId; }
+
+    public String getCurrency() { return currency; }
+    public void setCurrency(String currency) { this.currency = currency; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
+    public LocalDateTime getInitiatedAt() { return initiatedAt; }
+    public void setInitiatedAt(LocalDateTime initiatedAt) { this.initiatedAt = initiatedAt; }
+
+    public LocalDateTime getCompletedAt() { return completedAt; }
+    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+
+    public String getFailureReason() { return failureReason; }
+    public void setFailureReason(String failureReason) { this.failureReason = failureReason; }
+
+    public String getIdempotencyKey() { return idempotencyKey; }
+    public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+
+    public Long getCollectionOrderId() { return collectionOrderId; }
+    public void setCollectionOrderId(Long collectionOrderId) { this.collectionOrderId = collectionOrderId; }
 }

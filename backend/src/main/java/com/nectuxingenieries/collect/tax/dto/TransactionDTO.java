@@ -39,6 +39,7 @@ public class TransactionDTO {
     private String agentNom;
     private String agentPrenom;
     private String zoneNom;
+    private Long taxeCollectId;
 
     // Constructors
     public TransactionDTO() {}
@@ -115,4 +116,7 @@ public class TransactionDTO {
 
     public String getZoneNom() { return zoneNom; }
     public void setZoneNom(String zoneNom) { this.zoneNom = zoneNom; }
+
+    public Long getTaxeCollectId() { return taxeCollectId; }
+    public void setTaxeCollectId(Long taxeCollectId) { this.taxeCollectId = taxeCollectId; }
 }

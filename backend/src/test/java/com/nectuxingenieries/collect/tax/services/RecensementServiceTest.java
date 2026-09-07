@@ -6,9 +6,9 @@ import com.nectuxingenieries.collect.tax.dto.RecensementStatsDTO;
 import com.nectuxingenieries.collect.tax.exceptions.ConflictException;
 import com.nectuxingenieries.collect.tax.exceptions.NotFoundException;
 import com.nectuxingenieries.collect.tax.models.Contribuable;
-import com.nectuxingenieries.collect.tax.models.ZoneCollecte;
+import com.nectuxingenieries.collect.tax.models.Zone;
 import com.nectuxingenieries.collect.tax.repositories.ContribuableRepository;
-import com.nectuxingenieries.collect.tax.repositories.ZoneCollecteRepository;
+import com.nectuxingenieries.collect.tax.repositories.ZoneRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +34,7 @@ class RecensementServiceTest {
     private ContribuableRepository contribuableRepository;
 
     @Mock
-    private ZoneCollecteRepository zoneCollecteRepository;
+    private ZoneRepository zoneRepository;
 
     @Mock
     private QRCodeContribuableService qrCodeContribuableService;
@@ -42,13 +42,13 @@ class RecensementServiceTest {
     @InjectMocks
     private RecensementService recensementService;
 
-    private ZoneCollecte zone;
+    private Zone zone;
     private Contribuable contribuable;
     private RecensementDTO recensementDTO;
 
     @BeforeEach
     void setUp() {
-        zone = new ZoneCollecte();
+        zone = new Zone();
         zone.setId(1L);
         zone.setNom("Marché central");
 
@@ -57,7 +57,7 @@ class RecensementServiceTest {
         contribuable.setNom("Mwamba");
         contribuable.setPrenom("Augustin");
         contribuable.setTelephone("+243812345678");
-        contribuable.setZoneCollecte(zone);
+        contribuable.setZone(zone);
         contribuable.setTypeContribuable("personne_physique");
         contribuable.setActivite("Commerçant");
         contribuable.setStatut("actif");
@@ -77,7 +77,7 @@ class RecensementServiceTest {
     @Test
     void createRecensement_shouldCreateContribuableAndQRCode() {
         when(contribuableRepository.existsByTelephone("+243812345678")).thenReturn(false);
-        when(zoneCollecteRepository.findById(1L)).thenReturn(Optional.of(zone));
+        when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
         when(contribuableRepository.save(any(Contribuable.class))).thenAnswer(inv -> {
             Contribuable c = inv.getArgument(0);
             c.setId(10L);
@@ -112,7 +112,7 @@ class RecensementServiceTest {
     @Test
     void createRecensement_shouldThrowNotFound_whenZoneDoesNotExist() {
         when(contribuableRepository.existsByTelephone("+243812345678")).thenReturn(false);
-        when(zoneCollecteRepository.findById(99L)).thenReturn(Optional.empty());
+        when(zoneRepository.findById(99L)).thenReturn(Optional.empty());
 
         recensementDTO.setZoneId(99L);
         assertThrows(NotFoundException.class, () -> recensementService.createRecensement(recensementDTO));
@@ -121,7 +121,7 @@ class RecensementServiceTest {
     @Test
     void updateRecensement_shouldUpdateFields() {
         when(contribuableRepository.findById(10L)).thenReturn(Optional.of(contribuable));
-        when(zoneCollecteRepository.findById(1L)).thenReturn(Optional.of(zone));
+        when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
         when(contribuableRepository.save(any(Contribuable.class))).thenReturn(contribuable);
         when(qrCodeContribuableService.getActiveQRCode(10L)).thenReturn(Optional.empty());
 
@@ -196,7 +196,7 @@ class RecensementServiceTest {
 
     @Test
     void searchContribuables_shouldReturnResults_byZone() {
-        when(contribuableRepository.findByZoneCollecteId(1L))
+        when(contribuableRepository.findByZoneId(1L))
                 .thenReturn(Arrays.asList(contribuable));
         when(qrCodeContribuableService.getActiveQRCode(anyLong())).thenReturn(Optional.empty());
 

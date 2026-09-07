@@ -47,11 +47,16 @@
       <!-- Dashboard Content -->
       <div class="flex-1 p-6">
         <!-- KPI Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsCard title="Total collecté aujourd'hui" value="0" icon="mdi-cash" />
-          <StatsCard title="Nombre de transactions" value="0" icon="mdi-credit-card" />
-          <StatsCard title="Paiements Espèces" value="0" icon="mdi-banknote" />
-          <StatsCard title="Paiements Mobile Money" value="0" icon="mdi-cellphone" />
+        <div data-testid="kpi-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatsCard
+            title="Total collecté"
+            :value="totalCollected"
+            :icon="DollarSign"
+            format="currency"
+            icon-color="text-success-600"
+            icon-bg-color="bg-success-50"
+          />
+
           <StatsCard
             title="Nombre de transactions"
             :value="transactionStore.todayTransactionCount"
@@ -61,7 +66,15 @@
             :change="transactionChange"
             change-type="absolute"
           />
-          
+
+          <StatsCard
+            title="Agents actifs"
+            :value="activeAgentCount"
+            :icon="Users"
+            icon-color="text-info-600"
+            icon-bg-color="bg-info-50"
+          />
+
           <StatsCard
             title="Paiements Espèces"
             :value="transactionStore.paymentMethodStats.cash"
@@ -69,15 +82,6 @@
             format="currency"
             icon-color="text-warning-600"
             icon-bg-color="bg-warning-50"
-          />
-          
-          <StatsCard
-            title="Paiements Mobile Money"
-            :value="transactionStore.paymentMethodStats.mobileMoney"
-            :icon="Smartphone"
-            format="currency"
-            icon-color="text-info-600"
-            icon-bg-color="bg-info-50"
           />
         </div>
 
@@ -242,6 +246,7 @@ import {
   CreditCard,
   Banknote,
   Smartphone,
+  Users,
   RefreshCw
 } from 'lucide-vue-next'
 
@@ -255,6 +260,12 @@ const loading = ref(false)
 const selectedPeriod = ref('today')
 
 // Computed
+const activeAgentCount = computed(() => agentStore.activeAgents.length)
+
+const totalCollected = computed(() => {
+  return transactionStore.paymentMethodStats.cash + transactionStore.paymentMethodStats.mobileMoney
+})
+
 const recentTransactions = computed(() => {
   return transactionStore.transactions
     .slice()

@@ -7,7 +7,7 @@ class AppConfig {
   static const String appDescription = 'Digitalisation des Taxes Communales';
   
   // API Configuration
-  static const String baseUrl = 'http://192.168.1.4:9090';
+  static const String baseUrl = 'http://192.168.1.4:9091';
   static const String apiUrl = '$baseUrl/api';
   static const String authUrl = '$baseUrl/auth';
   
@@ -104,9 +104,9 @@ class AppConfig {
   
   static const String contribuablesEndpoint = '/api/taxcollect/contribuable';
   static const String agentsEndpoint = '/api/taxcollect/agent';
-  static const String zonesEndpoint = '/api/taxcollect/zonecollect';
+  static const String zonesEndpoint = '/api/taxcollect/zone';
   static const String taxesEndpoint = '/api/taxcollect/taxe';
-  static const String cartesEndpoint = '/api/taxcollect/carte';
+  static const String cartesEndpoint = '/api/taxcollect/carte-contribuable';
   static const String communesEndpoint = '/api/taxcollect/commune';
   static const String quartiersEndpoint = '/api/taxcollect/quartier';
   
@@ -134,8 +134,8 @@ class AppConfig {
   // User Roles
   static const String roleAgent = 'AGENT';
   static const String roleSuperviseur = 'SUPERVISEUR';
-  static const String roleAdministrateur = 'ADMINISTRATEUR';
-  static const String roleTresorPublic = 'TRESOR_PUBLIC';
+  static const String roleAdministrateur = 'ADMIN';
+  static const String roleTresorPublic = 'TRESOR';
   
   // Transaction Status
   static const String statusEnAttente = 'EN_ATTENTE';

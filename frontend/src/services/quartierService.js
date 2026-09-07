@@ -40,14 +40,14 @@ class QuartierService extends BaseService {
     return this.get('/including-deleted')
   }
 
-  // Récupérer les zones d'un quartier
-  async getQuartierZones(quartierId) {
-    return this.get(`/${quartierId}/zones`)
+  // Récupérer les secteurs d'un quartier
+  async getQuartierSecteurs(quartierId) {
+    return this.get(`/${quartierId}/secteurs`)
   }
 
-  // Récupérer les quartiers par commune
-  async getQuartiersByCommune(communeId) {
-    return this.get(`/commune/${communeId}`)
+  // Récupérer les quartiers par zone
+  async getQuartiersByZone(zoneId) {
+    return this.get(`/zone/${zoneId}`)
   }
 }
 
@@ -81,9 +81,9 @@ class CommuneService extends BaseService {
     return this.delete(`/${id}`)
   }
 
-  // Récupérer les quartiers d'une commune
-  async getCommuneQuartiers(communeId) {
-    return this.get(`/${communeId}/quartiers`)
+  // Récupérer les zones d'une commune
+  async getCommuneZones(communeId) {
+    return this.get(`/${communeId}/zones`)
   }
 }
 

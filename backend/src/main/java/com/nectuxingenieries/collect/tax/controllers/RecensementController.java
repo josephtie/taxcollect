@@ -6,9 +6,11 @@ import com.nectuxingenieries.collect.tax.dto.RecensementStatsDTO;
 import com.nectuxingenieries.collect.tax.services.QRCodeContribuableService;
 import com.nectuxingenieries.collect.tax.services.RecensementService;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/recensement")
+@Tag(name = "Recensement", description = "API de recensement des contribuables")
 public class RecensementController {
 
     @Autowired
@@ -24,36 +27,42 @@ public class RecensementController {
     @Autowired
     private QRCodeContribuableService qrCodeContribuableService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'AGENT')")
     @PostMapping("/contribuables")
     public ResponseEntity<RecensementDTO> createContribuable(@Valid @RequestBody RecensementDTO dto) {
         RecensementDTO created = recensementService.createRecensement(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'AGENT')")
     @PutMapping("/contribuables/{id}")
     public ResponseEntity<RecensementDTO> updateContribuable(@PathVariable Long id, @RequestBody RecensementDTO dto) {
         RecensementDTO updated = recensementService.updateRecensement(id, dto);
         return ResponseEntity.ok(updated);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     @GetMapping("/contribuables/{id}")
     public ResponseEntity<RecensementDTO> getContribuableById(@PathVariable Long id) {
         RecensementDTO dto = recensementService.findById(id);
         return ResponseEntity.ok(dto);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     @GetMapping("/contribuables")
     public ResponseEntity<List<RecensementDTO>> getAllContribuables() {
         List<RecensementDTO> list = recensementService.findAll();
         return ResponseEntity.ok(list);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     @GetMapping("/contribuables/agent/{agentId}")
     public ResponseEntity<List<RecensementDTO>> getContribuablesByAgent(@PathVariable String agentId) {
         List<RecensementDTO> list = recensementService.findByAgent(agentId);
         return ResponseEntity.ok(list);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     @GetMapping("/contribuables/search")
     public ResponseEntity<List<RecensementDTO>> searchContribuables(
             @RequestParam(required = false) String query,
@@ -68,30 +77,35 @@ public class RecensementController {
         return ResponseEntity.ok(results);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
     @DeleteMapping("/contribuables/{id}")
     public ResponseEntity<Void> deleteContribuable(@PathVariable Long id) {
         recensementService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR')")
     @GetMapping("/statistics")
     public ResponseEntity<RecensementStatsDTO> getStatistics() {
         RecensementStatsDTO stats = recensementService.getStatistics();
         return ResponseEntity.ok(stats);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'AGENT')")
     @PostMapping("/contribuables/{id}/qr-code")
     public ResponseEntity<QRCodeContribuableDTO> generateQRCode(@PathVariable Long id) {
         QRCodeContribuableDTO qrCode = qrCodeContribuableService.generateQRCode(id);
         return ResponseEntity.status(HttpStatus.CREATED).body(qrCode);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'AGENT')")
     @PostMapping("/contribuables/{id}/qr-code/regenerate")
     public ResponseEntity<QRCodeContribuableDTO> regenerateQRCode(@PathVariable Long id) {
         QRCodeContribuableDTO qrCode = qrCodeContribuableService.regenerateQRCode(id);
         return ResponseEntity.ok(qrCode);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     @GetMapping("/contribuables/{id}/qr-code")
     public ResponseEntity<QRCodeContribuableDTO> getActiveQRCode(@PathVariable Long id) {
         return qrCodeContribuableService.getActiveQRCode(id)
@@ -99,6 +113,7 @@ public class RecensementController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     @PostMapping("/qr-code/verify")
     public ResponseEntity<QRCodeContribuableDTO> verifyQRCode(
             @RequestParam String qrCodeData,
@@ -109,12 +124,14 @@ public class RecensementController {
         return ResponseEntity.ok(result);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     @GetMapping("/contribuables/{id}/qr-codes")
     public ResponseEntity<List<QRCodeContribuableDTO>> getAllQRCodes(@PathVariable Long id) {
         List<QRCodeContribuableDTO> qrCodes = qrCodeContribuableService.getQRCodesByContribuable(id);
         return ResponseEntity.ok(qrCodes);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
     @DeleteMapping("/qr-codes/{qrCodeId}")
     public ResponseEntity<Void> deactivateQRCode(@PathVariable Long qrCodeId) {
         qrCodeContribuableService.deactivateQRCode(qrCodeId);

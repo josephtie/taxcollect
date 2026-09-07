@@ -537,5 +537,43 @@ public class KeycloakUserService {
         
         return result;
     }
+
+    // 10. Get active sessions for a user
+    public List<Map<String, Object>> getUserSessions(String userId) {
+        try {
+            List<UserSessionRepresentation> sessions = realm().users().get(userId).getUserSessions();
+            return sessions.stream().map(session -> {
+                Map<String, Object> sessionMap = new HashMap<>();
+                sessionMap.put("id", session.getId());
+                sessionMap.put("ipAddress", session.getIpAddress());
+                sessionMap.put("started", session.getStart());
+                sessionMap.put("lastRefresh", session.getLastAccess());
+                sessionMap.put("clients", session.getClients() != null ? session.getClients() : List.of());
+                return sessionMap;
+            }).toList();
+        } catch (Exception e) {
+            log.warn("Erreur lors de la récupération des sessions pour {}: {}", userId, e.getMessage());
+            return List.of();
+        }
+    }
+
+    // 11. Get session count for all users (batch)
+    public Map<String, Integer> getAllUserSessionCounts() {
+        Map<String, Integer> sessionCounts = new HashMap<>();
+        try {
+            List<UserRepresentation> users = realm().users().list();
+            for (UserRepresentation user : users) {
+                try {
+                    List<UserSessionRepresentation> sessions = realm().users().get(user.getId()).getUserSessions();
+                    sessionCounts.put(user.getId(), sessions != null ? sessions.size() : 0);
+                } catch (Exception e) {
+                    sessionCounts.put(user.getId(), 0);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Erreur lors de la récupération des sessions: {}", e.getMessage());
+        }
+        return sessionCounts;
+    }
 }
 

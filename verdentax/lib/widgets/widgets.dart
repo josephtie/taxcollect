@@ -6,7 +6,7 @@ import '../config/theme_config.dart';
 import '../services/services.dart';
 
 // Export all widgets for easy import
-// export 'recensement_wizard.dart'; // Temporarily disabled due to GeolocationService dependency
+export 'recensement_wizard.dart';
 // export 'map_widget.dart'; // Temporarily disabled due to GeolocationService dependency
 export 'carte_widgets.dart';
 

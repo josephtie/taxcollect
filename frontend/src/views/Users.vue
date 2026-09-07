@@ -23,7 +23,7 @@
               Nouvel Utilisateur
             </button>
           </div>
-        </div>
+        </div> 
       </div>
     </header>
 
@@ -154,6 +154,9 @@
                     Statut
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Sessions
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Dernière connexion
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -163,7 +166,7 @@
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
                 <tr v-if="loading" class="text-center">
-                  <td colspan="6" class="px-6 py-12">
+                  <td colspan="7" class="px-6 py-12">
                     <div class="flex items-center justify-center">
                       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
                       <span class="ml-2 text-gray-600">Chargement...</span>
@@ -209,6 +212,22 @@
                       type="user"
                     />
                   </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span
+                      v-if="user.sessionCount > 0"
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                    >
+                      <span class="w-2 h-2 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>
+                      {{ user.sessionCount }} session{{ user.sessionCount > 1 ? 's' : '' }}
+                    </span>
+                    <span
+                      v-else
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500"
+                    >
+                      <span class="w-2 h-2 rounded-full bg-gray-400 mr-1.5"></span>
+                      Hors ligne
+                    </span>
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ formatDate(user.lastLogin) }}
                   </td>
@@ -237,6 +256,14 @@
                         <PowerOff v-else class="w-4 h-4" />
                       </button>
                       <button
+                        v-if="user.role === 'SUPERVISEUR'"
+                        @click="openZoneModal(user)"
+                        class="text-purple-600 hover:text-purple-900"
+                        title="Attribuer des zones"
+                      >
+                        <MapPin class="w-4 h-4" />
+                      </button>
+                      <button
                         @click="deleteUser(user)"
                         class="text-danger-600 hover:text-danger-900"
                         title="Supprimer"
@@ -256,7 +283,7 @@
     <!-- Create/Edit Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <h3 class="modal-header">
           {{ editingUser ? 'Modifier' : 'Créer' }} un Utilisateur
         </h3>
         
@@ -357,11 +384,85 @@
       </div>
     </div>
 
+    <!-- Zone Assignment Modal -->
+    <div v-if="showZoneModal && selectedSuperviseur" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="modal-header">
+            Zones de {{ selectedSuperviseur.nom }} {{ selectedSuperviseur.prenom }}
+          </h3>
+          <button
+            @click="closeZoneModal"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <X class="w-6 h-6" />
+          </button>
+        </div>
+
+        <div v-if="zoneLoading" class="flex items-center justify-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <span class="ml-2 text-gray-600">Chargement des zones...</span>
+        </div>
+
+        <div v-else-if="allZones.length === 0" class="text-center py-8 text-gray-500">
+          Aucune zone disponible.
+        </div>
+
+        <div v-else class="space-y-2">
+          <div
+            v-for="zone in allZones"
+            :key="zone.id"
+            class="flex items-center justify-between p-3 rounded-lg border"
+            :class="isZoneAssignedToCurrent(zone) ? 'border-purple-300 bg-purple-50' : 'border-gray-200 bg-white'"
+          >
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                :class="isZoneAssignedToCurrent(zone) ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-400'"
+              >
+                <MapPin class="w-5 h-5" />
+              </div>
+              <div>
+                <div class="text-sm font-medium text-gray-900">{{ zone.nom }}</div>
+                <div class="text-xs text-gray-500">
+                  {{ zone.communeNom || 'Commune non définie' }}
+                  <span v-if="zone.superviseurId && zone.superviseurId !== selectedSuperviseur.id" class="text-orange-500">
+                    — Assignée à un autre superviseur
+                  </span>
+                </div>
+              </div>
+            </div>
+            <button
+              @click="toggleZoneAssignment(zone)"
+              :disabled="zoneAssigning === zone.id"
+              class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+              :class="isZoneAssignedToCurrent(zone)
+                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+            >
+              <span v-if="zoneAssigning === zone.id">...</span>
+              <span v-else-if="isZoneAssignedToCurrent(zone)">Retirer</span>
+              <span v-else>Attribuer</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex justify-end mt-6">
+          <button
+            type="button"
+            @click="closeZoneModal"
+            class="btn-secondary"
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- User Details Modal -->
     <div v-if="showDetailsModal && selectedUser" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold text-gray-900">
+          <h3 class="modal-header">
             Détails de l'Utilisateur
           </h3>
           <button
@@ -424,7 +525,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { userService } from '@/services'
+import { userService, zoneService, supervisionService } from '@/services'
 import Sidebar from '@/components/Sidebar.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
@@ -440,7 +541,8 @@ import {
   Trash2,
   Power,
   PowerOff,
-  X
+  X,
+  MapPin
 } from 'lucide-vue-next'
 
 // State
@@ -452,6 +554,13 @@ const editingUser = ref(null)
 const selectedUser = ref(null)
 const saving = ref(false)
 const searchQuery = ref('')
+
+// Zone assignment state
+const showZoneModal = ref(false)
+const selectedSuperviseur = ref(null)
+const allZones = ref([])
+const zoneLoading = ref(false)
+const zoneAssigning = ref(null)
 
 const filters = ref({
   search: '',
@@ -591,13 +700,29 @@ const saveUser = async () => {
   saving.value = true
   try {
     if (editingUser.value) {
-      const updatedUser = await userService.updateUser(editingUser.value.id, userForm.value)
+      const payload = {
+        username: userForm.value.username,
+        email: userForm.value.email,
+        firstName: userForm.value.prenom,
+        lastName: userForm.value.nom,
+        password: userForm.value.password,
+        roles: userForm.value.role ? [userForm.value.role] : []
+      }
+      const updatedUser = await userService.updateUser(editingUser.value.id, payload)
       const index = users.value.findIndex(u => u.id === editingUser.value.id)
       if (index !== -1) {
         users.value[index] = updatedUser.data
       }
     } else {
-      const newUser = await userService.createUser(userForm.value)
+      const payload = {
+        username: userForm.value.username,
+        email: userForm.value.email,
+        firstName: userForm.value.prenom,
+        lastName: userForm.value.nom,
+        password: userForm.value.password,
+        roles: userForm.value.role ? [userForm.value.role] : []
+      }
+      const newUser = await userService.createUser(payload)
       users.value.push(newUser.data)
     }
     closeModal()
@@ -627,6 +752,51 @@ const closeDetailsModal = () => {
   selectedUser.value = null
 }
 
+// Zone assignment methods
+const openZoneModal = async (user) => {
+  selectedSuperviseur.value = user
+  showZoneModal.value = true
+  zoneLoading.value = true
+  try {
+    const response = await zoneService.getAllZones()
+    allZones.value = response.data || []
+  } catch (error) {
+    console.error('Erreur lors du chargement des zones:', error)
+    allZones.value = []
+  } finally {
+    zoneLoading.value = false
+  }
+}
+
+const closeZoneModal = () => {
+  showZoneModal.value = false
+  selectedSuperviseur.value = null
+  allZones.value = []
+}
+
+const isZoneAssignedToCurrent = (zone) => {
+  return zone.superviseurId === selectedSuperviseur.value.id
+}
+
+const toggleZoneAssignment = async (zone) => {
+  zoneAssigning.value = zone.id
+  try {
+    if (isZoneAssignedToCurrent(zone)) {
+      // Retirer: assigner avec un superviseurId vide
+      await supervisionService.assignZoneToSuperviseur(zone.id, '')
+      zone.superviseurId = null
+    } else {
+      // Attribuer
+      await supervisionService.assignZoneToSuperviseur(zone.id, selectedSuperviseur.value.id)
+      zone.superviseurId = selectedSuperviseur.value.id
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'affectation de zone:', error)
+  } finally {
+    zoneAssigning.value = null
+  }
+}
+
 const fetchUsers = async () => {
   loading.value = true
   try {
@@ -640,6 +810,7 @@ const fetchUsers = async () => {
         email: user.email,
         active: user.enabled,
         lastLogin: user.lastLogin,
+        sessionCount: user.sessionCount || 0,
         // Extraire le rôle principal (ignorer "default-roles-mairie")
         role: userWithRoles.roles.find(r => r !== 'default-roles-mairie') || 'USER',
         telephone: '', // Pas dans la réponse actuelle

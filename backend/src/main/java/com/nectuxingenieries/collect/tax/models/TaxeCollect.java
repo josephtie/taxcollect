@@ -7,8 +7,6 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.Year;
-import java.time.YearMonth;
 
 @Entity
 @Table(name = "taxecollect")
@@ -36,14 +34,24 @@ public class TaxeCollect extends Auditable {
 
     @ManyToOne
     @JoinColumn(name = "zone_id", nullable = false)
-    private ZoneCollecte zone;
+    private Zone zone;
+
+    @ManyToOne
+    @JoinColumn(name = "taxe_id")
+    private Taxe taxe;
 
 
-    @Column(name = "date_paiement", nullable = false)
+    @Column(name = "date_paiement")
     private LocalDate datePaiement;
 
-    private YearMonth periodeMensuelle;
-    private Year periodeAnnuelle;
+    @Column(name = "period_start", nullable = false)
+    private LocalDate periodStart;
+
+    @Column(name = "period_end", nullable = false)
+    private LocalDate periodEnd;
+
+    @Column(name = "due_date", nullable = false)
+    private LocalDate dueDate;
 
 
     @Enumerated(EnumType.STRING)
@@ -51,11 +59,25 @@ public class TaxeCollect extends Auditable {
     private StatutPayment statut;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column
     private ModePaiement modePaiement;
 
     private boolean offline; // true if processed offline and synced later
-    private String numeroRecu; // généré automatiquement, unique
+    @Column(unique = true)
+    private String numeroRecu;
+
+    // --- Extensions module paiement ---
+    @Column(unique = true)
+    private String reference;
+
+    @Column(name = "remaining_amount", precision = 19, scale = 2)
+    private BigDecimal remainingAmount;
+
+    @Column(length = 8)
+    private String currency;
+
+    @Column(name = "tax_type", length = 64)
+    private String taxType;
 
     // Getters & setters
     public Long getId() { return id; }
@@ -71,8 +93,8 @@ public class TaxeCollect extends Auditable {
     public void setPaye(boolean paye) { this.paye = paye; }
     public Contribuable getContribuable() { return contribuable; }
     public void setContribuable(Contribuable contribuable) { this.contribuable = contribuable; }
-    public ZoneCollecte getZone() { return zone; }
-    public void setZone(ZoneCollecte zone) { this.zone = zone; }
+    public Zone getZone() { return zone; }
+    public void setZone(Zone zone) { this.zone = zone; }
 
     public LocalDate getDatePaiement() {
         return datePaiement;
@@ -92,7 +114,9 @@ public class TaxeCollect extends Auditable {
         this.statut = statut;
     }
 
-    public TaxeCollect(BigDecimal montant, LocalDate dateEmission, LocalDate dateLimite, boolean paye, Contribuable contribuable, ZoneCollecte zone, LocalDate datePaiement, StatutPayment statut, Long id) {
+    public TaxeCollect() {}
+
+    public TaxeCollect(BigDecimal montant, LocalDate dateEmission, LocalDate dateLimite, boolean paye, Contribuable contribuable, Zone zone, LocalDate datePaiement, StatutPayment statut, Long id) {
         this.montant = montant;
         this.dateEmission = dateEmission;
         this.dateLimite = dateLimite;
@@ -104,20 +128,28 @@ public class TaxeCollect extends Auditable {
         this.id = id;
     }
 
-    public YearMonth getPeriodeMensuelle() {
-        return periodeMensuelle;
+    public LocalDate getPeriodStart() {
+        return periodStart;
     }
 
-    public void setPeriodeMensuelle(YearMonth periodeMensuelle) {
-        this.periodeMensuelle = periodeMensuelle;
+    public void setPeriodStart(LocalDate periodStart) {
+        this.periodStart = periodStart;
     }
 
-    public Year getPeriodeAnnuelle() {
-        return periodeAnnuelle;
+    public LocalDate getPeriodEnd() {
+        return periodEnd;
     }
 
-    public void setPeriodeAnnuelle(Year periodeAnnuelle) {
-        this.periodeAnnuelle = periodeAnnuelle;
+    public void setPeriodEnd(LocalDate periodEnd) {
+        this.periodEnd = periodEnd;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
     }
 
     public ModePaiement getModePaiement() {
@@ -142,5 +174,45 @@ public class TaxeCollect extends Auditable {
 
     public void setNumeroRecu(String numeroRecu) {
         this.numeroRecu = numeroRecu;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
+    public BigDecimal getRemainingAmount() {
+        return remainingAmount;
+    }
+
+    public void setRemainingAmount(BigDecimal remainingAmount) {
+        this.remainingAmount = remainingAmount;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public String getTaxType() {
+        return taxType;
+    }
+
+    public void setTaxType(String taxType) {
+        this.taxType = taxType;
+    }
+
+    public Taxe getTaxe() {
+        return taxe;
+    }
+
+    public void setTaxe(Taxe taxe) {
+        this.taxe = taxe;
     }
 }

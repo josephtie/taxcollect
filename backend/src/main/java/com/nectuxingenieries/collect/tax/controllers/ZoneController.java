@@ -1,8 +1,8 @@
 package com.nectuxingenieries.collect.tax.controllers;
 
 
-import com.nectuxingenieries.collect.tax.services.ZoneCollecteService;
-import com.nectuxingenieries.collect.tax.dto.ZoneCollectDto;
+import com.nectuxingenieries.collect.tax.services.ZoneService;
+import com.nectuxingenieries.collect.tax.dto.ZoneDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -10,27 +10,26 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.nectuxingenieries.collect.tax.dto.*;
 import java.util.List;
 
 @RestController
 @RequestMapping("api/taxcollect/zone")
 @RequiredArgsConstructor
-@Tag(name = "Zones", description = "API de gestion des zones de collecte")
+@Tag(name = "Zones", description = "API de gestion des zones")
 public class ZoneController {
 
-    private final ZoneCollecteService zoneService;
+    private final ZoneService zoneService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'AGENT')")
-    public ResponseEntity<List<ZoneCollectDto>> findAll() {
-        List<ZoneCollectDto> zones = zoneService.findAll();
+    public ResponseEntity<List<ZoneDto>> findAll() {
+        List<ZoneDto> zones = zoneService.findAll();
         return ResponseEntity.ok(zones);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'AGENT')")
-    public ResponseEntity<ZoneCollectDto> findById(@PathVariable Long id) {
+    public ResponseEntity<ZoneDto> findById(@PathVariable Long id) {
         return zoneService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -38,15 +37,15 @@ public class ZoneController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
-    public ResponseEntity<ZoneCollectDto> create(@RequestBody ZoneCollectDto zoneDto) {
-        ZoneCollectDto created = zoneService.create(zoneDto);
+    public ResponseEntity<ZoneDto> create(@RequestBody ZoneDto zoneDto) {
+        ZoneDto created = zoneService.create(zoneDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
-    public ResponseEntity<ZoneCollectDto> update(@PathVariable Long id, @RequestBody ZoneCollectDto zoneDto) {
-        ZoneCollectDto updated = zoneService.update(id, zoneDto);
+    public ResponseEntity<ZoneDto> update(@PathVariable Long id, @RequestBody ZoneDto zoneDto) {
+        ZoneDto updated = zoneService.update(id, zoneDto);
         return ResponseEntity.ok(updated);
     }
 
@@ -66,8 +65,8 @@ public class ZoneController {
 
     @GetMapping("/including-deleted")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
-    public ResponseEntity<List<ZoneCollectDto>> findAllIncludingDeleted() {
-        List<ZoneCollectDto> zones = zoneService.findAllIncludingDeleted();
+    public ResponseEntity<List<ZoneDto>> findAllIncludingDeleted() {
+        List<ZoneDto> zones = zoneService.findAllIncludingDeleted();
         return ResponseEntity.ok(zones);
     }
 }

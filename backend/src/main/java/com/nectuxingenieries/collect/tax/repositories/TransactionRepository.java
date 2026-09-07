@@ -73,4 +73,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     @Query("SELECT t.statut, COUNT(t) FROM Transaction t WHERE t.dateCreation >= :debut AND t.dateCreation <= :fin GROUP BY t.statut")
     List<Object[]> countByStatutAndDateRange(@Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
+    @Query("SELECT t.modePaiement, COUNT(t) FROM Transaction t GROUP BY t.modePaiement")
+    List<Object[]> countByModePaiementAll();
+
+    @Query("SELECT t.statut, COUNT(t) FROM Transaction t GROUP BY t.statut")
+    List<Object[]> countByStatutAll();
+
+    @Query("SELECT COALESCE(SUM(t.montant), 0) FROM Transaction t")
+    BigDecimal sumMontantAll();
 }

@@ -42,8 +42,37 @@
 
       <!-- Taxes Content -->
       <div class="flex-1 p-6">
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 mb-6">
+          <nav class="-mb-px flex space-x-8">
+            <button
+              @click="activeTab = 'taxes'"
+              :class="[
+                'py-2 px-1 border-b-2 font-medium text-sm',
+                activeTab === 'taxes'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ]"
+            >
+              Taxes
+            </button>
+            <button
+              v-permission="'assessments.view'"
+              @click="activeTab = 'avis'; loadAvisForTaxe()"
+              :class="[
+                'py-2 px-1 border-b-2 font-medium text-sm',
+                activeTab === 'avis'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ]"
+            >
+              Avis d'imposition
+            </button>
+          </nav>
+        </div>
+
         <!-- Alert for read-only users -->
-        <div v-if="!canCreateTaxe" class="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
+        <div v-if="!canCreateTaxe && activeTab === 'taxes'" class="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
           <div class="flex">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
@@ -60,7 +89,7 @@
         </div>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div v-if="activeTab === 'taxes'" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
               <div class="flex items-center">
@@ -143,7 +172,7 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white shadow rounded-lg mb-6 p-4">
+        <div v-if="activeTab === 'taxes'" class="bg-white shadow rounded-lg mb-6 p-4">
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Recherche</label>
@@ -190,7 +219,7 @@
         </div>
 
         <!-- Taxes Table -->
-        <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div v-if="activeTab === 'taxes'" data-testid="taxes-table" class="bg-white shadow rounded-lg overflow-hidden">
           <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
             <h3 class="text-lg leading-6 font-medium text-gray-900">Liste des Taxes</h3>
           </div>
@@ -224,12 +253,12 @@
                     <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
                   </td>
                 </tr>
-                <tr v-else-if="filteredTaxes.length === 0">
+                <tr v-else-if="paginatedTaxes.length === 0">
                   <td colspan="6" class="px-6 py-4 text-center text-gray-500">
                     Aucune taxe trouvée
                   </td>
                 </tr>
-                <tr v-else v-for="taxe in filteredTaxes" :key="taxe.id" class="hover:bg-gray-50">
+                <tr v-else v-for="taxe in paginatedTaxes" :key="taxe.id" class="hover:bg-gray-50">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">{{ taxe.nom }}</div>
                   </td>
@@ -291,6 +320,262 @@
               </tbody>
             </table>
           </div>
+          <!-- Taxes Pagination -->
+          <div class="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+            <div class="flex items-center text-sm text-gray-600">
+              <span>Affichage de </span>
+              <span class="font-medium mx-1">{{ taxesRangeStart }}</span>
+              <span>à</span>
+              <span class="font-medium mx-1">{{ taxesRangeEnd }}</span>
+              <span>sur</span>
+              <span class="font-medium mx-1">{{ taxesTotalElements }}</span>
+              <span>taxe(s)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <select
+                v-model="pageSize"
+                @change="onPageSizeChange"
+                class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option :value="10">10 / page</option>
+                <option :value="20">20 / page</option>
+                <option :value="50">50 / page</option>
+                <option :value="100">100 / page</option>
+              </select>
+              <button
+                @click="goToPage(0)"
+                :disabled="currentPage === 0 || loading"
+                class="p-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Première page"
+              >
+                <ChevronsLeft class="w-4 h-4" />
+              </button>
+              <button
+                @click="goToPage(currentPage - 1)"
+                :disabled="currentPage === 0 || loading"
+                class="p-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Page précédente"
+              >
+                <ChevronLeft class="w-4 h-4" />
+              </button>
+              <span class="text-sm text-gray-700 px-2">
+                Page <span class="font-medium">{{ currentPage + 1 }}</span> / <span class="font-medium">{{ taxesTotalPages }}</span>
+              </span>
+              <button
+                @click="goToPage(currentPage + 1)"
+                :disabled="taxesIsLastPage || loading"
+                class="p-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Page suivante"
+              >
+                <ChevronRight class="w-4 h-4" />
+              </button>
+              <button
+                @click="goToPage(taxesTotalPages - 1)"
+                :disabled="taxesIsLastPage || loading"
+                class="p-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Dernière page"
+              >
+                <ChevronsRight class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+        <div v-if="activeTab === 'avis'">
+          <!-- Avis Controls -->
+          <div class="bg-white shadow rounded-lg mb-6 p-4">
+            <div class="flex flex-wrap items-center gap-4">
+              <div class="flex-1 min-w-48">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Taxe</label>
+                <select
+                  v-model="avisFilter.taxeId"
+                  @change="loadAvisForTaxe"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">Toutes les taxes</option>
+                  <option v-for="taxe in taxes" :key="taxe.id" :value="taxe.id">
+                    {{ taxe.nom }} ({{ formatPeriodicite(taxe.periodicite) }})
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Période début</label>
+                <input
+                  type="date"
+                  v-model="avisFilter.periodStart"
+                  @change="loadAvisForTaxe"
+                  class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Période fin</label>
+                <input
+                  type="date"
+                  v-model="avisFilter.periodEnd"
+                  @change="loadAvisForTaxe"
+                  class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div class="flex items-end gap-2">
+                <button
+              v-permission="'assessments.generate'"
+              @click="generateAvis"
+              :disabled="avisGenerating"
+              data-testid="generate-avis"
+              class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 text-sm font-medium"
+            >
+                  {{ avisGenerating ? 'Génération...' : 'Générer les avis' }}
+                </button>
+                <button
+                  v-permission="'assessments.manage'"
+                  @click="markOverdueAvis"
+                  class="px-4 py-2 border border-orange-300 text-orange-700 bg-orange-50 rounded-md hover:bg-orange-100 text-sm font-medium"
+                >
+                  Marquer en retard
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Avis Stats -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4">
+              <p class="text-sm text-gray-500">Total avis</p>
+              <p class="text-xl font-semibold text-gray-900">{{ avisList.length }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+              <p class="text-sm text-gray-500">Impayés</p>
+              <p class="text-xl font-semibold text-yellow-600">{{ avisList.filter(a => a.statut === 'IMPAYE').length }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+              <p class="text-sm text-gray-500">En retard</p>
+              <p class="text-xl font-semibold text-red-600">{{ avisList.filter(a => a.statut === 'EN_RETARD').length }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+              <p class="text-sm text-gray-500">Payés</p>
+              <p class="text-xl font-semibold text-green-600">{{ avisList.filter(a => a.statut === 'PAYE').length }}</p>
+            </div>
+          </div>
+
+          <!-- Avis Table -->
+          <div data-testid="avis-table" class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+              <h3 class="text-lg leading-6 font-medium text-gray-900">Avis d'imposition</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Référence</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contribuable</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Taxe</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Période</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Échéance</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-if="avisLoading">
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+                    </td>
+                  </tr>
+                  <tr v-else-if="paginatedAvis.length === 0">
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                      Aucun avis trouvé pour cette période
+                    </td>
+                  </tr>
+                  <tr v-else v-for="avis in paginatedAvis" :key="avis.id" class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {{ avis.reference || '—' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      Contribuable #{{ avis.contribuableId }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {{ avis.taxType || '—' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div v-if="avis.periodStart">
+                        {{ formatDate(avis.periodStart) }} → {{ formatDate(avis.periodEnd) }}
+                      </div>
+                      <div v-else>{{ avis.periodeConcernee || '—' }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                      {{ formatMontant(avis.montant) }} FCFA
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <span :class="{ 'text-red-600 font-medium': isAvisOverdue(avis) }">
+                        {{ formatDate(avis.dueDate) }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <StatusBadge :status="avis.statut" type="assessment" />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- Avis Pagination -->
+            <div class="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+              <div class="flex items-center text-sm text-gray-600">
+                <span>Affichage de </span>
+                <span class="font-medium mx-1">{{ avisRangeStart }}</span>
+                <span>à</span>
+                <span class="font-medium mx-1">{{ avisRangeEnd }}</span>
+                <span>sur</span>
+                <span class="font-medium mx-1">{{ avisTotalElements }}</span>
+                <span>avis</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <select
+                  v-model="pageSize"
+                  @change="onPageSizeChange"
+                  class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option :value="10">10 / page</option>
+                  <option :value="20">20 / page</option>
+                  <option :value="50">50 / page</option>
+                  <option :value="100">100 / page</option>
+                </select>
+                <button
+                  @click="goToPage(0)"
+                  :disabled="currentPage === 0 || avisLoading"
+                  class="p-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Première page"
+                >
+                  <ChevronsLeft class="w-4 h-4" />
+                </button>
+                <button
+                  @click="goToPage(currentPage - 1)"
+                  :disabled="currentPage === 0 || avisLoading"
+                  class="p-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Page précédente"
+                >
+                  <ChevronLeft class="w-4 h-4" />
+                </button>
+                <span class="text-sm text-gray-700 px-2">
+                  Page <span class="font-medium">{{ currentPage + 1 }}</span> / <span class="font-medium">{{ avisTotalPages }}</span>
+                </span>
+                <button
+                  @click="goToPage(currentPage + 1)"
+                  :disabled="avisIsLastPage || avisLoading"
+                  class="p-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Page suivante"
+                >
+                  <ChevronRight class="w-4 h-4" />
+                </button>
+                <button
+                  @click="goToPage(avisTotalPages - 1)"
+                  :disabled="avisIsLastPage || avisLoading"
+                  class="p-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Dernière page"
+                >
+                  <ChevronsRight class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -298,7 +583,7 @@
     <!-- Create/Edit Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <h3 class="modal-header">
           {{ editingTaxe ? 'Modifier' : 'Créer' }} une Taxe
         </h3>
         
@@ -417,11 +702,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { taxeService, permissionService } from '@/services'
+import { ref, computed, onMounted, watch } from 'vue'
+import { taxeService, permissionService, assessmentService } from '@/services'
 import Sidebar from '@/components/Sidebar.vue'
 import LogicalDeletionActions from '@/components/LogicalDeletionActions.vue'
-import { Eye, Edit } from 'lucide-vue-next'
+import StatusBadge from '@/components/StatusBadge.vue'
+import { Eye, Edit, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-vue-next'
 
 // State
 const loading = ref(false)
@@ -429,6 +715,21 @@ const showCreateModal = ref(false)
 const editingTaxe = ref(null)
 const saving = ref(false)
 const taxes = ref([])
+const activeTab = ref('taxes')
+
+// Pagination state (shared, reset on tab switch)
+const currentPage = ref(0)
+const pageSize = ref(10)
+
+// Avis state
+const avisList = ref([])
+const avisLoading = ref(false)
+const avisGenerating = ref(false)
+const avisFilter = ref({
+  taxeId: '',
+  periodStart: '',
+  periodEnd: ''
+})
 
 const filters = ref({
   search: '',
@@ -459,6 +760,7 @@ const categories = [
 const periodicites = [
   'JOURNALIERE',
   'MENSUELLE',
+  'TRIMESTRIELLE',
   'ANNUELLE'
 ]
 
@@ -490,6 +792,53 @@ const filteredTaxes = computed(() => {
   return filtered
 })
 
+// Taxes pagination computed
+const taxesTotalPages = computed(() => Math.max(1, Math.ceil(filteredTaxes.value.length / pageSize.value)))
+const taxesTotalElements = computed(() => filteredTaxes.value.length)
+const taxesIsLastPage = computed(() => currentPage.value >= taxesTotalPages.value - 1)
+const taxesRangeStart = computed(() => taxesTotalElements.value === 0 ? 0 : currentPage.value * pageSize.value + 1)
+const taxesRangeEnd = computed(() => Math.min((currentPage.value + 1) * pageSize.value, taxesTotalElements.value))
+
+const paginatedTaxes = computed(() => {
+  const start = currentPage.value * pageSize.value
+  return filteredTaxes.value.slice(start, start + pageSize.value)
+})
+
+// Avis pagination computed
+const avisTotalPages = computed(() => Math.max(1, Math.ceil(filteredAvis.value.length / pageSize.value)))
+const avisTotalElements = computed(() => filteredAvis.value.length)
+const avisIsLastPage = computed(() => currentPage.value >= avisTotalPages.value - 1)
+const avisRangeStart = computed(() => avisTotalElements.value === 0 ? 0 : currentPage.value * pageSize.value + 1)
+const avisRangeEnd = computed(() => Math.min((currentPage.value + 1) * pageSize.value, avisTotalElements.value))
+
+const paginatedAvis = computed(() => {
+  const start = currentPage.value * pageSize.value
+  return filteredAvis.value.slice(start, start + pageSize.value)
+})
+
+const filteredAvis = computed(() => {
+  return avisList.value
+})
+
+// Reset page when filters change
+watch([() => filters.value.search, () => filters.value.categorie, () => filters.value.periodicite], () => {
+  currentPage.value = 0
+})
+watch(activeTab, () => {
+  currentPage.value = 0
+})
+
+function goToPage(page) {
+  if (page < 0) return
+  if (activeTab.value === 'taxes' && page >= taxesTotalPages.value) return
+  if (activeTab.value === 'avis' && page >= avisTotalPages.value) return
+  currentPage.value = page
+}
+
+function onPageSizeChange() {
+  currentPage.value = 0
+}
+
 const tauxMoyen = computed(() => {
   if (taxes.value.length === 0) return 0
   const total = taxes.value.reduce((sum, taxe) => sum + taxe.taux, 0)
@@ -513,6 +862,7 @@ const formatPeriodicite = (periodicite) => {
   const labels = {
     'JOURNALIERE': 'Journalière',
     'MENSUELLE': 'Mensuelle',
+    'TRIMESTRIELLE': 'Trimestrielle',
     'ANNUELLE': 'Annuelle'
   }
   return labels[periodicite] || periodicite
@@ -709,6 +1059,70 @@ const handleTaxeRestored = (taxe) => {
 const viewTaxeDetails = (taxe) => {
   // Implémenter la vue des détails
   console.log('View taxe:', taxe)
+}
+
+// Avis methods
+const formatDate = (dateStr) => {
+  if (!dateStr) return '—'
+  return new Date(dateStr).toLocaleDateString('fr-FR')
+}
+
+const isAvisOverdue = (avis) => {
+  if (!avis.dueDate) return false
+  return new Date(avis.dueDate) < new Date() && avis.statut !== 'PAYE'
+}
+
+const loadAvisForTaxe = async () => {
+  avisLoading.value = true
+  try {
+    const today = new Date()
+    const start = avisFilter.value.periodStart || new Date(today.getFullYear(), today.getMonth() - 3, 1).toISOString().split('T')[0]
+    const end = avisFilter.value.periodEnd || new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]
+
+    const response = await assessmentService.findByPeriod(start, end)
+    let allAvis = Array.isArray(response.data) ? response.data : []
+
+    if (avisFilter.value.taxeId) {
+      const taxe = taxes.value.find(t => t.id === avisFilter.value.taxeId)
+      if (taxe) {
+        allAvis = allAvis.filter(a => a.taxType === taxe.nom)
+      }
+    }
+
+    avisList.value = allAvis
+  } catch (err) {
+    console.error('Error loading avis:', err)
+    avisList.value = []
+  } finally {
+    avisLoading.value = false
+  }
+}
+
+const generateAvis = async () => {
+  avisGenerating.value = true
+  try {
+    const today = new Date().toISOString().split('T')[0]
+    if (avisFilter.value.taxeId) {
+      await assessmentService.generateForTaxe(avisFilter.value.taxeId, today)
+    } else {
+      await assessmentService.generateForAll(today)
+    }
+    await loadAvisForTaxe()
+  } catch (err) {
+    console.error('Error generating avis:', err)
+    alert('Erreur lors de la génération: ' + (err.response?.data?.message || err.message))
+  } finally {
+    avisGenerating.value = false
+  }
+}
+
+const markOverdueAvis = async () => {
+  try {
+    await assessmentService.markOverdue()
+    await loadAvisForTaxe()
+  } catch (err) {
+    console.error('Error marking overdue:', err)
+  }
 }
 
 // Lifecycle

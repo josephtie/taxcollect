@@ -13,7 +13,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:9090',
+        target: 'http://localhost:9091',
         changeOrigin: true,
         secure: false,
       },
@@ -22,5 +22,11 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    root: '.',
+    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
   },
 })

@@ -833,27 +833,20 @@ class _RecensementScreenState extends State<RecensementScreen>
   }
 
   void _showRecensementWizard() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        maxChildSize: 0.95,
-        minChildSize: 0.5,
-        builder: (context, scrollController) => Container(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Recensement Wizard temporairement désactivé'),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Fermer'),
-                ),
-              ],
-            ),
-          ),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => RecensementWizard(
+          onCancel: () => Navigator.of(context).pop(),
+          onSave: (contribuable) {
+            Navigator.of(context).pop();
+            _loadData();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Contribuable ${contribuable.numeroContribuable} enregistré'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          },
         ),
       ),
     );

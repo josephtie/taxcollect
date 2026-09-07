@@ -1,9 +1,10 @@
 package com.nectuxingenieries.collect.tax.services.impl;
 
 import com.nectuxingenieries.collect.tax.repositories.AgentRepository;
-import com.nectuxingenieries.collect.tax.repositories.ZoneCollecteRepository;
+import com.nectuxingenieries.collect.tax.repositories.ZoneRepository;
 import com.nectuxingenieries.collect.tax.models.Agents;
-import com.nectuxingenieries.collect.tax.models.ZoneCollecte;
+import com.nectuxingenieries.collect.tax.models.StatutAgent;
+import com.nectuxingenieries.collect.tax.models.Zone;
 import com.nectuxingenieries.collect.tax.dto.AgentsDto;
 import com.nectuxingenieries.collect.tax.exceptions.NotFoundException;
 import com.nectuxingenieries.collect.tax.exceptions.InvalidOperationException;
@@ -28,14 +29,14 @@ public class AgentServiceImpl extends BaseServiceImpl<Agents, Long, AgentsDto, A
 
     private final AgentRepository agentRepository;
     private final AgentsMapper agentMapper;
-    private final ZoneCollecteRepository zoneCollecteRepository;
+    private final ZoneRepository zoneRepository;
 
     @Autowired
-    public AgentServiceImpl(AgentRepository agentRepository, AgentsMapper agentMapper, LogicalDeletionPermissions permissions, ZoneCollecteRepository zoneCollecteRepository) {
+    public AgentServiceImpl(AgentRepository agentRepository, AgentsMapper agentMapper, LogicalDeletionPermissions permissions, ZoneRepository zoneRepository) {
         super(agentRepository, agentMapper::toEntity, agentMapper::toDto, permissions);
         this.agentRepository = agentRepository;
         this.agentMapper = agentMapper;
-        this.zoneCollecteRepository = zoneCollecteRepository;
+        this.zoneRepository = zoneRepository;
     }
 
     // Méthodes spécifiques aux agents
@@ -86,7 +87,7 @@ public class AgentServiceImpl extends BaseServiceImpl<Agents, Long, AgentsDto, A
     }
 
     @Override
-    public AgentsDto updateStatus(Long id, String status) {
+    public AgentsDto updateStatus(Long id, StatutAgent status) {
         Agents agent = agentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Agent", id));
         agent.setStatut(status);
@@ -118,16 +119,16 @@ public class AgentServiceImpl extends BaseServiceImpl<Agents, Long, AgentsDto, A
     public AgentsDto assignZoneToAgent(Long agentId, Long zoneId) {
         Agents agent = agentRepository.findById(agentId)
                 .orElseThrow(() -> new NotFoundException("Agent", agentId));
-        ZoneCollecte zone = zoneCollecteRepository.findById(zoneId)
-                .orElseThrow(() -> new NotFoundException("Zone de collecte", zoneId));
+        Zone zone = zoneRepository.findById(zoneId)
+                .orElseThrow(() -> new NotFoundException("Zone", zoneId));
 
-        if (agent.getZoneCollectes() == null) {
-            agent.setZoneCollectes(new java.util.ArrayList<>());
+        if (agent.getZones() == null) {
+            agent.setZones(new java.util.ArrayList<>());
         }
-        if (agent.getZoneCollectes().stream().anyMatch(z -> z.getId().equals(zoneId))) {
+        if (agent.getZones().stream().anyMatch(z -> z.getId().equals(zoneId))) {
             throw new InvalidOperationException("La zone " + zoneId + " est déjà assignée à l'agent " + agentId);
         }
-        agent.getZoneCollectes().add(zone);
+        agent.getZones().add(zone);
         return agentMapper.toDto(agentRepository.save(agent));
     }
 
@@ -136,17 +137,17 @@ public class AgentServiceImpl extends BaseServiceImpl<Agents, Long, AgentsDto, A
         Agents agent = agentRepository.findById(agentId)
                 .orElseThrow(() -> new NotFoundException("Agent", agentId));
 
-        if (agent.getZoneCollectes() == null || agent.getZoneCollectes().stream().noneMatch(z -> z.getId().equals(zoneId))) {
+        if (agent.getZones() == null || agent.getZones().stream().noneMatch(z -> z.getId().equals(zoneId))) {
             throw new InvalidOperationException("La zone " + zoneId + " n'est pas assignée à l'agent " + agentId);
         }
-        agent.getZoneCollectes().removeIf(z -> z.getId().equals(zoneId));
+        agent.getZones().removeIf(z -> z.getId().equals(zoneId));
         return agentMapper.toDto(agentRepository.save(agent));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<AgentsDto> getAgentsByZone(Long zoneId) {
-        return agentRepository.findByZoneCollecteId(zoneId)
+        return agentRepository.findByZoneId(zoneId)
                 .stream()
                 .map(agentMapper::toDto)
                 .collect(Collectors.toList());

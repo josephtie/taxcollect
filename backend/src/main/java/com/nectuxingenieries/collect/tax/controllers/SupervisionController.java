@@ -1,9 +1,18 @@
 package com.nectuxingenieries.collect.tax.controllers;
 
+import com.nectuxingenieries.collect.tax.dto.AgentSummaryDto;
+import com.nectuxingenieries.collect.tax.dto.SupervisedZoneDto;
+import com.nectuxingenieries.collect.tax.dto.ZoneDto;
+import com.nectuxingenieries.collect.tax.services.SupervisionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Hidden;
 
 import java.util.List;
 import java.util.Map;
@@ -11,59 +20,84 @@ import java.util.Map;
 @RestController
 @RequestMapping("api/taxcollect/supervision")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"}, allowedHeaders = "*", allowCredentials = "true")
+@Tag(name = "Supervision", description = "API de supervision des zones et affectation des agents")
 public class SupervisionController {
 
-    @GetMapping("/agents/available")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPERVISEUR')")
-    @Hidden
-    public ResponseEntity<List<Map<String, Object>>> getAvailableAgents() {
-        // Retourner une liste d'agents disponibles pour la supervision
-        List<Map<String, Object>> agents = List.of(
-            Map.of(
-                "id", 1L,
-                "nom", "Agent 1",
-                "prenom", "Doe",
-                "email", "agent1@example.com",
-                "telephone", "771234567",
-                "statut", "ACTIF",
-                "enLigne", true
-            ),
-            Map.of(
-                "id", 2L,
-                "nom", "Agent 2", 
-                "prenom", "Smith",
-                "email", "agent2@example.com",
-                "telephone", "775678901",
-                "statut", "ACTIF",
-                "enLigne", false
-            )
-        );
-        
-        return ResponseEntity.ok(agents);
+    private final SupervisionService supervisionService;
+
+    public SupervisionController(SupervisionService supervisionService) {
+        this.supervisionService = supervisionService;
+    }
+
+    private String getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            Jwt jwt = jwtAuth.getToken();
+            return jwt.getClaim("sub");
+        }
+        throw new IllegalStateException("Utilisateur non authentifié");
     }
 
     @GetMapping("/zones/supervised")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPERVISEUR')")
-    @Hidden
-    public ResponseEntity<List<Map<String, Object>>> getSupervisedZones() {
-        // Retourner une liste de zones supervisées
-        List<Map<String, Object>> zones = List.of(
-            Map.of(
-                "id", 1L,
-                "nom", "Zone Centre",
-                "statut", true,
-                "agentsCount", 2,
-                "quartier", Map.of("id", 1L, "nom", "Centre-ville")
-            ),
-            Map.of(
-                "id", 2L,
-                "nom", "Zone Nord",
-                "statut", true,
-                "agentsCount", 1,
-                "quartier", Map.of("id", 2L, "nom", "Nord-ville")
-            )
-        );
-        
+    @Operation(summary = "Récupérer les zones supervisées par l'utilisateur courant")
+    public ResponseEntity<List<SupervisedZoneDto>> getSupervisedZones() {
+        String superviseurId = getCurrentUserId();
+        List<SupervisedZoneDto> zones = supervisionService.getSupervisedZones(superviseurId);
+        return ResponseEntity.ok(zones);
+    }
+
+    @GetMapping("/agents/available")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPERVISEUR')")
+    @Operation(summary = "Récupérer les agents disponibles pour affectation")
+    public ResponseEntity<List<AgentSummaryDto>> getAvailableAgents() {
+        String superviseurId = getCurrentUserId();
+        List<AgentSummaryDto> agents = supervisionService.getAvailableAgents(superviseurId);
+        return ResponseEntity.ok(agents);
+    }
+
+    @PostMapping("/assign-agent")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPERVISEUR')")
+    @Operation(summary = "Affecter un agent à une zone")
+    public ResponseEntity<Void> assignAgentToZone(@RequestBody Map<String, Long> body) {
+        Long zoneId = body.get("zoneId");
+        Long agentId = body.get("agentId");
+        if (zoneId == null || agentId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        supervisionService.assignAgentToZone(zoneId, agentId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/unassign-agent/{zoneId}/{agentId}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPERVISEUR')")
+    @Operation(summary = "Retirer un agent d'une zone")
+    public ResponseEntity<Void> unassignAgentFromZone(@PathVariable Long zoneId, @PathVariable Long agentId) {
+        supervisionService.unassignAgentFromZone(zoneId, agentId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/zones/{zoneId}/assign-superviseur")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Affecter une zone à un superviseur")
+    public ResponseEntity<ZoneDto> assignZoneToSuperviseur(@PathVariable Long zoneId, @RequestBody Map<String, String> body) {
+        String superviseurId = body.get("superviseurId");
+        if (superviseurId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (superviseurId.trim().isEmpty()) {
+            superviseurId = null;
+        }
+        ZoneDto zone = supervisionService.assignZoneToSuperviseur(zoneId, superviseurId);
+        return ResponseEntity.ok(zone);
+    }
+
+    @GetMapping("/zones/unassigned")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPERVISEUR')")
+    @Operation(summary = "Récupérer les zones non assignées au superviseur courant")
+    public ResponseEntity<List<ZoneDto>> getUnassignedZones() {
+        String superviseurId = getCurrentUserId();
+        List<ZoneDto> zones = supervisionService.getUnassignedZones(superviseurId);
         return ResponseEntity.ok(zones);
     }
 }

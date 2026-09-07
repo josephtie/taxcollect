@@ -139,33 +139,89 @@ public class ContribuableServiceImpl implements ContribuableService {
     @Override
     @Transactional(readOnly = true)
     public byte[] exportContribuables(String format, Long zoneId) {
-        // Pour l'instant, retourner un contenu CSV basique
-        // À implémenter avec Apache POI pour Excel ou CSV writer
-        String content = "Nom,Prenom,Email,Telephone,Adresse,Zone\n";
-        
         List<Contribuable> contribuables = contribuableRepository.findAll();
-        
+
         if (zoneId != null) {
-            // Filtrer par zone si spécifié
             contribuables = contribuables.stream()
-                    .filter(c -> {
-                        // Logique de filtrage par zone à implémenter
-                        return true; // Pour l'instant, tous
-                    })
+                    .filter(c -> c.getZone() != null && c.getZone().getId().equals(zoneId))
                     .collect(Collectors.toList());
         }
-        
-        for (Contribuable contribuable : contribuables) {
-            content += String.format("%s,%s,%s,%s,%s,%s\n",
-                    contribuable.getNom(),
-                    contribuable.getPrenom(),
-                    contribuable.getEmail() != null ? contribuable.getEmail() : "",
-                    contribuable.getTelephone() != null ? contribuable.getTelephone() : "",
-                    contribuable.getAdresse() != null ? contribuable.getAdresse() : "",
-                    "" // Zone à implémenter
-            );
+
+        if ("xlsx".equalsIgnoreCase(format)) {
+            return exportContribuablesToXlsx(contribuables);
+        } else {
+            return exportContribuablesToCsv(contribuables);
         }
-        
-        return content.getBytes();
+    }
+
+    private byte[] exportContribuablesToCsv(List<Contribuable> contribuables) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Numero,Nom,Prenom,Telephone,Email,Type,Activite,Zone,Quartier,Statut,BaseImposable\n");
+        for (Contribuable c : contribuables) {
+            sb.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    escapeCsv(c.getNumeroContribuable()),
+                    escapeCsv(c.getNom()),
+                    escapeCsv(c.getPrenom()),
+                    c.getTelephone() != null ? c.getTelephone() : "",
+                    c.getEmail() != null ? c.getEmail() : "",
+                    c.getTypeContribuable() != null ? c.getTypeContribuable() : "",
+                    escapeCsv(c.getActivite()),
+                    c.getZone() != null ? escapeCsv(c.getZone().getNom()) : "",
+                    c.getQuartier() != null ? escapeCsv(c.getQuartier()) : "",
+                    c.getStatut() != null ? c.getStatut() : "",
+                    c.getBaseImposable() != null ? c.getBaseImposable().toPlainString() : ""
+            ));
+        }
+        return sb.toString().getBytes();
+    }
+
+    private byte[] exportContribuablesToXlsx(List<Contribuable> contribuables) {
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Contribuables");
+
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
+            String[] headers = {"Numero", "Nom", "Prenom", "Telephone", "Email", "Type", "Activite", "Zone", "Quartier", "Statut", "BaseImposable"};
+            for (int i = 0; i < headers.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+                sheet.setColumnWidth(i, 4000);
+            }
+
+            int rowIdx = 1;
+            for (Contribuable c : contribuables) {
+                org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(c.getNumeroContribuable() != null ? c.getNumeroContribuable() : "");
+                row.createCell(1).setCellValue(c.getNom() != null ? c.getNom() : "");
+                row.createCell(2).setCellValue(c.getPrenom() != null ? c.getPrenom() : "");
+                row.createCell(3).setCellValue(c.getTelephone() != null ? c.getTelephone() : "");
+                row.createCell(4).setCellValue(c.getEmail() != null ? c.getEmail() : "");
+                row.createCell(5).setCellValue(c.getTypeContribuable() != null ? c.getTypeContribuable() : "");
+                row.createCell(6).setCellValue(c.getActivite() != null ? c.getActivite() : "");
+                row.createCell(7).setCellValue(c.getZone() != null ? c.getZone().getNom() : "");
+                row.createCell(8).setCellValue(c.getQuartier() != null ? c.getQuartier() : "");
+                row.createCell(9).setCellValue(c.getStatut() != null ? c.getStatut() : "");
+                row.createCell(10).setCellValue(c.getBaseImposable() != null ? c.getBaseImposable().doubleValue() : 0);
+            }
+
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            workbook.write(baos);
+            return baos.toByteArray();
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Erreur lors de la génération du fichier Excel", e);
+        }
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 }

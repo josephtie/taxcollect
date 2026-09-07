@@ -83,16 +83,7 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "credentials": [
-        {
-          "id": "admin-cred-id",
-          "type": "password",
-          "userLabel": "Password",
-          "createdDate": 1642694400000,
-          "secretData": "{\"value\":\"$2a$10$abcdefghijklmnopqrstuv\",\"salt\":\"abcdefghijklmnopqrstuv\",\"additionalParameters\":{}}",
-          "credentialData": "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
-        }
-      ],
+      "credentials": [],
       "realmRoles": ["ADMIN"],
       "clientRoles": {},
       "attributes": {}
@@ -110,16 +101,7 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "credentials": [
-        {
-          "id": "tresor-cred-id",
-          "type": "password",
-          "userLabel": "Password",
-          "createdDate": 1642694400000,
-          "secretData": "{\"value\":\"$2a$10$abcdefghijklmnopqrstuv\",\"salt\":\"abcdefghijklmnopqrstuv\",\"additionalParameters\":{}}",
-          "credentialData": "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
-        }
-      ],
+      "credentials": [],
       "realmRoles": ["TRESOR"],
       "clientRoles": {},
       "attributes": {}
@@ -137,16 +119,7 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "credentials": [
-        {
-          "id": "agent-cred-id",
-          "type": "password",
-          "userLabel": "Password",
-          "createdDate": 1642694400000,
-          "secretData": "{\"value\":\"$2a$10$abcdefghijklmnopqrstuv\",\"salt\":\"abcdefghijklmnopqrstuv\",\"additionalParameters\":{}}",
-          "credentialData": "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
-        }
-      ],
+      "credentials": [],
       "realmRoles": ["AGENT"],
       "clientRoles": {},
       "attributes": {}
@@ -164,16 +137,7 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "credentials": [
-        {
-          "id": "superviseur-cred-id",
-          "type": "password",
-          "userLabel": "Password",
-          "createdDate": 1642694400000,
-          "secretData": "{\"value\":\"$2a$10$abcdefghijklmnopqrstuv\",\"salt\":\"abcdefghijklmnopqrstuv\",\"additionalParameters\":{}}",
-          "credentialData": "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
-        }
-      ],
+      "credentials": [],
       "realmRoles": ["SUPERVISEUR"],
       "clientRoles": {},
       "attributes": {}

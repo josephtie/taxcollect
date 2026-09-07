@@ -8,9 +8,9 @@ export const authService = {
   // Connexion via l'API backend (qui communique avec Keycloak)
   async login(username, password) {
     try {
-      console.log('Tentative de connexion vers:', `${this.apiUrl}/api/auth/login`)
+      console.log('Tentative de connexion vers:', `${this.apiUrl}/auth/login`)
       
-      const response = await fetch(`${this.apiUrl}/api/auth/login`, {
+      const response = await fetch(`${this.apiUrl}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -321,7 +321,7 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
                         <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-3 overflow-hidden">
-                          <img v-if="agent.photo" :src="agent.photo.startsWith('http') ? agent.photo : `http://localhost:9091${agent.photo}`" :alt="agent.nom" class="w-full h-full object-cover" />
+                          <img v-if="agent.photo" :src="agent.photo.startsWith('http') ? agent.photo : `/api${agent.photo}`" :alt="agent.nom" class="w-full h-full object-cover" />
                           <span v-else class="text-sm font-medium text-gray-600">
                             {{ agent.nom[0] }}{{ agent.prenom[0] }}
                           </span>
@@ -505,7 +505,7 @@
           <!-- Agent info -->
           <div class="flex items-center gap-4">
             <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-              <img v-if="detailsAgent.photo" :src="detailsAgent.photo.startsWith('http') ? detailsAgent.photo : `http://localhost:9091${detailsAgent.photo}`" :alt="detailsAgent.nom" class="w-full h-full object-cover" />
+              <img v-if="detailsAgent.photo" :src="detailsAgent.photo.startsWith('http') ? detailsAgent.photo : `/api${detailsAgent.photo}`" :alt="detailsAgent.nom" class="w-full h-full object-cover" />
               <span v-else class="text-xl font-semibold text-gray-600">{{ detailsAgent.nom?.[0] }}{{ detailsAgent.prenom?.[0] }}</span>
             </div>
             <div class="flex-1">
@@ -705,7 +705,7 @@ const formatCurrency = (amount) => {
 const photoFullUrl = computed(() => {
   if (!agentForm.value.photo) return ''
   if (agentForm.value.photo.startsWith('http')) return agentForm.value.photo
-  return `http://localhost:9091${agentForm.value.photo}`
+  return `/api${agentForm.value.photo}`
 })
 
 const handlePhotoUpload = async (event) => {

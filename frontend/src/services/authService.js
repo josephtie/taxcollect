@@ -2,15 +2,15 @@ import api from './api'
 import { permissionService } from './permissionService'
 
 export const authService = {
-  // URL de l'API backend
-  apiUrl: 'http://localhost:9091',
+  // URL de l'API backend (via proxy Nginx)
+  apiUrl: import.meta.env.VITE_API_URL || '',
 
   // Connexion via l'API backend (qui communique avec Keycloak)
   async login(username, password) {
     try {
-      console.log('Tentative de connexion vers:', `${this.apiUrl}/auth/login`)
+      console.log('Tentative de connexion vers:', `${this.apiUrl}/api/auth/login`)
       
-      const response = await fetch(`${this.apiUrl}/auth/login`, {
+      const response = await fetch(`${this.apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

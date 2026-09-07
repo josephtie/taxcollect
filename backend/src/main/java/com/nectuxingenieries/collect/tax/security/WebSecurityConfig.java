@@ -49,8 +49,10 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of(
-            "http://localhost:*",     // Autoriser tous les ports localhost
-            "http://127.0.0.1:*"    // Autoriser tous les ports 127.0.0.1
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "http://83.171.249.150:*",
+            "https://83.171.249.150:*"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

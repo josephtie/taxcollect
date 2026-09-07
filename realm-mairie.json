@@ -294,7 +294,7 @@
       "description": "Client pour l'administration Keycloak",
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
-      "secret": "yp1Lwh1Lic2tJ9paQhzaj4KHkLiFYdnc",
+      "secret": "UWyD30VzrHMYOdmgDTsaxaFmuYzMB9eP",
       "redirectUris": ["http://localhost:8080/*"],
       "webOrigins": ["http://localhost:8080"],
       "bearerOnly": false,

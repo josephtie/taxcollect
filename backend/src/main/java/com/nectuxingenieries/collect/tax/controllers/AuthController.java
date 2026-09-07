@@ -18,7 +18,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"}, allowedHeaders = "*", allowCredentials = "true")
 @Tag(name = "Authentification", description = "API d'authentification Keycloak")
 public class AuthController {
 

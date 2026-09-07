@@ -45,7 +45,7 @@ services:
     image: quay.io/keycloak/keycloak:25.0.1
     container_name: keycloakTax
     restart: always
-    command: ["start-dev", "--import-realm"]
+    command: ["start-dev"]
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
@@ -57,7 +57,7 @@ services:
     ports:
       - "18080:8080"
     volumes:
-      - ./realm-mairie.json:/opt/keycloak/data/import/realm-mairie.json
+      - keycloak_data:/opt/keycloak/data
     networks:
       - internal
     depends_on:
@@ -165,18 +165,6 @@ services:
     networks:
       - internal
 
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: taxcollect-prometheus
-    restart: always
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - internal
-    depends_on:
-      backend:
-        condition: service_started
-
   frontend:
     build:
       context: ./frontend
@@ -195,6 +183,7 @@ volumes:
   ldap_data:
   ldap_config:
   pg_data:
+  keycloak_data:
 
 networks:
   internal:

@@ -12,6 +12,10 @@ class CollectionOrderService extends BaseService {
   async getCollectionOrder(reference) {
     return this.get(`/${reference}`)
   }
+
+  async getAllCollectionOrders(page = 0, size = 20) {
+    return this.get('', { page, size })
+  }
 }
 
 export const collectionOrderService = new CollectionOrderService()

@@ -256,6 +256,18 @@
                 <option value="COMMERCANT">Commerçant</option>
                 <option value="PROPRIETAIRE_FONCIER">Propriétaire foncier</option>
               </select>
+              <select v-model="filterZoneId" @change="onZoneFilterChange" data-testid="filter-zone" class="border border-gray-300 rounded-md text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <option value="">Toutes les zones</option>
+                <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.nom }}</option>
+              </select>
+              <select v-model="filterQuartierId" @change="onQuartierFilterChange" data-testid="filter-quartier" class="border border-gray-300 rounded-md text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary-500" :disabled="!filterZoneId">
+                <option value="">Tous les quartiers</option>
+                <option v-for="q in quartiers" :key="q.id" :value="q.id">{{ q.nom }}</option>
+              </select>
+              <select v-model="filterSecteurId" @change="loadContribuables" data-testid="filter-secteur" class="border border-gray-300 rounded-md text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary-500" :disabled="!filterQuartierId">
+                <option value="">Tous les secteurs</option>
+                <option v-for="s in secteurs" :key="s.id" :value="s.id">{{ s.nom }}</option>
+              </select>
             </div>
             <button
               @click="openCreateModal"
@@ -285,6 +297,9 @@
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activité</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zone</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quartier</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Secteur</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Base imposable</th>
                   <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -300,6 +315,9 @@
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ c.activite || '—' }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ c.zoneNom || '—' }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ c.quartierNom || '—' }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ c.secteurNom || '—' }}</td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ c.baseImposable ? formatMoney(c.baseImposable) : '—' }}</td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button @click="openEditModal(c)" class="text-primary-600 hover:text-primary-900 mr-3">Modifier</button>
@@ -479,7 +497,7 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
-import { agentService, zoneService, contribuableService } from '@/services'
+import { agentService, zoneService, contribuableService, quartierService, secteurService } from '@/services'
 import InteractiveMap from '@/components/InteractiveMap.vue'
 import Sidebar from '@/components/Sidebar.vue'
 import {
@@ -500,6 +518,11 @@ const contribuables = ref([])
 const contribuableLoading = ref(false)
 const searchQuery = ref('')
 const filterType = ref('')
+const filterZoneId = ref('')
+const filterQuartierId = ref('')
+const filterSecteurId = ref('')
+const quartiers = ref([])
+const secteurs = ref([])
 const currentPage = ref(0)
 const totalPages = ref(0)
 const pageSize = ref(10)
@@ -614,19 +637,20 @@ const loadContribuables = async () => {
     let response
     const pageParams = { page: currentPage.value, size: pageSize.value }
 
+    const filters = {}
+    if (filterType.value) filters.typeContribuable = filterType.value
+    if (filterZoneId.value) filters.zoneId = filterZoneId.value
+    if (filterQuartierId.value) filters.quartierId = filterQuartierId.value
+    if (filterSecteurId.value) filters.secteurId = filterSecteurId.value
+
     if (searchQuery.value && searchQuery.value.trim()) {
-      // Recherche par terme
-      const filters = {}
-      if (filterType.value) filters.typeContribuable = filterType.value
       response = await contribuableService.searchContribuables(searchQuery.value.trim(), {
         ...pageParams,
         ...filters,
       })
-    } else if (filterType.value) {
-      // Filtrage par type
-      response = await contribuableService.get('/filter', { typeContribuable: filterType.value, ...pageParams })
+    } else if (Object.keys(filters).length > 0) {
+      response = await contribuableService.get('/filter', { ...filters, ...pageParams })
     } else {
-      // Pagination simple
       response = await contribuableService.getAllContribuables(pageParams)
     }
 
@@ -657,6 +681,40 @@ const onSearchInput = () => {
     currentPage.value = 0
     loadContribuables()
   }, 300)
+}
+
+const onZoneFilterChange = async () => {
+  filterQuartierId.value = ''
+  filterSecteurId.value = ''
+  secteurs.value = []
+  if (filterZoneId.value) {
+    try {
+      const response = await quartierService.getQuartiersByZone(filterZoneId.value)
+      quartiers.value = response.data || []
+    } catch (error) {
+      console.error('Erreur lors du chargement des quartiers:', error)
+      quartiers.value = []
+    }
+  } else {
+    quartiers.value = []
+  }
+  loadContribuables()
+}
+
+const onQuartierFilterChange = async () => {
+  filterSecteurId.value = ''
+  if (filterQuartierId.value) {
+    try {
+      const response = await secteurService.getSecteursByQuartier(filterQuartierId.value)
+      secteurs.value = response.data || []
+    } catch (error) {
+      console.error('Erreur lors du chargement des secteurs:', error)
+      secteurs.value = []
+    }
+  } else {
+    secteurs.value = []
+  }
+  loadContribuables()
 }
 
 const changePage = (page) => {

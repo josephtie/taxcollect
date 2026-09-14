@@ -148,7 +148,13 @@ import {
   Wallet,
   Map as MapIcon,
   Users as UsersIcon,
-  FileText
+  FileText,
+  AlertTriangle,
+  Route,
+  Calendar,
+  MessageSquare,
+  RefreshCw,
+  History
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -206,10 +212,39 @@ const menuGroups = [
     label: 'Supervision',
     icon: Eye,
     children: [
+      { name: 'Tableau de bord zone', to: '/dashboard-superviseur', icon: LayoutDashboard, permission: 'supervision.view' },
       { name: 'Supervision', to: '/supervision', icon: Eye, permission: 'supervision.view' },
       { name: 'Analyse Agents', to: '/analyse-agents', icon: BarChart3, permission: 'supervision.view' },
       { name: 'Analyse Zones', to: '/analyse-zones', icon: TrendingUp, permission: 'supervision.view' },
       { name: 'Carte Recensement', to: '/carte-recensement', icon: MapPin, permission: 'supervision.view' }
+    ]
+  },
+  // Bloc 3b: Pilotage opérationnel (Superviseur)
+  {
+    label: 'Pilotage',
+    icon: Route,
+    children: [
+      { name: 'Tournées', to: '/tournees', icon: Route, permission: 'tournees.view' },
+      { name: 'Recouvrement', to: '/recouvrement', icon: Wallet, permission: 'recouvrement.view' },
+      { name: 'Promesses', to: '/promesses', icon: FileText, permission: 'promesses.view' },
+      { name: 'Anomalies', to: '/anomalies', icon: AlertTriangle, permission: 'anomalies.view' },
+      { name: 'Synchronisation', to: '/synchronisation', icon: RefreshCw, permission: 'sync.view' },
+      { name: 'Réclamations', to: '/reclamations', icon: MessageSquare, permission: 'reclamations.view' },
+      { name: 'Audit', to: '/audit', icon: History, permission: 'audit.view' }
+    ]
+  },
+  // Bloc 3c: Mon Quartier (Responsable de Quartier / Chef d'Équipe)
+  {
+    label: 'Mon Quartier',
+    icon: Building,
+    children: [
+      { name: 'Tableau de bord', to: '/dashboard-responsable', icon: LayoutDashboard, permission: 'quartiers.view' },
+      { name: 'Mes agents', to: '/responsable-agents', icon: Users, permission: 'agents.view' },
+      { name: 'Contribuables', to: '/responsable-contribuables', icon: Building, permission: 'contribuables.view' },
+      { name: 'Visites terrain', to: '/responsable-visites', icon: MapPin, permission: 'visites.view' },
+      { name: 'Collectes', to: '/responsable-collectes', icon: Wallet, permission: 'payments.view' },
+      { name: 'Anomalies', to: '/responsable-anomalies', icon: AlertTriangle, permission: 'anomalies.view' },
+      { name: 'Rapports', to: '/responsable-rapports', icon: BarChart3, permission: 'reports.view' }
     ]
   },
   // Bloc 4: Géographie
@@ -286,6 +321,7 @@ const userRole = computed(() => {
   switch (role) {
     case 'ADMIN': return 'Administrateur'
     case 'SUPERVISEUR': return 'Superviseur'
+    case 'RESPONSABLE_QUARTIER': return 'Resp. Quartier'
     case 'TRESOR': return 'Trésor'
     case 'AGENT': return 'Agent'
     case 'CONTRIBUABLE': return 'Contribuable'

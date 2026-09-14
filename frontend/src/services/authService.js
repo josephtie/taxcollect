@@ -119,30 +119,38 @@ export const authService = {
   extractRoleFromToken(payload) {
     console.log('Payload JWT:', payload)
     
-    if (payload.resource_access && payload.resource_access['tax-backend']) {
-      const roles = payload.resource_access['tax-backend'].roles
-      console.log('Roles from resource_access:', roles)
-      const role = roles.includes('ADMIN') ? 'ADMIN' : 
-                   roles.includes('SUPERVISEUR') ? 'SUPERVISEUR' :
-                   roles.includes('TRESOR') ? 'TRESOR' : 
-                   roles.includes('AGENT') ? 'AGENT' :
-                   roles.includes('CONTRIBUABLE') ? 'CONTRIBUABLE' : 'USER'
-      console.log('Role determined:', role)
-      return role
-    }
-    
+    // Ordre de priorité des rôles métier. Doit rester aligné sur les rôles du realm
+    // Keycloak (realm-mairie.json) et sur JwtAuthConverter côté backend.
+    const ROLE_PRIORITY = [
+      'ADMIN',
+      'SUPERVISEUR',
+      'TRESOR',
+      'RESPONSABLE_QUARTIER',
+      'AGENT',
+      'CONTRIBUABLE'
+    ]
+
+    // Le backend lit realm_access.roles : on le privilégie pour rester cohérent,
+    // avec resource_access['tax-backend'] en repli.
     const realmRoles = payload.realm_access?.roles || []
-    console.log('Roles from realm_access:', realmRoles)
-    
-    // Chercher les rôles métier dans l'ordre de priorité
-    const role = realmRoles.includes('ADMIN') ? 'ADMIN' : 
-                 realmRoles.includes('SUPERVISEUR') ? 'SUPERVISEUR' :
-                 realmRoles.includes('TRESOR') ? 'TRESOR' : 
-                 realmRoles.includes('AGENT') ? 'AGENT' :
-                 realmRoles.includes('CONTRIBUABLE') ? 'CONTRIBUABLE' : 'USER'
-    
-    console.log('Role determined from realm:', role)
+    const clientRoles = payload.resource_access?.['tax-backend']?.roles || []
+    const roles = [...realmRoles, ...clientRoles]
+    console.log('Roles from token:', roles)
+
+    const role = ROLE_PRIORITY.find(r => roles.includes(r)) || 'USER'
+    console.log('Role determined:', role)
     return role
+  },
+
+  // Récupérer l'utilisateur courant depuis le stockage local
+  getCurrentUser() {
+    try {
+      const raw = localStorage.getItem('user')
+      return raw ? JSON.parse(raw) : null
+    } catch (error) {
+      console.error('Erreur lecture utilisateur courant:', error)
+      return null
+    }
   },
 
   // Déconnexion
@@ -164,10 +172,49 @@ export const authService = {
     return localStorage.getItem('authToken')
   },
 
-  // Rafraîchir le token (non implémenté pour l'instant)
+  // Rafraîchir le token via /auth/refresh (échange refresh_token côté Keycloak)
   async refreshToken() {
-    // Pour l'instant, on déconnecte et on redirige vers login
-    this.logout()
-    return null
+    const refreshToken = localStorage.getItem('refreshToken')
+    if (!refreshToken) {
+      this.logout()
+      return null
+    }
+
+    try {
+      const response = await fetch(`${this.apiUrl}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      })
+
+      if (!response.ok) {
+        this.logout()
+        return null
+      }
+
+      const data = await response.json()
+      if (!data.access_token) {
+        this.logout()
+        return null
+      }
+
+      localStorage.setItem('authToken', data.access_token)
+      if (data.refresh_token) {
+        localStorage.setItem('refreshToken', data.refresh_token)
+      }
+
+      const userInfo = this.parseJWT(data.access_token)
+      localStorage.setItem('user', JSON.stringify(userInfo))
+      permissionService.init(userInfo)
+
+      return data.access_token
+    } catch (error) {
+      console.error('Erreur rafraîchissement du token:', error)
+      this.logout()
+      return null
+    }
   }
 }

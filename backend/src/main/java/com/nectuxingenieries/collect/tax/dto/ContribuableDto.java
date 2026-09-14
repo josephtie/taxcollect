@@ -18,7 +18,11 @@ public class ContribuableDto {
     private Double longitude;
     private Double precisionGps;
     private Long zoneId;
+    private String zoneNom;
+    private Long quartierId;
+    private String quartierNom;
     private Long secteurId;
+    private String secteurNom;
     private List<Long> taxeIds;
 
     private String numeroContribuable;
@@ -57,8 +61,16 @@ public class ContribuableDto {
     public void setPrecisionGps(Double precisionGps) { this.precisionGps = precisionGps; }
     public Long getZoneId() { return zoneId; }
     public void setZoneId(Long zoneId) { this.zoneId = zoneId; }
+    public String getZoneNom() { return zoneNom; }
+    public void setZoneNom(String zoneNom) { this.zoneNom = zoneNom; }
+    public Long getQuartierId() { return quartierId; }
+    public void setQuartierId(Long quartierId) { this.quartierId = quartierId; }
+    public String getQuartierNom() { return quartierNom; }
+    public void setQuartierNom(String quartierNom) { this.quartierNom = quartierNom; }
     public Long getSecteurId() { return secteurId; }
     public void setSecteurId(Long secteurId) { this.secteurId = secteurId; }
+    public String getSecteurNom() { return secteurNom; }
+    public void setSecteurNom(String secteurNom) { this.secteurNom = secteurNom; }
     public List<Long> getTaxeIds() { return taxeIds; }
     public void setTaxeIds(List<Long> taxeIds) { this.taxeIds = taxeIds; }
 

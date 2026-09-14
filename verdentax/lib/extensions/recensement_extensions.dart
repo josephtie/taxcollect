@@ -316,8 +316,8 @@ extension RecensementServiceGeolocation on RecensementService {
                 version: contribuable.version + 1,
               );
               
-              // Sauvegarder les modifications
-              await updateContribuable(updatedContribuable);
+              // Sauvegarder les modifications (agentId requis par updateContribuable)
+              await updateContribuable(updatedContribuable, contribuable.agentId);
             }
           }
         }

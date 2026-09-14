@@ -122,9 +122,39 @@
 
 ---
 
-## 5. Contribuable — Augustin Mwamba
+## 5. Responsable de quartier — Jean-Pierre Ilunga
 
-**Rôle** : Aucun (utilisateur indirect via QR code)
+**Rôle** : `RESPONSABLE_QUARTIER`
+
+**Profil**
+- Âge : 42 ans
+- Poste : Responsable de quartier au sein de la mairie
+- Équipement : Smartphone Android, connexion 4G
+- Expérience : 6 ans en gestion de quartier, connaît bien les commerçants et les flux de collecte
+
+**Objectifs**
+- Suivre les collectes de son quartier en temps réel
+- Recevoir et traiter les signalements des agents
+- Proposer des affectations d'agents au superviseur
+- Générer des rapports de couverture par secteur
+
+**Frustrations**
+- Il manque de visibilité sur les collectes en cours dans son quartier
+- Les signalements des agents se perdent dans des canaux informels
+- Les affectations d'agents se font sans consultation
+
+**Scénarios clés**
+- Consulter le dashboard de son quartier (`GET /api/taxcollect/responsable/dashboard`)
+- Lister les agents de son quartier (`GET /api/taxcollect/responsable/agents`)
+- Proposer une affectation d'agent (`POST /api/taxcollect/responsable/agents/proposer-affectation`)
+- Signaler une collecte douteuse (`POST /api/taxcollect/responsable/collectes/signaler-douteuse`)
+- Consulter les rapports (`GET /api/taxcollect/responsable/rapports`)
+
+---
+
+## 6. Contribuable — Augustin Mwamba
+
+**Rôle** : `CONTRIBUABLE`
 
 **Profil**
 - Âge : 50 ans

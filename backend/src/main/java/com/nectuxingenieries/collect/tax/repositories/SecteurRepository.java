@@ -14,6 +14,9 @@ public interface SecteurRepository extends BaseRepository<Secteur, Long>, JpaSpe
     @Query("SELECT s FROM Secteur s WHERE s.quartier.id = ?1 AND s.deletedAt IS NULL")
     List<Secteur> findByQuartierId(Long quartierId);
 
+    @Query("SELECT s FROM Secteur s WHERE s.quartier.id IN :quartierIds AND s.deletedAt IS NULL")
+    List<Secteur> findByQuartierIdIn(@Param("quartierIds") List<Long> quartierIds);
+
     @Query("SELECT s FROM Secteur s WHERE LOWER(s.nom) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND s.deletedAt IS NULL ORDER BY s.nom ASC")
     List<Secteur> searchByNom(@Param("searchTerm") String searchTerm);
 

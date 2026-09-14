@@ -7,18 +7,27 @@ class AppConfig {
   static const String appDescription = 'Digitalisation des Taxes Communales';
   
   // API Configuration
-  static const String baseUrl = 'http://192.168.1.4:9091';
+  // Surchargeable au build sans toucher au code, ex :
+  //   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:9091
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://83.171.249.150:9091',
+  );
   static const String apiUrl = '$baseUrl/api';
   static const String authUrl = '$baseUrl/auth';
-  
+
   // Keycloak Configuration
-  static const String keycloakUrl = 'http://192.168.1.4:8080';
+  static const String keycloakUrl = String.fromEnvironment(
+    'KEYCLOAK_URL',
+    defaultValue: 'http://83.171.249.150:18080',
+  );
   static const String keycloakRealm = 'mairie';
-  static const String clientId = 'tax-backend';
+  static const String clientId = 'tax-frontend';
   static const String redirectUrl = 'verdentax://callback';
   
   // Authentication Configuration
   static const String authTokenKey = 'auth_token';
+  static const String refreshTokenKey = 'refresh_token';
   static const String userDataKey = 'user_data';
   static const String lastLoginKey = 'last_login_time';
   static const String loginAttemptsKey = 'login_attempts';
@@ -88,7 +97,7 @@ class AppConfig {
   static const bool enableOfflineMode = true;
   static const bool enableLocationServices = true;
   static const bool enableQRCodeScanning = true;
-  static const bool enableBiometricLogin = true;
+  static const bool enableBiometricLogin = false;
   static const bool enablePushNotifications = false;
   static const bool enableAnalytics = false;
   
@@ -103,12 +112,26 @@ class AppConfig {
   static const String clotureCaisseEndpoint = '/api/cloture-caisse';
   
   static const String contribuablesEndpoint = '/api/taxcollect/contribuable';
+  static const String recensementEndpoint = '/api/recensement';
   static const String agentsEndpoint = '/api/taxcollect/agent';
   static const String zonesEndpoint = '/api/taxcollect/zone';
   static const String taxesEndpoint = '/api/taxcollect/taxe';
-  static const String cartesEndpoint = '/api/taxcollect/carte-contribuable';
   static const String communesEndpoint = '/api/taxcollect/commune';
   static const String quartiersEndpoint = '/api/taxcollect/quartier';
+  static const String secteursEndpoint = '/api/taxcollect/secteur';
+
+  // Agent P0 endpoints
+  static const String visiteEndpoint = '/api/taxcollect/visite';
+  static const String tourneeEndpoint = '/api/taxcollect/tournee';
+  static const String syncEndpoint = '/api/taxcollect/sync';
+  static const String auditEndpoint = '/api/taxcollect/audit';
+  static const String promesseEndpoint = '/api/taxcollect/promesse';
+  static const String messagerieEndpoint = '/api/taxcollect/messagerie';
+  static const String signalementEndpoint = '/api/taxcollect/signalement';
+  static const String carteContribuableEndpoint = '/api/taxcollect/carte-contribuable';
+  static const String caisseEndpoint = '/api/taxcollect/caisse';
+  static const String remiseCaisseEndpoint = '/api/taxcollect/remise-caisse';
+  static const String healthEndpoint = '/actuator/health';
   
   // Error Messages
   static const String networkError = 'Erreur de connexion réseau';
@@ -131,11 +154,14 @@ class AppConfig {
   static const String passwordTooShort = 'Le mot de passe doit contenir au moins ${minPasswordLength} caractères';
   static const String usernameTooShort = 'Le nom d\'utilisateur doit contenir au moins ${minUsernameLength} caractères';
   
-  // User Roles
+  // User Roles — doivent correspondre exactement aux rôles du realm Keycloak
+  // (voir realm-mairie.json) et à JwtAuthConverter côté backend.
   static const String roleAgent = 'AGENT';
   static const String roleSuperviseur = 'SUPERVISEUR';
   static const String roleAdministrateur = 'ADMIN';
   static const String roleTresorPublic = 'TRESOR';
+  static const String roleResponsableQuartier = 'RESPONSABLE_QUARTIER';
+  static const String roleContribuable = 'CONTRIBUABLE';
   
   // Transaction Status
   static const String statusEnAttente = 'EN_ATTENTE';

@@ -40,7 +40,7 @@ public class TransactionController {
         @ApiResponse(responseCode = "200", description = "Transactions trouvées"),
         @ApiResponse(responseCode = "403", description = "Accès non autorisé")
     })
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<PageResponse<TransactionDTO>> getAllTransactions(
             @Parameter(description = "Numéro de page (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Taille de la page") @RequestParam(defaultValue = "20") int size,
@@ -79,7 +79,7 @@ public class TransactionController {
         @ApiResponse(responseCode = "200", description = "Transaction trouvée"),
         @ApiResponse(responseCode = "404", description = "Transaction non trouvée")
     })
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<TransactionDTO> getTransactionById(
             @Parameter(description = "ID de la transaction") @PathVariable Long id) {
         return transactionService.getTransactionById(id)
@@ -93,7 +93,7 @@ public class TransactionController {
         @ApiResponse(responseCode = "200", description = "Transaction trouvée"),
         @ApiResponse(responseCode = "404", description = "Transaction non trouvée")
     })
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<TransactionDTO> getTransactionByNumeroRecu(
             @Parameter(description = "Numéro de reçu de la transaction") @PathVariable String numeroRecu) {
         return transactionService.getTransactionByNumeroRecu(numeroRecu)
@@ -103,7 +103,7 @@ public class TransactionController {
 
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "Lister les transactions d'un agent", description = "Retourne la liste de toutes les transactions effectuées par un agent spécifique")
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<List<TransactionDTO>> getTransactionsByAgent(
             @Parameter(description = "ID de l'agent") @PathVariable Long agentId) {
         List<TransactionDTO> transactions = transactionService.getTransactionsByAgent(agentId);
@@ -112,7 +112,7 @@ public class TransactionController {
 
     @GetMapping("/agent/{agentId}/range")
     @Operation(summary = "Lister les transactions d'un agent par période", description = "Retourne les transactions d'un agent dans une période donnée")
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<List<TransactionDTO>> getTransactionsByAgentAndDateRange(
             @Parameter(description = "ID de l'agent") @PathVariable Long agentId,
             @Parameter(description = "Date de début") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime debut,
@@ -161,6 +161,22 @@ public class TransactionController {
         return ResponseEntity.ok().body(transaction);
     }
 
+    @PostMapping("/{id}/cancel")
+    @Operation(summary = "Annuler une transaction", description = "Annule une transaction en toute sécurité. Une transaction déjà annulée ou validée ne peut pas être annulée.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Transaction annulée avec succès"),
+        @ApiResponse(responseCode = "404", description = "Transaction non trouvée"),
+        @ApiResponse(responseCode = "400", description = "La transaction ne peut pas être annulée (déjà annulée ou validée)")
+    })
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    public ResponseEntity<TransactionDTO> cancelTransaction(
+            @Parameter(description = "ID de la transaction") @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body) {
+        String motif = body != null ? body.get("motif") : null;
+        TransactionDTO transaction = transactionService.cancelTransaction(id, motif);
+        return ResponseEntity.ok().body(transaction);
+    }
+
     @GetMapping("/{id}/verify")
     @Operation(summary = "Vérifier l'intégrité d'une transaction", description = "Vérifie que le hash de la transaction est valide")
     @ApiResponses(value = {
@@ -177,7 +193,7 @@ public class TransactionController {
 
     @GetMapping("/offline/count")
     @Operation(summary = "Compter les transactions hors-ligne", description = "Retourne le nombre de transactions en attente de synchronisation")
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<Long> countOfflineTransactions() {
         Long count = transactionService.countOfflineTransactions();
         return ResponseEntity.ok().body(count);
@@ -185,7 +201,7 @@ public class TransactionController {
 
     @GetMapping("/filter")
     @Operation(summary = "Filtrer les transactions", description = "Retourne les transactions filtrées par date, agent, mode de paiement, etc.")
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<Page<TransactionDTO>> filterTransactions(
             @Parameter(description = "Date de début") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime debut,
             @Parameter(description = "Date de fin") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fin,
@@ -232,7 +248,7 @@ public class TransactionController {
 
     @GetMapping("/zone/{zoneId}")
     @Operation(summary = "Transactions par zone", description = "Retourne les transactions pour une zone spécifique")
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<List<TransactionDTO>> getTransactionsByZone(@PathVariable Long zoneId) {
         List<TransactionDTO> transactions = transactionService.getTransactionsByZone(zoneId);
         return ResponseEntity.ok().body(transactions);
@@ -240,7 +256,7 @@ public class TransactionController {
 
     @GetMapping("/contribuable/{contribuableId}")
     @Operation(summary = "Transactions par contribuable", description = "Retourne les transactions pour un contribuable spécifique")
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<List<TransactionDTO>> getTransactionsByContribuable(@PathVariable Long contribuableId) {
         List<TransactionDTO> transactions = transactionService.getTransactionsByContribuable(contribuableId);
         return ResponseEntity.ok().body(transactions);

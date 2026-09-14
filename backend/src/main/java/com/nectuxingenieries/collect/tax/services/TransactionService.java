@@ -207,6 +207,37 @@ public class TransactionService {
         return convertToDTO(savedTransaction);
     }
 
+    /**
+     * Annule une transaction en toute sécurité.
+     * <p>
+     * Règles métier :
+     * <ul>
+     *   <li>Une transaction déjà annulée ne peut pas être annulée à nouveau.</li>
+     *   <li>Une transaction validée (VALIDEE) ne peut pas être annulée.</li>
+     *   <li>Les autres statuts (EN_ATTENTE, EN_COURS, SYNCHRONISEE) peuvent être annulés.</li>
+     * </ul>
+     *
+     * @param transactionId ID de la transaction à annuler
+     * @param motif         motif d'annulation (optionnel)
+     * @return la transaction mise à jour avec le statut ANNULEE
+     */
+    public TransactionDTO cancelTransaction(Long transactionId, String motif) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new NotFoundException("Transaction", transactionId));
+
+        StatutTransaction statutCourant = transaction.getStatut();
+        if (statutCourant == StatutTransaction.ANNULEE) {
+            throw new InvalidOperationException("La transaction " + transactionId + " est déjà annulée");
+        }
+        if (statutCourant == StatutTransaction.VALIDEE) {
+            throw new InvalidOperationException("La transaction " + transactionId + " est validée et ne peut pas être annulée");
+        }
+
+        transaction.setStatut(StatutTransaction.ANNULEE);
+        Transaction savedTransaction = transactionRepository.save(transaction);
+        return convertToDTO(savedTransaction);
+    }
+
     @Transactional(readOnly = true)
     public boolean verifyTransactionHash(Long transactionId, String hashToVerify) {
         Transaction transaction = transactionRepository.findById(transactionId)

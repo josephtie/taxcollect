@@ -56,77 +56,83 @@
           />
         </div>
 
-        <!-- Quartiers Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div
-            v-for="quartier in quartiers"
-            :key="quartier.id"
-            class="bg-white rounded-lg shadow-soft border border-gray-100 p-6 hover:shadow-medium transition-shadow"
-          >
-            <div class="flex items-start justify-between mb-4">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900">{{ quartier.nom }}</h3>
-                <p class="text-sm text-gray-500">{{ quartier.zoneNom || 'Non spécifiée' }} - {{ quartier.communeNom || '' }}</p>
-              </div>
-              <StatusBadge 
-                :status="quartier.statut ? 'ACTIF' : 'INACTIF'" 
-                type="quartier"
-              />
-            </div>
+        <!-- Quartiers Table -->
+        <div class="bg-white rounded-lg shadow-soft border border-gray-100 overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nom</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Zone</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Commune</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Agents</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Secteurs</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr v-for="quartier in paginatedQuartiers" :key="quartier.id" class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">{{ quartier.nom }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-500">{{ quartier.zoneNom || 'Non spécifiée' }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-500">{{ quartier.communeNom || '' }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <button
+                    @click="openAgentsModal(quartier)"
+                    class="text-sm font-medium text-primary-600 hover:text-primary-900 flex items-center"
+                  >
+                    <UserPlus class="w-3.5 h-3.5 mr-1" />
+                    {{ quartierAgentCounts[quartier.id] || 0 }} agent(s)
+                  </button>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">{{ quartier.secteurs?.length || 0 }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <StatusBadge :status="quartier.statut ? 'ACTIF' : 'INACTIF'" type="quartier" />
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                  <div class="flex items-center justify-end space-x-2">
+                    <button @click="editQuartier(quartier)" class="text-primary-600 hover:text-primary-900" title="Modifier">
+                      <Edit class="w-4 h-4" />
+                    </button>
+                    <LogicalDeletionActions
+                      :entity="quartier"
+                      endpoint="quartier"
+                      entity-name="le quartier"
+                      :can-delete="canDeleteQuartier"
+                      :can-restore="canRestoreQuartier"
+                      :display-field="'nom'"
+                      @deleted="handleQuartierDeleted"
+                      @restored="handleQuartierRestored"
+                    />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Agents assignés</span>
-                <button
-                  @click="openAgentsModal(quartier)"
-                  class="text-sm font-medium text-primary-600 hover:text-primary-900 flex items-center"
-                >
-                  <UserPlus class="w-3.5 h-3.5 mr-1" />
-                  {{ quartierAgentCounts[quartier.id] || 0 }} agent(s)
-                </button>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Secteurs associés</span>
-                <span class="text-sm font-medium text-gray-900">{{ quartier.secteurs?.length || 0 }}</span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Statut</span>
-                <span class="text-sm font-medium" :class="quartier.statut ? 'text-green-600' : 'text-red-600'">
-                  {{ quartier.statut ? 'Actif' : 'Inactif' }}
-                </span>
-              </div>
-            </div>
-
-            <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between">
-              <button
-                @click="viewQuartierDetails(quartier)"
-                class="text-primary-600 hover:text-primary-900 text-sm font-medium"
-              >
-                Voir détails
-              </button>
-              <div class="flex space-x-2">
-                <button
-                  @click="editQuartier(quartier)"
-                  class="text-primary-600 hover:text-primary-900"
-                >
-                  <Edit class="w-4 h-4" />
-                </button>
-                
-                <!-- Actions de suppression logique -->
-                <LogicalDeletionActions
-                  :entity="quartier"
-                  endpoint="quartier"
-                  entity-name="le quartier"
-                  :can-delete="canDeleteQuartier"
-                  :can-restore="canRestoreQuartier"
-                  :display-field="'nom'"
-                  @deleted="handleQuartierDeleted"
-                  @restored="handleQuartierRestored"
-                />
-              </div>
-            </div>
+        <!-- Pagination -->
+        <div v-if="quartiers.length > itemsPerPage" class="flex items-center justify-between mt-4">
+          <div class="text-sm text-gray-500">
+            Affichage {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, quartiers.length) }} sur {{ quartiers.length }}
+          </div>
+          <div class="flex items-center space-x-2">
+            <select v-model="itemsPerPage" @change="currentPage = 1" class="text-sm border border-gray-300 rounded-lg px-2 py-1">
+              <option :value="5">5</option>
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+            </select>
+            <button @click="currentPage--" :disabled="currentPage === 1" class="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Précédent</button>
+            <span class="text-sm text-gray-600">{{ currentPage }} / {{ totalPages }}</span>
+            <button @click="currentPage++" :disabled="currentPage === totalPages" class="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Suivant</button>
           </div>
         </div>
 
@@ -229,7 +235,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { quartierService, zoneService, affectationService, permissionService } from '@/services'
+import { quartierService, zoneService, affectationService, permissionService, supervisionService } from '@/services'
 import Sidebar from '@/components/Sidebar.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
@@ -244,6 +250,9 @@ const showCreateModal = ref(false)
 const editingQuartier = ref(null)
 const quartiers = ref([])
 const zones = ref([])
+
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
 
 // Agent management state
 const showAgentsModal = ref(false)
@@ -269,53 +278,48 @@ const totalSecteurs = computed(() => {
   return quartiers.value.reduce((sum, quartier) => sum + (quartier.secteurs?.length || 0), 0)
 })
 
+const totalPages = computed(() => Math.ceil(quartiers.value.length / itemsPerPage.value) || 1)
+const paginatedQuartiers = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  return quartiers.value.slice(start, start + itemsPerPage.value)
+})
+
 // Methods
 const totalAgentsInQuartier = (quartier) => {
   return quartierAgentCounts.value[quartier.id] || 0
+}
+
+const supervisedZoneIds = ref([])
+const supervisedZoneNames = ref([])
+
+const fetchSupervisedZoneIds = async () => {
+  try {
+    const response = await supervisionService.getSupervisedZones()
+    const zones = response.data || []
+    supervisedZoneIds.value = zones.map(z => z.id)
+    supervisedZoneNames.value = zones.map(z => z.nom)
+  } catch (error) {
+    console.error('Erreur chargement zones supervisées:', error)
+    supervisedZoneIds.value = []
+    supervisedZoneNames.value = []
+  }
 }
 
 const fetchQuartiers = async () => {
   try {
     loading.value = true
     const response = await quartierService.getAllQuartiers()
-    quartiers.value = response.data || []
+    let allQuartiers = response.data || []
+    if (permissionService.isSuperviseur() && supervisedZoneIds.value.length > 0) {
+      allQuartiers = allQuartiers.filter(q =>
+        supervisedZoneIds.value.includes(q.zoneId) ||
+        supervisedZoneNames.value.includes(q.zoneNom)
+      )
+    }
+    quartiers.value = allQuartiers
   } catch (error) {
     console.error('Erreur chargement quartiers:', error)
-    // Fallback avec données mock pour Grand-Bassam
-    quartiers.value = [
-      {
-        id: 1,
-        nom: 'Centre Ville',
-        zoneId: 1,
-        zoneNom: 'Zone Nord',
-        communeNom: 'Grand-Bassam',
-        statut: true,
-        secteurs: [
-          { id: 1, nom: 'Secteur A' },
-          { id: 2, nom: 'Secteur B' }
-        ]
-      },
-      {
-        id: 2,
-        nom: 'Zone France',
-        zoneId: 1,
-        zoneNom: 'Zone Nord',
-        communeNom: 'Grand-Bassam',
-        statut: true,
-        secteurs: [
-          { id: 3, nom: 'Secteur C' }
-        ]
-      },
-      {
-        id: 3,
-        nom: 'Quartier Ghana',
-        zoneId: 2,
-        zoneNom: 'Zone Sud',
-        communeNom: 'Grand-Bassam',
-        statut: false,
-        secteurs: []
-      }
-    ]
+    quartiers.value = []
   } finally {
     loading.value = false
   }
@@ -323,14 +327,16 @@ const fetchQuartiers = async () => {
 
 const fetchZones = async () => {
   try {
-    const response = await zoneService.getAllZones()
-    zones.value = response.data || []
+    if (permissionService.isSuperviseur()) {
+      const response = await supervisionService.getSupervisedZones()
+      zones.value = (response.data || []).map(z => ({ id: z.id, nom: z.nom, communeNom: z.communeNom }))
+    } else {
+      const response = await zoneService.getAllZones()
+      zones.value = response.data || []
+    }
   } catch (error) {
     console.error('Erreur chargement zones:', error)
-    zones.value = [
-      { id: 1, nom: 'Zone Nord', communeNom: 'Grand-Bassam' },
-      { id: 2, nom: 'Zone Sud', communeNom: 'Grand-Bassam' }
-    ]
+    zones.value = []
   }
 }
 
@@ -444,6 +450,9 @@ const fetchQuartierAgentCounts = async () => {
 
 // Lifecycle
 onMounted(async () => {
+  if (permissionService.isSuperviseur()) {
+    await fetchSupervisedZoneIds()
+  }
   await Promise.all([fetchQuartiers(), fetchZones()])
   await fetchQuartierAgentCounts()
 })

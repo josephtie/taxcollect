@@ -49,6 +49,11 @@ class TransactionService extends BaseService {
     return this.post('', transactionData)
   }
 
+  // Annuler une transaction (route dédiée backend)
+  async cancelTransaction(id, motif = null) {
+    return this.post(`/${id}/cancel`, motif ? { motif } : {})
+  }
+
   // Récupérer les transactions d'un agent par période
   async getTransactionsByAgentAndDateRange(agentId, startDate, endDate) {
     return this.get(`/agent/${agentId}/range`, {

@@ -44,7 +44,7 @@ public class ContribuableController {
         return ResponseEntity.ok(updated);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/{id}")
     public ResponseEntity<ContribuableDto> findById(@PathVariable Long id) {
         return contribuableService.findById(id)
@@ -52,21 +52,21 @@ public class ContribuableController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/all")
     public ResponseEntity<List<ContribuableDto>> findAll() {
         List<ContribuableDto> contribuableList = contribuableService.findAll();
         return ResponseEntity.ok(contribuableList);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/page")
     public ResponseEntity<Page<ContribuableDto>> findAllPageable(@PageableDefault(size = 20, sort = "nom", direction = Sort.Direction.ASC) Pageable pageable) {
         Page<ContribuableDto> page = contribuableService.findAll(pageable);
         return ResponseEntity.ok(page);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/filter")
     public ResponseEntity<Page<ContribuableDto>> findAllFiltered(@RequestParam Map<String,String> filters,
                                                                  @PageableDefault(size = 20, sort = "nom", direction = Sort.Direction.ASC) Pageable pageable) {
@@ -74,14 +74,14 @@ public class ContribuableController {
         return ResponseEntity.ok(page);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         contribuableService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/search")
     public ResponseEntity<Page<ContribuableDto>> searchContribuables(@RequestParam String searchTerm,
                                                                       @RequestParam(required = false) Map<String, String> filters,
@@ -90,7 +90,7 @@ public class ContribuableController {
         return ResponseEntity.ok(searchResults);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/zone/{zoneId}")
     public ResponseEntity<List<ContribuableDto>> getContribuablesByZone(@PathVariable Long zoneId) {
         List<ContribuableDto> contribuables = contribuableService.getContribuablesByZone(zoneId);

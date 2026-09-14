@@ -8,14 +8,23 @@
             <h1 class="text-2xl font-bold text-gray-900">Supervision des Zones</h1>
             <p class="text-xs text-gray-500">Affectation des agents sur vos zones territoriales</p>
           </div>
-          <button
-            @click="refresh"
-            :disabled="loading"
-            class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-          >
-            <RefreshCw :class="['w-4 h-4 mr-2', loading && 'animate-spin']" />
-            Actualiser
-          </button>
+          <div class="flex items-center gap-3">
+            <router-link
+              to="/supervision-responsables"
+              class="inline-flex items-center px-3 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
+            >
+              <Users class="w-4 h-4 mr-2" />
+              Responsables de quartier
+            </router-link>
+            <button
+              @click="refresh"
+              :disabled="loading"
+              class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              <RefreshCw :class="['w-4 h-4 mr-2', loading && 'animate-spin']" />
+              Actualiser
+            </button>
+          </div>
         </div>
       </div>
     </header>

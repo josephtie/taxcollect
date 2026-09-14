@@ -95,4 +95,13 @@ public class SecteurServiceImpl implements SecteurService {
         Secteur secteur = secteurRepository.findByGeometryContaining(latitude, longitude);
         return Optional.ofNullable(secteur).map(secteurMapper::toDto);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SecteurDto> findByQuartierId(Long quartierId) {
+        return secteurRepository.findByQuartierId(quartierId)
+                .stream()
+                .map(secteurMapper::toDto)
+                .toList();
+    }
 }

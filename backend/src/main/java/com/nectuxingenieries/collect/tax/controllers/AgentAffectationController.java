@@ -45,7 +45,7 @@ public class AgentAffectationController {
     }
 
     @GetMapping("/territory")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'AGENT')")
     @Operation(summary = "Lister les affectations actives pour un territoire")
     public ResponseEntity<List<AgentAffectationDto>> getByTerritory(
             @RequestParam TerritoryType territoryType,
@@ -54,14 +54,14 @@ public class AgentAffectationController {
     }
 
     @GetMapping("/agent/{agentId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'AGENT')")
     @Operation(summary = "Lister les affectations actives d'un agent")
     public ResponseEntity<List<AgentAffectationDto>> getByAgent(@PathVariable Long agentId) {
         return ResponseEntity.ok(affectationService.getAffectationsByAgent(agentId));
     }
 
     @GetMapping("/agent/{agentId}/perimeter")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'AGENT')")
     @Operation(summary = "Calculer le périmètre effectif d'un agent (héritage hiérarchique)")
     public ResponseEntity<EffectivePerimeterDto> getEffectivePerimeter(@PathVariable Long agentId) {
         return ResponseEntity.ok(affectationService.getEffectivePerimeter(agentId));

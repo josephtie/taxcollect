@@ -31,14 +31,14 @@ public class AgentController {
     @Autowired
     private AgentService agentService;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<AgentsDto> create(@RequestBody AgentsDto agentsDto) {
         AgentsDto created = agentService.create(agentsDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<AgentsDto> update(@PathVariable Long id,
                                                   @RequestBody AgentsDto agentsDto) {
@@ -46,7 +46,7 @@ public class AgentController {
         return ResponseEntity.ok(updated);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR')")
     @GetMapping("/{id}")
     public ResponseEntity<AgentsDto> findById(@PathVariable Long id) {
         AgentsDto agent = agentService.findById(id)
@@ -54,7 +54,7 @@ public class AgentController {
         return ResponseEntity.ok(agent);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR')")
     @GetMapping("/all")
     public ResponseEntity<List<AgentsDto>> findAll() {
         List<AgentsDto> contribuableList = agentService.findAll();
@@ -63,7 +63,7 @@ public class AgentController {
 
     @GetMapping("/page")
     @Operation(summary = "Lister tous les agents (paginé)", description = "Retourne tous les agents avec pagination")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER')")
     public ResponseEntity<PageResponse<AgentsDto>> findAllPageable(
             @Parameter(description = "Numéro de page (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Taille de la page") @RequestParam(defaultValue = "20") int size,
@@ -83,7 +83,7 @@ public class AgentController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR')")
     @GetMapping("/filter")
     public ResponseEntity<Page<AgentsDto>> findAllFiltered(@RequestParam Map<String,String> filters,
                                                                  @PageableDefault(size = 20, sort = "nom", direction = Sort.Direction.ASC) Pageable pageable) {
@@ -91,7 +91,7 @@ public class AgentController {
         return ResponseEntity.ok(page);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         agentService.delete(id);
@@ -111,14 +111,14 @@ public class AgentController {
         return ResponseEntity.ok(agentService.findAllIncludingDeleted());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR')")
     @GetMapping("/active")
     public ResponseEntity<List<AgentsDto>> findActiveAgents() {
         List<AgentsDto> activeAgents = agentService.findActiveAgents();
         return ResponseEntity.ok(activeAgents);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR')")
     @GetMapping("/search")
     public ResponseEntity<Page<AgentsDto>> searchAgents(@RequestParam String searchTerm,
                                                           @RequestParam(required = false) Map<String, String> filters,
@@ -169,7 +169,7 @@ public class AgentController {
         return ResponseEntity.ok(updated);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/zone/{zoneId}")
     public ResponseEntity<List<AgentsDto>> getAgentsByZone(@PathVariable Long zoneId) {
         List<AgentsDto> agents = agentService.getAgentsByZone(zoneId);

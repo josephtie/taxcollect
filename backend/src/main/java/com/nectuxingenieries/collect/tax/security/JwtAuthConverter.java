@@ -31,7 +31,8 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
                     .filter(role -> role.equals("ADMIN")
                             || role.equals("TRESOR")
                             || role.equals("AGENT")
-                            || role.equals("SUPERVISEUR"))
+                            || role.equals("SUPERVISEUR")
+                            || role.equals("RESPONSABLE_QUARTIER"))
                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                     .collect(Collectors.toList());
         }

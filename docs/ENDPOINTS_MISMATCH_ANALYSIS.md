@@ -1,5 +1,11 @@
 # 🚨 Analyse Incompatibilité Endpoints Frontend vs Backend
 
+> **⚠️ Document historique** — Cette analyse a été réalisée avant l'alignement
+> des endpoints (backend, frontend, mobile). Les corrections ont été appliquées
+> dans le code. Pour l'état courant de l'API, voir `ARCHITECTURE.md`.
+> Les ports mentionnés ici (frontend 9090, backend 8080) sont obsolètes :
+> le backend écoute sur 9091 et le frontend dev sur 3000.
+
 ## 📊 Problème Identifié
 
 Les erreurs 404 dans la console indiquent que les services frontend appellent des endpoints qui n'existent pas dans les controllers backend.

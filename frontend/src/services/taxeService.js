@@ -67,19 +67,9 @@ class TaxeService extends BaseService {
     return this.get(`/export?format=${format}`)
   }
 
-  // Valider une taxe
-  async validateTaxe(id) {
-    return this.post(`/${id}/validate`)
-  }
-
-  // Désactiver une taxe
-  async deactivateTaxe(id) {
-    return this.post(`/${id}/deactivate`)
-  }
-
-  // Activer une taxe
-  async activateTaxe(id) {
-    return this.post(`/${id}/activate`)
+  // Dupliquer une taxe existante
+  async duplicateTaxe(id) {
+    return this.post(`/${id}/duplicate`)
   }
 }
 

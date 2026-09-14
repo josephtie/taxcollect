@@ -27,6 +27,9 @@ public class Quartier extends Auditable {
 
     private Boolean statut;
 
+    @Column(name = "responsable_id")
+    private String responsableId;
+
     @Column(name = "geometry", columnDefinition = "geometry(MultiPolygon, 4326)")
     @JdbcTypeCode(SqlTypes.GEOMETRY)
     private MultiPolygon geometry;
@@ -42,6 +45,8 @@ public class Quartier extends Auditable {
     public void setSecteurs(List<Secteur> secteurs) { this.secteurs = secteurs; }
     public Boolean getStatut() { return statut; }
     public void setStatut(Boolean statut) { this.statut = statut; }
+    public String getResponsableId() { return responsableId; }
+    public void setResponsableId(String responsableId) { this.responsableId = responsableId; }
     public MultiPolygon getGeometry() { return geometry; }
     public void setGeometry(MultiPolygon geometry) { this.geometry = geometry; }
 }

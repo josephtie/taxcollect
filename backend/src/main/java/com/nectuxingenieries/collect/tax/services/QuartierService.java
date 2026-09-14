@@ -18,4 +18,5 @@ public interface QuartierService {
     void delete(Long id);
     void restore(Long id);
     List<QuartierDto> findAllIncludingDeleted();
+    List<QuartierDto> findByZoneId(Long zoneId);
 }

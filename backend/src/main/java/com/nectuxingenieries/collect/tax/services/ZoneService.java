@@ -18,4 +18,6 @@ public interface ZoneService {
     void delete(Long id);
     void restore(Long id);
     List<ZoneDto> findAllIncludingDeleted();
+    List<ZoneDto> findByCommuneId(Long communeId);
+    List<ZoneDto> search(String searchTerm);
 }

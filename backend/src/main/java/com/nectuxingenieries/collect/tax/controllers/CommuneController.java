@@ -1,7 +1,10 @@
 package com.nectuxingenieries.collect.tax.controllers;
 
 import com.nectuxingenieries.collect.tax.dto.CommuneDto;
+import com.nectuxingenieries.collect.tax.dto.ZoneDto;
 import com.nectuxingenieries.collect.tax.services.CommuneService;
+import com.nectuxingenieries.collect.tax.services.ZoneService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,17 +28,19 @@ public class CommuneController {
 
     @Autowired
    private  CommuneService communeService;
+    @Autowired
+    private ZoneService zoneService;
 
 
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<CommuneDto> create(@RequestBody CommuneDto CommuneDto) {
         CommuneDto created = communeService.create(CommuneDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<CommuneDto> update(@PathVariable Long id,
                                                   @RequestBody CommuneDto CommuneDto) {
@@ -78,5 +83,12 @@ public class CommuneController {
                                                                  @PageableDefault(size = 20, sort = "nom", direction = Sort.Direction.ASC) Pageable pageable) {
         Page<CommuneDto> page = communeService.findAll(filters, pageable);
         return ResponseEntity.ok(page);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER')")
+    @GetMapping("/{communeId}/zones")
+    @Operation(summary = "Lister les zones d'une commune")
+    public ResponseEntity<List<ZoneDto>> findZones(@PathVariable Long communeId) {
+        return ResponseEntity.ok(zoneService.findByCommuneId(communeId));
     }
 }

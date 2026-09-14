@@ -17,6 +17,19 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // authService appelle /auth/login sans passer par l'instance axios :
+      // sans cette règle, le login échoue en dev quand VITE_API_URL est vide.
+      '/auth': {
+        target: 'http://localhost:9091',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Photos d'agents et pièces d'identité servies par le backend.
+      '/uploads': {
+        target: 'http://localhost:9091',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   build: {

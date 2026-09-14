@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -35,7 +36,7 @@ public class ClotureCaisseController {
     // Récupérer toutes les clôtures (paginé)
     @GetMapping
     @Operation(summary = "Lister toutes les clôtures (paginé)", description = "Retourne toutes les clôtures de caisse avec pagination")
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<PageResponse<ClotureCaisseDTO>> getAllClotures(
             @Parameter(description = "Numéro de page (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Taille de la page") @RequestParam(defaultValue = "20") int size,
@@ -160,7 +161,7 @@ public class ClotureCaisseController {
         @ApiResponse(responseCode = "200", description = "Clôture trouvée"),
         @ApiResponse(responseCode = "404", description = "Clôture non trouvée")
     })
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<ClotureCaisseDTO> getClotureCaisseById(
             @Parameter(description = "ID de la clôture") @PathVariable Long id) {
         Optional<ClotureCaisseDTO> cloture = clotureCaisseService.getClotureCaisseById(id);
@@ -173,7 +174,7 @@ public class ClotureCaisseController {
         @ApiResponse(responseCode = "200", description = "Clôture trouvée"),
         @ApiResponse(responseCode = "404", description = "Clôture non trouvée")
     })
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<ClotureCaisseDTO> getClotureCaisseByAgentAndDate(
             @Parameter(description = "ID de l'agent") @RequestParam Long agentId,
             @Parameter(description = "Date de clôture") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
@@ -183,7 +184,7 @@ public class ClotureCaisseController {
 
     @GetMapping("/agent/{agentId}")
     @Operation(summary = "Lister les clôtures d'un agent", description = "Retourne l'historique des clôtures de caisse d'un agent")
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<List<ClotureCaisseDTO>> getClotureCaisseByAgent(
             @Parameter(description = "ID de l'agent") @PathVariable Long agentId) {
         List<ClotureCaisseDTO> clotures = clotureCaisseService.getClotureCaisseByAgent(agentId);
@@ -192,7 +193,7 @@ public class ClotureCaisseController {
 
     @GetMapping("/statut/{statut}")
     @Operation(summary = "Lister les clôtures par statut", description = "Retourne les clôtures ayant un statut spécifique")
-    @PreAuthorize("hasAnyRole('AGENT', 'TRESOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
     public ResponseEntity<List<ClotureCaisseDTO>> getClotureCaisseByStatut(
             @Parameter(description = "Statut des clôtures") @PathVariable StatutCloture statut) {
         List<ClotureCaisseDTO> clotures = clotureCaisseService.getClotureCaisseByStatut(statut);
@@ -207,5 +208,36 @@ public class ClotureCaisseController {
             @Parameter(description = "Date de fin") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin) {
         List<ClotureCaisseDTO> clotures = clotureCaisseService.getClotureCaisseByDateRange(debut, fin);
         return ResponseEntity.ok().body(clotures);
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Statistiques des clôtures", description = "Volumes par statut, montants cumulés et écarts sur une période")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR')")
+    public ResponseEntity<Map<String, Object>> getClotureStats(
+            @Parameter(description = "Date de début") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate debut,
+            @Parameter(description = "Date de fin") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin) {
+        return ResponseEntity.ok(clotureCaisseService.getClotureStats(debut, fin));
+    }
+
+    @GetMapping("/export")
+    @Operation(summary = "Exporter les bordereaux de clôture", description = "Exporte les clôtures d'une période au format CSV ou XLSX")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TRESOR')")
+    public ResponseEntity<byte[]> exportClotures(
+            @Parameter(description = "Format d'export (csv ou xlsx)") @RequestParam(required = false, defaultValue = "csv") String format,
+            @Parameter(description = "Date de début") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate debut,
+            @Parameter(description = "Date de fin") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin) {
+
+        byte[] exportData = clotureCaisseService.exportClotures(format, debut, fin);
+        String extension = "xlsx".equalsIgnoreCase(format) ? "xlsx" : "csv";
+        String filename = "clotures_"
+                + new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date())
+                + "." + extension;
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                .header("Content-Type", "csv".equals(extension)
+                        ? "text/csv"
+                        : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .body(exportData);
     }
 }

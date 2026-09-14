@@ -9,6 +9,7 @@ import '../services/services.dart';
 export 'recensement_wizard.dart';
 // export 'map_widget.dart'; // Temporarily disabled due to GeolocationService dependency
 export 'carte_widgets.dart';
+export 'agent_widgets.dart';
 
 class ContribuableCard extends StatelessWidget {
   final ContribuableForm contribuable;

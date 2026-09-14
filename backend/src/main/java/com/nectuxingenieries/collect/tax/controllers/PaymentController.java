@@ -40,7 +40,7 @@ public class PaymentController {
     }
 
     @PostMapping("/{reference}/cancel")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TRESOR', 'AGENT', 'SUPERVISEUR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TRESOR')")
     public ResponseEntity<Void> cancelPayment(@PathVariable String reference) {
         // TODO — Implémenter l'annulation via le provider
         return ResponseEntity.noContent().build();

@@ -305,7 +305,7 @@ extension ContribuableDtoGeolocation on ContribuableDto {
         'contribuableId': id,
         'telephone': telephone,
         'activites': activites,
-        'zoneCollecteId': zoneCollecteId,
+        'zoneId': zoneId,
       },
     );
   }

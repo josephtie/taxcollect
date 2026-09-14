@@ -208,6 +208,24 @@
         "clientRole": false,
         "containerId": "mairie",
         "attributes": {}
+      },
+      {
+        "id": "responsable-quartier-role-id",
+        "name": "RESPONSABLE_QUARTIER",
+        "description": "Responsable de quartier: contrôle opérationnel de son quartier, propose les affectations d'agents",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "mairie",
+        "attributes": {}
+      },
+      {
+        "id": "contribuable-role-id",
+        "name": "CONTRIBUABLE",
+        "description": "Contribuable: consultation de ses avis, paiement en ligne et vérification de ses reçus",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "mairie",
+        "attributes": {}
       }
     ]
   },
@@ -219,8 +237,18 @@
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
       "secret": "ZSRrPMfQYuHkTjeTT46LBuvCgBAss6oW",
-      "redirectUris": ["http://localhost:9090/*", "http://localhost:3000/*"],
-      "webOrigins": ["http://localhost:9090", "http://localhost:3000"],
+      "redirectUris": [
+        "http://localhost:9091/*",
+        "http://localhost:3000/*",
+        "http://83.171.249.150:9091/*",
+        "http://83.171.249.150:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:9091",
+        "http://localhost:3000",
+        "http://83.171.249.150:9091",
+        "http://83.171.249.150:3000"
+      ],
       "bearerOnly": false,
       "consentRequired": false,
       "standardFlowEnabled": true,
@@ -246,6 +274,45 @@
             "access.token.claim": "true",
             "claim.name": "preferred_username",
             "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "zone_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "zone_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "zone_id",
+            "jsonType.label": "long"
+          }
+        },
+        {
+          "name": "quartier_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "quartier_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "quartier_id",
+            "jsonType.label": "long"
+          }
+        },
+        {
+          "name": "secteur_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "secteur_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "secteur_id",
+            "jsonType.label": "long"
           }
         }
       ],
@@ -285,8 +352,14 @@
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
       "secret": "",
-      "redirectUris": ["http://localhost:3000/*", "http://localhost:3000/callback"],
-      "webOrigins": ["http://localhost:3000"],
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:3000/callback",
+        "http://83.171.249.150:3000/*",
+        "http://83.171.249.150/*",
+        "verdentax://callback"
+      ],
+      "webOrigins": ["http://localhost:3000", "http://83.171.249.150:3000", "http://83.171.249.150"],
       "bearerOnly": false,
       "consentRequired": false,
       "standardFlowEnabled": true,
@@ -312,6 +385,45 @@
             "access.token.claim": "true",
             "claim.name": "preferred_username",
             "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "zone_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "zone_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "zone_id",
+            "jsonType.label": "long"
+          }
+        },
+        {
+          "name": "quartier_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "quartier_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "quartier_id",
+            "jsonType.label": "long"
+          }
+        },
+        {
+          "name": "secteur_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "secteur_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "secteur_id",
+            "jsonType.label": "long"
           }
         }
       ],

@@ -6,7 +6,9 @@ import { BaseService } from './baseService.js';
 class LogicalDeletionService {
     
     constructor() {
-        this.baseService = new BaseService();
+        // Les entités concernées (agent, taxe, zone, quartier, secteur) sont toutes
+        // exposées sous /api/taxcollect côté backend.
+        this.baseService = new BaseService('/api/taxcollect');
     }
     
     /**
@@ -17,7 +19,7 @@ class LogicalDeletionService {
      */
     async deleteLogical(endpoint, id) {
         try {
-            const response = await this.baseService.delete(`${endpoint}/${id}`);
+            const response = await this.baseService.delete(`/${endpoint}/${id}`);
             return response;
         } catch (error) {
             console.error(`Erreur lors de la suppression logique de ${endpoint} ${id}:`, error);
@@ -33,7 +35,7 @@ class LogicalDeletionService {
      */
     async restore(endpoint, id) {
         try {
-            const response = await this.baseService.post(`${endpoint}/${id}/restore`);
+            const response = await this.baseService.post(`/${endpoint}/${id}/restore`);
             return response;
         } catch (error) {
             console.error(`Erreur lors de la restauration de ${endpoint} ${id}:`, error);
@@ -48,7 +50,7 @@ class LogicalDeletionService {
      */
     async findAllIncludingDeleted(endpoint) {
         try {
-            const response = await this.baseService.get(`${endpoint}/including-deleted`);
+            const response = await this.baseService.get(`/${endpoint}/including-deleted`);
             return response;
         } catch (error) {
             console.error(`Erreur lors de la récupération de ${endpoint} incluant les supprimés:`, error);

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import '../config/config.dart';
 import '../models/models.dart';
@@ -246,10 +247,10 @@ class ContribuableCarteService {
         contribuable: ContribuableForm(
           id: contribuable.id,
           nom: contribuable.nom,
-          prenom: contribuable.prenom,
+          prenoms: contribuable.prenom,
           telephone: contribuable.telephone ?? '',
           activite: contribuable.activites ?? '',
-          zoneId: contribuable.zoneCollecteId?.toString() ?? '',
+          zoneId: contribuable.zoneId?.toString() ?? '',
           type: ContribuableType.personnePhysique,
           typePiece: TypePieceIdentite.cni,
           numeroPiece: '',
@@ -279,6 +280,9 @@ class ContribuableCarteService {
         cartesActives: 0,
         cartesExpirees: 0,
         cartesSuspendues: 0,
+        cartesExpirantDans30Jours: 0,
+        cartesEmisesAujourdhui: 0,
+        cartesNonSynchronisees: 0,
         cartesRevokes: 0,
         repartitionParType: {},
         repartitionParStatut: {},
@@ -330,60 +334,51 @@ class ContribuableCarteService {
 }
 
 // Extension on ApiService for carte operations
+//
+// Backend : CarteContribuableController (/api/taxcollect/carte-contribuable)
 extension ApiServiceCarteExtension on ApiService {
   Future<CarteContribuable> createCarte(CarteCreationRequest request) async {
+    final response = await dio.post(
+      '${AppConfig.baseUrl}${AppConfig.carteContribuableEndpoint}',
+      data: request.toJson(),
+    );
+    return CarteContribuable.fromJson(response.data);
+  }
+
+  Future<CarteContribuable?> getCarteByMatricule(String matricule) async {
     try {
-      final response = await post<CarteContribuable>(
-        '${AppConfig.cartesEndpoint}/create',
-        data: request.toJson(),
+      final response = await dio.get(
+        '${AppConfig.baseUrl}${AppConfig.carteContribuableEndpoint}/matricule/$matricule',
       );
-      return response;
-    } catch (e) {
+      return CarteContribuable.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
       rethrow;
     }
   }
-  
-  Future<CarteContribuable> getCarteByMatricule(String matricule) async {
-    try {
-      final response = await get<CarteContribuable>(
-        '${AppConfig.cartesEndpoint}/matricule/$matricule',
-      );
-      return response;
-    } catch (e) {
-      rethrow;
-    }
-  }
-  
+
   Future<List<CarteContribuable>> getCartesByContribuable(String contribuableId) async {
-    try {
-      final response = await get<List<dynamic>>(
-        '${AppConfig.cartesEndpoint}/contribuable/$contribuableId',
-      );
-      return response.map((json) => CarteContribuable.fromJson(json)).toList();
-    } catch (e) {
-      rethrow;
+    final response = await dio.get(
+      '${AppConfig.baseUrl}${AppConfig.carteContribuableEndpoint}/contribuable/$contribuableId',
+    );
+    final data = response.data;
+    if (data is List) {
+      return data.map((json) => CarteContribuable.fromJson(json)).toList();
     }
+    return [];
   }
-  
+
   Future<void> updateCarteStatus(String carteId, CarteStatus status) async {
-    try {
-      await put(
-        '${AppConfig.cartesEndpoint}/$carteId/status',
-        data: {'status': status.code},
-      );
-    } catch (e) {
-      rethrow;
-    }
+    await dio.put(
+      '${AppConfig.baseUrl}${AppConfig.carteContribuableEndpoint}/$carteId/status',
+      data: {'status': status.code},
+    );
   }
-  
+
   Future<CarteStatistics> getCarteStatistics() async {
-    try {
-      final response = await get<CarteStatistics>(
-        '${AppConfig.cartesEndpoint}/statistics',
-      );
-      return response;
-    } catch (e) {
-      rethrow;
-    }
+    final response = await dio.get(
+      '${AppConfig.baseUrl}${AppConfig.carteContribuableEndpoint}/statistics',
+    );
+    return CarteStatistics.fromJson(response.data);
   }
 }

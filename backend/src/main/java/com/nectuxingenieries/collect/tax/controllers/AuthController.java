@@ -69,8 +69,75 @@ public class AuthController {
                     .body(Map.of("error", "Invalid credentials"));
         }
     }
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refresh_token");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "refresh_token is required"));
+        }
+
+        String clientId = body.get("client_id") != null && !body.get("client_id").isBlank()
+                ? body.get("client_id") : keycloakClientId;
+
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("grant_type", "refresh_token");
+        form.add("client_id", clientId);
+        if (!"tax-frontend".equals(clientId)) {
+            form.add("client_secret", keycloakClientSecret);
+        }
+        form.add("refresh_token", refreshToken);
+
+        return exchangeWithKeycloak(form, "Invalid refresh token");
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refresh_token");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "refresh_token is required"));
+        }
+
+        String clientId = body.get("client_id") != null && !body.get("client_id").isBlank()
+                ? body.get("client_id") : keycloakClientId;
+
+        String logoutUrl = String.format("%s/realms/%s/protocol/openid-connect/logout", keycloakHost, keycloakRealm);
+
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("client_id", clientId);
+        if (!"tax-frontend".equals(clientId)) {
+            form.add("client_secret", keycloakClientSecret);
+        }
+        form.add("refresh_token", refreshToken);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        try {
+            restTemplateBuilder.build().postForEntity(logoutUrl, new HttpEntity<>(form, headers), Void.class);
+        } catch (HttpClientErrorException e) {
+            // La session Keycloak est déjà invalide : le client peut purger son token localement.
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/api/debug/roles")
     public ResponseEntity<?> roles(Authentication auth) {
         return ResponseEntity.ok(auth.getAuthorities());
+    }
+
+    private ResponseEntity<?> exchangeWithKeycloak(MultiValueMap<String, String> form, String errorMessage) {
+        String tokenUrl = String.format("%s/realms/%s/protocol/openid-connect/token", keycloakHost, keycloakRealm);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        try {
+            ResponseEntity<Map> response = restTemplateBuilder.build()
+                    .postForEntity(tokenUrl, new HttpEntity<>(form, headers), Map.class);
+            return ResponseEntity.ok(response.getBody());
+        } catch (HttpClientErrorException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", errorMessage));
+        }
     }
 }

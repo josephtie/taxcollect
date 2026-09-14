@@ -5,11 +5,14 @@ Ce dossier contient la documentation technique du projet TaxCollect.
 ## Index
 
 ### Architecture
-- [Architecture globale](../ARCHITECTURE.md) - Structure du projet, technologies, flux de données
+- [Architecture globale](ARCHITECTURE.md) - Structure du projet, technologies, flux de données
+- [Personas](personas.md) - Rôles utilisateurs et cas d'usage
+- [Spécification agent de collecte](AGENT_COLLECTE_SPEC.md)
+- [Spécification module paiement](PAYMENT_MODULE_SPECIFICATION.md)
+- [Distinction Superviseur / Responsable quartier](E_Collecte_Distinction_Superviseur_Responsable_Quartier.md)
 
 ### Implémentations
 - [Service Agent](AGENT_SERVICE_IMPLEMENTATION_SUMMARY.md)
-- [Service Contribuable](CONTRIBUTABLE_SERVICE_IMPLEMENTATION_SUMMARY.md)
 - [Service Taxe](TAXE_SERVICE_IMPLEMENTATION_SUMMARY.md)
 - [Service Transaction](TRANSACTION_SERVICE_IMPLEMENTATION_SUMMARY.md)
 

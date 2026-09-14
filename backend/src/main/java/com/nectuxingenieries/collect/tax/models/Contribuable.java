@@ -53,6 +53,10 @@ public class Contribuable extends Auditable {
     @Column(name = "quartier")
     private String quartier;
 
+    @ManyToOne
+    @JoinColumn(name = "quartier_id", nullable = true)
+    private Quartier quartierEntite;
+
     @Column(name = "type_piece_identite")
     private String typePieceIdentite;
 
@@ -130,6 +134,8 @@ public class Contribuable extends Auditable {
 
     public String getQuartier() { return quartier; }
     public void setQuartier(String quartier) { this.quartier = quartier; }
+    public Quartier getQuartierEntite() { return quartierEntite; }
+    public void setQuartierEntite(Quartier quartierEntite) { this.quartierEntite = quartierEntite; }
 
     public String getTypePieceIdentite() { return typePieceIdentite; }
     public void setTypePieceIdentite(String typePieceIdentite) { this.typePieceIdentite = typePieceIdentite; }

@@ -105,4 +105,25 @@ public class ZoneServiceImpl implements ZoneService {
                 .map(zoneMapper::toDto)
                 .toList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ZoneDto> findByCommuneId(Long communeId) {
+        return zoneRepository.findByCommuneId(communeId)
+                .stream()
+                .map(zoneMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ZoneDto> search(String searchTerm) {
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return findAll();
+        }
+        return zoneRepository.searchByNomOrCommune(searchTerm)
+                .stream()
+                .map(zoneMapper::toDto)
+                .toList();
+    }
 }

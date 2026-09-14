@@ -20,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -214,6 +216,159 @@ public class ClotureCaisseService {
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Statistiques de clôture sur une période : volumes par statut, montants cumulés
+     * et écart global entre le déclaré et le calculé.
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getClotureStats(LocalDate debut, LocalDate fin) {
+        List<ClotureCaisse> clotures = (debut != null && fin != null)
+                ? clotureCaisseRepository.findByDateClotureBetween(debut, fin)
+                : clotureCaisseRepository.findAll();
+
+        Map<String, Long> parStatut = new LinkedHashMap<>();
+        for (StatutCloture statut : StatutCloture.values()) {
+            parStatut.put(statut.name(), clotures.stream()
+                    .filter(c -> c.getStatut() == statut)
+                    .count());
+        }
+
+        BigDecimal montantTotal = sum(clotures, ClotureCaisse::getMontantTotal);
+        BigDecimal montantDeclare = sum(clotures, ClotureCaisse::getMontantDeclare);
+        BigDecimal montantDepose = sum(clotures, ClotureCaisse::getMontantDepose);
+
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("nombreClotures", clotures.size());
+        stats.put("parStatut", parStatut);
+        stats.put("montantTotalEspece", sum(clotures, ClotureCaisse::getMontantTotalEspece));
+        stats.put("montantTotalMobileMoney", sum(clotures, ClotureCaisse::getMontantTotalMobileMoney));
+        stats.put("montantTotal", montantTotal);
+        stats.put("montantDeclare", montantDeclare);
+        stats.put("montantDepose", montantDepose);
+        stats.put("ecartDeclare", montantDeclare.subtract(montantTotal));
+        stats.put("ecartDepose", montantDepose.subtract(montantDeclare));
+        stats.put("nombreTransactions", clotures.stream()
+                .mapToInt(c -> c.getNombreTransactions() != null ? c.getNombreTransactions() : 0)
+                .sum());
+        return stats;
+    }
+
+    /**
+     * Exporte les bordereaux de clôture d'une période au format CSV ou XLSX.
+     */
+    @Transactional(readOnly = true)
+    public byte[] exportClotures(String format, LocalDate debut, LocalDate fin) {
+        List<ClotureCaisse> clotures = (debut != null && fin != null)
+                ? clotureCaisseRepository.findByDateClotureBetween(debut, fin)
+                : clotureCaisseRepository.findAll();
+
+        return "xlsx".equalsIgnoreCase(format)
+                ? exportCloturesToXlsx(clotures)
+                : exportCloturesToCsv(clotures);
+    }
+
+    private static final String[] EXPORT_HEADERS = {
+            "Id", "Date", "Agent", "Especes", "MobileMoney", "Total",
+            "Declare", "Depose", "Statut", "ReferenceDepot", "NombreTransactions"
+    };
+
+    private byte[] exportCloturesToCsv(List<ClotureCaisse> clotures) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.join(",", EXPORT_HEADERS)).append("\n");
+        for (ClotureCaisse c : clotures) {
+            sb.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    c.getId(),
+                    c.getDateCloture() != null ? c.getDateCloture() : "",
+                    escapeCsv(agentLabel(c)),
+                    plain(c.getMontantTotalEspece()),
+                    plain(c.getMontantTotalMobileMoney()),
+                    plain(c.getMontantTotal()),
+                    plain(c.getMontantDeclare()),
+                    plain(c.getMontantDepose()),
+                    c.getStatut() != null ? c.getStatut().name() : "",
+                    escapeCsv(c.getReferenceDepotBanque()),
+                    c.getNombreTransactions() != null ? c.getNombreTransactions() : 0));
+        }
+        return sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private byte[] exportCloturesToXlsx(List<ClotureCaisse> clotures) {
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Clotures");
+
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < EXPORT_HEADERS.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
+                cell.setCellValue(EXPORT_HEADERS[i]);
+                cell.setCellStyle(headerStyle);
+                sheet.setColumnWidth(i, 4000);
+            }
+
+            int rowIdx = 1;
+            for (ClotureCaisse c : clotures) {
+                org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(c.getId() != null ? c.getId() : 0);
+                row.createCell(1).setCellValue(c.getDateCloture() != null ? c.getDateCloture().toString() : "");
+                row.createCell(2).setCellValue(agentLabel(c));
+                row.createCell(3).setCellValue(doubleOf(c.getMontantTotalEspece()));
+                row.createCell(4).setCellValue(doubleOf(c.getMontantTotalMobileMoney()));
+                row.createCell(5).setCellValue(doubleOf(c.getMontantTotal()));
+                row.createCell(6).setCellValue(doubleOf(c.getMontantDeclare()));
+                row.createCell(7).setCellValue(doubleOf(c.getMontantDepose()));
+                row.createCell(8).setCellValue(c.getStatut() != null ? c.getStatut().name() : "");
+                row.createCell(9).setCellValue(c.getReferenceDepotBanque() != null ? c.getReferenceDepotBanque() : "");
+                row.createCell(10).setCellValue(c.getNombreTransactions() != null ? c.getNombreTransactions() : 0);
+            }
+
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Erreur lors de l'export XLSX des clôtures", e);
+        }
+    }
+
+    private BigDecimal sum(List<ClotureCaisse> clotures, java.util.function.Function<ClotureCaisse, BigDecimal> getter) {
+        return clotures.stream()
+                .map(getter)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private String agentLabel(ClotureCaisse c) {
+        if (c.getAgent() == null) {
+            return "";
+        }
+        return String.format("%s %s", nullToEmpty(c.getAgent().getNom()), nullToEmpty(c.getAgent().getPrenom())).trim();
+    }
+
+    private String plain(BigDecimal value) {
+        return value != null ? value.toPlainString() : "";
+    }
+
+    private double doubleOf(BigDecimal value) {
+        return value != null ? value.doubleValue() : 0d;
+    }
+
+    private String nullToEmpty(String value) {
+        return value != null ? value : "";
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     private ClotureCaisseDTO convertToDTO(ClotureCaisse clotureCaisse) {

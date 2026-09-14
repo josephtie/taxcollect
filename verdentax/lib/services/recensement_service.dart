@@ -312,6 +312,18 @@ class RecensementService {
     }
   }
 
+  /// Récupérer tous les contribuables (recherche large sans filtre).
+  /// Utilisé par les extensions de géolocalisation pour les statistiques par zone.
+  Future<List<ContribuableForm>> getAllContribuables({int limit = 1000}) async {
+    try {
+      final results = await searchContribuables(query: '', limit: limit);
+      return results.map((r) => r.contribuable).toList();
+    } catch (e) {
+      _logger.e('Error getting all contribuables: $e');
+      return [];
+    }
+  }
+
   // Sync pending contribuables
   Future<List<ContribuableForm>> syncPendingContribuables() async {
     try {
@@ -593,8 +605,11 @@ class RecensementService {
 
   Future<List<ContribuableForm>> _getContribuablesByAgentFromServer(String agentId) async {
     try {
+      // Le backend expose les contribuables d'un agent via
+      // /api/recensement/contribuables/agent/{agentId} (RecensementController),
+      // et non via /api/taxcollect/contribuable/zone/{agentId}.
       final response = await _apiService.get<List<dynamic>>(
-        '${AppConfig.contribuablesEndpoint}/zone/${agentId}',
+        '${AppConfig.recensementEndpoint}/contribuables/agent/$agentId',
       );
       
       if (response != null) {
@@ -711,19 +726,10 @@ class RecensementService {
   }
 
   Future<List<ContribuableHistorique>> _getServerHistorique(int contribuableId) async {
-    try {
-      final response = await _apiService.get<List<dynamic>>(
-        '${AppConfig.contribuablesEndpoint}/$contribuableId/historique',
-      );
-      
-      if (response != null) {
-        return response.map((json) => ContribuableHistorique.fromJson(json)).toList();
-      }
-      return [];
-    } catch (e) {
-      _logger.e('Error getting server historique: $e');
-      return [];
-    }
+    // Le backend (ContribuableController) n'expose pas de route /historique.
+    // L'historique n'est disponible qu'en local tant qu'un endpoint dédié
+    // n'est pas implémenté côté backend.
+    return [];
   }
 
   Future<void> _createHistoriqueEntry(
@@ -754,14 +760,9 @@ class RecensementService {
 
       // Sync if online
       if (_connectivityService.canPerformOnlineOperation()) {
-        try {
-          await _apiService.post<Map<String, dynamic>>(
-            '${AppConfig.contribuablesEndpoint}/historique',
-            data: historique.toJson(),
-          );
-        } catch (e) {
-          _logger.w('Failed to sync historique entry: $e');
-        }
+        // Le backend n'expose pas de route /historique pour les contribuables.
+        // L'entrée est conservée localement en attendant un endpoint dédié.
+        _logger.w('Historique entry kept local (no backend endpoint): $raisonModification');
       }
     } catch (e) {
       _logger.e('Error creating historique entry: $e');

@@ -470,8 +470,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success && mounted) {
-        // Navigate to dashboard
-        Navigator.of(context).pushReplacementNamed('/dashboard');
+        // Route agents to agent dashboard, others to regular dashboard
+        final user = authService.currentUser;
+        final route = (user != null && user.isAgent) ? '/agent-dashboard' : '/dashboard';
+        Navigator.of(context).pushReplacementNamed(route);
       }
     } catch (e) {
       if (mounted) {
@@ -499,8 +501,9 @@ class _LoginScreenState extends State<LoginScreen> {
       final success = await authService.authenticateWithBiometrics();
 
       if (success && mounted) {
-        // Navigate to dashboard
-        Navigator.of(context).pushReplacementNamed('/dashboard');
+        final user = authService.currentUser;
+        final route = (user != null && user.isAgent) ? '/agent-dashboard' : '/dashboard';
+        Navigator.of(context).pushReplacementNamed(route);
       }
     } catch (e) {
       if (mounted) {

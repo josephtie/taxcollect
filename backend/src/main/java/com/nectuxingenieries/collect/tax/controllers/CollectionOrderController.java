@@ -6,6 +6,10 @@ import com.nectuxingenieries.collect.tax.models.enums.PaymentChannel;
 import com.nectuxingenieries.collect.tax.repositories.CollectionOrderRepository;
 import com.nectuxingenieries.collect.tax.services.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +33,13 @@ public class CollectionOrderController {
         String channelStr = body.getOrDefault("channel", "DIRECT_PAYMENT").toString();
         PaymentChannel channel = PaymentChannel.valueOf(channelStr);
         return ResponseEntity.ok(paymentService.createCollectionOrder(taxeCollectId, channel));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'TRESOR', 'AGENT', 'SUPERVISEUR')")
+    public ResponseEntity<Page<CollectionOrder>> listCollectionOrders(
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(collectionOrderRepository.findAll(pageable));
     }
 
     @GetMapping("/{reference}")

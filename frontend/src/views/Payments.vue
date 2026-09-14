@@ -202,8 +202,8 @@ onMounted(async () => {
 
 async function loadOrders() {
   try {
-    const response = await collectionOrderService.getCollectionOrder('')
-    orders.value = Array.isArray(response.data) ? response.data : []
+    const response = await collectionOrderService.getAllCollectionOrders()
+    orders.value = Array.isArray(response.data) ? response.data : (response.data?.content || [])
   } catch (err) {
     console.error('Error loading orders:', err)
   }
@@ -211,7 +211,7 @@ async function loadOrders() {
 
 async function loadTaxes() {
   try {
-    const response = await taxeService.getAll()
+    const response = await taxeService.getAllTaxes()
     availableTaxes.value = Array.isArray(response.data) ? response.data : (response.data?.content || [])
   } catch (err) {
     console.error('Error loading taxes:', err)

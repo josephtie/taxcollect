@@ -60,16 +60,16 @@ class AgentService extends BaseService {
   // Récupérer les statistiques d'un agent
   async getAgentStats(id, startDate, endDate) {
     return this.get(`/${id}/stats`, {
-      debut: startDate?.toISOString(),
-      fin: endDate?.toISOString()
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString()
     })
   }
 
   // Récupérer les transactions d'un agent
   async getAgentTransactions(id, startDate, endDate) {
     return this.get(`/${id}/transactions`, {
-      debut: startDate?.toISOString(),
-      fin: endDate?.toISOString()
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString()
     })
   }
 

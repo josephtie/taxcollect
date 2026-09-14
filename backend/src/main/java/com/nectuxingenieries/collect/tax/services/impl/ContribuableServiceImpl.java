@@ -1,7 +1,13 @@
 package com.nectuxingenieries.collect.tax.services.impl;
 
 import com.nectuxingenieries.collect.tax.repositories.ContribuableRepository;
+import com.nectuxingenieries.collect.tax.repositories.ZoneRepository;
+import com.nectuxingenieries.collect.tax.repositories.QuartierRepository;
+import com.nectuxingenieries.collect.tax.repositories.SecteurRepository;
 import com.nectuxingenieries.collect.tax.models.Contribuable;
+import com.nectuxingenieries.collect.tax.models.Zone;
+import com.nectuxingenieries.collect.tax.models.Quartier;
+import com.nectuxingenieries.collect.tax.models.Secteur;
 import com.nectuxingenieries.collect.tax.dto.ContribuableDto;
 import com.nectuxingenieries.collect.tax.models.mappers.ContribuableMapper;
 import com.nectuxingenieries.collect.tax.services.ContribuableService;
@@ -28,11 +34,23 @@ public class ContribuableServiceImpl implements ContribuableService {
     @Autowired
   private  ContribuableRepository contribuableRepository;
     @Autowired private  ContribuableMapper contribuableMapper;
+    @Autowired private  ZoneRepository zoneRepository;
+    @Autowired private  QuartierRepository quartierRepository;
+    @Autowired private  SecteurRepository secteurRepository;
 
 
     @Override
     public ContribuableDto create(ContribuableDto contribuableDto) {
         Contribuable entity = contribuableMapper.toEntity(contribuableDto);
+        if (contribuableDto.getZoneId() != null) {
+            zoneRepository.findById(contribuableDto.getZoneId()).ifPresent(entity::setZone);
+        }
+        if (contribuableDto.getQuartierId() != null) {
+            quartierRepository.findById(contribuableDto.getQuartierId()).ifPresent(entity::setQuartierEntite);
+        }
+        if (contribuableDto.getSecteurId() != null) {
+            secteurRepository.findById(contribuableDto.getSecteurId()).ifPresent(entity::setSecteur);
+        }
         return contribuableMapper.toDto(contribuableRepository.save(entity));
     }
     @Override
@@ -40,6 +58,15 @@ public class ContribuableServiceImpl implements ContribuableService {
         Contribuable existing = contribuableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Contribuable non trouvé"));
         contribuableMapper.updateFromDto(contribuableDto, existing);
+        if (contribuableDto.getZoneId() != null) {
+            zoneRepository.findById(contribuableDto.getZoneId()).ifPresent(existing::setZone);
+        }
+        if (contribuableDto.getQuartierId() != null) {
+            quartierRepository.findById(contribuableDto.getQuartierId()).ifPresent(existing::setQuartierEntite);
+        }
+        if (contribuableDto.getSecteurId() != null) {
+            secteurRepository.findById(contribuableDto.getSecteurId()).ifPresent(existing::setSecteur);
+        }
         return contribuableMapper.toDto(contribuableRepository.save(existing));
     }
     @Override

@@ -17,6 +17,7 @@ import org.locationtech.jts.geom.MultiPolygon;
 )
 public interface SecteurMapper {
 
+    @Mapping(source = "quartier.id", target = "quartierId")
     @Mapping(source = "quartier.nom", target = "quartierNom")
     @Mapping(source = "geometry", target = "geometryGeoJson", qualifiedByName = "multiPolygonToGeoJson")
     SecteurDto toDto(Secteur secteur);

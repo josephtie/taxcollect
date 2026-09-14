@@ -46,67 +46,85 @@
           />
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div
-            v-for="secteur in secteurs"
-            :key="secteur.id"
-            class="bg-white rounded-lg shadow-soft border border-gray-100 p-6 hover:shadow-medium transition-shadow"
-          >
-            <div class="flex items-start justify-between mb-4">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900">{{ secteur.nom }}</h3>
-                <p class="text-sm text-gray-500">{{ secteur.quartierNom || 'Non spécifié' }}</p>
-              </div>
-            </div>
+        <div class="bg-white rounded-lg shadow-soft border border-gray-100 overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nom</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Quartier</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rue</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">N° Lot</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">GPS</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Agents</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr v-for="secteur in paginatedSecteurs" :key="secteur.id" class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">{{ secteur.nom }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-500">{{ secteur.quartierNom || 'Non spécifié' }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-500">{{ secteur.rue || '-' }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-500">{{ secteur.numeroLot || '-' }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div v-if="secteur.latitude && secteur.longitude" class="text-sm text-gray-500">
+                    {{ secteur.latitude }}, {{ secteur.longitude }}
+                  </div>
+                  <div v-else class="text-sm text-gray-400">-</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <button
+                    @click="openAgentsModal(secteur)"
+                    class="text-sm font-medium text-primary-600 hover:text-primary-900 flex items-center"
+                  >
+                    <UserPlus class="w-3.5 h-3.5 mr-1" />
+                    {{ secteurAgentCounts[secteur.id] || 0 }} agent(s)
+                  </button>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                  <div class="flex items-center justify-end space-x-2">
+                    <button @click="editSecteur(secteur)" class="text-warning-600 hover:text-warning-900" title="Modifier">
+                      <Edit class="w-4 h-4" />
+                    </button>
+                    <LogicalDeletionActions
+                      :entity="secteur"
+                      endpoint="secteur"
+                      entity-name="le secteur"
+                      :can-delete="canDeleteSecteur"
+                      :can-restore="canRestoreSecteur"
+                      :display-field="'nom'"
+                      @deleted="handleSecteurDeleted"
+                      @restored="handleSecteurRestored"
+                    />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Agents assignés</span>
-                <button
-                  @click="openAgentsModal(secteur)"
-                  class="text-sm font-medium text-primary-600 hover:text-primary-900 flex items-center"
-                >
-                  <UserPlus class="w-3.5 h-3.5 mr-1" />
-                  {{ secteurAgentCounts[secteur.id] || 0 }} agent(s)
-                </button>
-              </div>
-              <div v-if="secteur.rue" class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Rue</span>
-                <span class="text-sm font-medium text-gray-900">{{ secteur.rue }}</span>
-              </div>
-              <div v-if="secteur.numeroLot" class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Numéro de lot</span>
-                <span class="text-sm font-medium text-gray-900">{{ secteur.numeroLot }}</span>
-              </div>
-              <div v-if="secteur.latitude && secteur.longitude" class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Coordonnées</span>
-                <span class="text-sm font-medium text-gray-900">{{ secteur.latitude }}, {{ secteur.longitude }}</span>
-              </div>
-            </div>
-
-            <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between">
-              <button
-                @click="viewSecteurDetails(secteur)"
-                class="text-primary-600 hover:text-primary-900 text-sm font-medium"
-              >
-                Voir détails
-              </button>
-              <div class="flex items-center space-x-2">
-                <button @click="editSecteur(secteur)" class="text-warning-600 hover:text-warning-900">
-                  <Edit class="w-4 h-4" />
-                </button>
-                <LogicalDeletionActions
-                  :entity="secteur"
-                  endpoint="secteur"
-                  entity-name="le secteur"
-                  :can-delete="canDeleteSecteur"
-                  :can-restore="canRestoreSecteur"
-                  :display-field="'nom'"
-                  @deleted="handleSecteurDeleted"
-                  @restored="handleSecteurRestored"
-                />
-              </div>
-            </div>
+        <!-- Pagination -->
+        <div v-if="secteurs.length > itemsPerPage" class="flex items-center justify-between mt-4">
+          <div class="text-sm text-gray-500">
+            Affichage {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, secteurs.length) }} sur {{ secteurs.length }}
+          </div>
+          <div class="flex items-center space-x-2">
+            <select v-model="itemsPerPage" @change="currentPage = 1" class="text-sm border border-gray-300 rounded-lg px-2 py-1">
+              <option :value="5">5</option>
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+            </select>
+            <button @click="currentPage--" :disabled="currentPage === 1" class="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Précédent</button>
+            <span class="text-sm text-gray-600">{{ currentPage }} / {{ totalPages }}</span>
+            <button @click="currentPage++" :disabled="currentPage === totalPages" class="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Suivant</button>
           </div>
         </div>
 
@@ -169,26 +187,28 @@
               </select>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="form-label">Latitude</label>
-                <input
-                  v-model="secteurForm.latitude"
-                  type="number"
-                  step="any"
-                  class="form-input"
-                  placeholder="Ex: 5.2048"
-                />
-              </div>
-              <div>
-                <label class="form-label">Longitude</label>
-                <input
-                  v-model="secteurForm.longitude"
-                  type="number"
-                  step="any"
-                  class="form-input"
-                  placeholder="Ex: -3.7467"
-                />
+            <div>
+              <label class="form-label">Point de repère (latitude / longitude)</label>
+              <p class="text-xs text-gray-500 mb-2">Point central ou repère approximatif du secteur</p>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <input
+                    v-model="secteurForm.latitude"
+                    type="number"
+                    step="any"
+                    class="form-input"
+                    placeholder="Ex: 5.2048"
+                  />
+                </div>
+                <div>
+                  <input
+                    v-model="secteurForm.longitude"
+                    type="number"
+                    step="any"
+                    class="form-input"
+                    placeholder="Ex: -3.7467"
+                  />
+                </div>
               </div>
             </div>
 
@@ -213,13 +233,15 @@
             </div>
 
             <div>
-              <label class="form-label">Délimitation géographique (polygone)</label>
-              <p class="text-xs text-gray-500 mb-2">Dessinez le périmètre du secteur sur la carte</p>
+              <label class="form-label">Périmètre géographique complet (polygone)</label>
+              <p class="text-xs text-gray-500 mb-2">Dessinez les limites du secteur sur la carte. Un polygone définit précisément la zone couverte.</p>
               <div class="h-[300px] border border-gray-300 rounded-lg overflow-hidden">
                 <TerritoryMap
                   ref="secteurMapRef"
                   height="300px"
                   :initial-geo-json="secteurForm.geometryGeoJson"
+                  :parent-layers="mapParentLayers"
+                  :highlight-geo-json="mapParentLayers.length > 0 ? mapParentLayers[0].geoJson : null"
                   :editable="true"
                   @polygon-drawn="onPolygonDrawn"
                   @polygon-cleared="onPolygonCleared"
@@ -243,8 +265,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { secteurService, quartierService, affectationService, permissionService } from '@/services'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { secteurService, quartierService, affectationService, permissionService, supervisionService } from '@/services'
 import Sidebar from '@/components/Sidebar.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import LogicalDeletionActions from '@/components/LogicalDeletionActions.vue'
@@ -259,6 +281,9 @@ const saving = ref(false)
 
 const secteurs = ref([])
 const quartiers = ref([])
+
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
 
 // Agent management state
 const showAgentsModal = ref(false)
@@ -276,6 +301,7 @@ const secteurForm = ref({
 })
 const secteurMapRef = ref(null)
 const drawnGeometry = ref(null)
+const mapParentLayers = ref([])
 
 const onPolygonDrawn = (geoJson) => {
   drawnGeometry.value = geoJson
@@ -285,6 +311,28 @@ const onPolygonCleared = () => {
   drawnGeometry.value = null
 }
 
+watch(() => secteurForm.value.quartierId, async (newQuartierId) => {
+  if (!newQuartierId) {
+    mapParentLayers.value = []
+    return
+  }
+  const selectedQuartier = quartiers.value.find(q => q.id == newQuartierId)
+  if (selectedQuartier && selectedQuartier.geometryGeoJson) {
+    mapParentLayers.value = [{
+      type: 'quartier',
+      name: selectedQuartier.nom,
+      geoJson: selectedQuartier.geometryGeoJson
+    }]
+  } else {
+    mapParentLayers.value = []
+  }
+  nextTick(() => {
+    if (secteurMapRef.value) {
+      secteurMapRef.value.invalidateMapSize()
+    }
+  })
+})
+
 const canDeleteSecteur = computed(() => permissionService.hasPermission('dashboard.view'))
 const canRestoreSecteur = computed(() => permissionService.hasPermission('dashboard.view'))
 
@@ -292,11 +340,42 @@ const secteursAvecGPS = computed(() => {
   return secteurs.value.filter(s => s.latitude && s.longitude).length
 })
 
+const totalPages = computed(() => Math.ceil(secteurs.value.length / itemsPerPage.value) || 1)
+const paginatedSecteurs = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  return secteurs.value.slice(start, start + itemsPerPage.value)
+})
+
+const supervisedZoneIds = ref([])
+const supervisedZoneNames = ref([])
+const supervisedQuartierIds = ref([])
+const supervisedQuartierNames = ref([])
+
+const fetchSupervisedZoneIds = async () => {
+  try {
+    const response = await supervisionService.getSupervisedZones()
+    const zones = response.data || []
+    supervisedZoneIds.value = zones.map(z => z.id)
+    supervisedZoneNames.value = zones.map(z => z.nom)
+  } catch (error) {
+    console.error('Erreur chargement zones supervisées:', error)
+    supervisedZoneIds.value = []
+    supervisedZoneNames.value = []
+  }
+}
+
 const fetchSecteurs = async () => {
   try {
     loading.value = true
     const response = await secteurService.getAllSecteurs()
-    secteurs.value = response.data
+    let allSecteurs = response.data || []
+    if (permissionService.isSuperviseur() && supervisedQuartierIds.value.length > 0) {
+      allSecteurs = allSecteurs.filter(s =>
+        supervisedQuartierIds.value.includes(s.quartierId) ||
+        supervisedQuartierNames.value.includes(s.quartierNom)
+      )
+    }
+    secteurs.value = allSecteurs
   } catch (error) {
     console.error('Erreur chargement secteurs:', error)
     secteurs.value = []
@@ -308,7 +387,16 @@ const fetchSecteurs = async () => {
 const fetchQuartiers = async () => {
   try {
     const response = await quartierService.getAllQuartiers()
-    quartiers.value = response.data || []
+    let allQuartiers = response.data || []
+    if (permissionService.isSuperviseur() && supervisedZoneIds.value.length > 0) {
+      allQuartiers = allQuartiers.filter(q =>
+        supervisedZoneIds.value.includes(q.zoneId) ||
+        supervisedZoneNames.value.includes(q.zoneNom)
+      )
+      supervisedQuartierIds.value = allQuartiers.map(q => q.id)
+      supervisedQuartierNames.value = allQuartiers.map(q => q.nom)
+    }
+    quartiers.value = allQuartiers
   } catch (error) {
     console.error('Erreur chargement quartiers:', error)
     quartiers.value = [
@@ -369,6 +457,7 @@ const closeModal = () => {
   showCreateModal.value = false
   editingSecteur.value = null
   drawnGeometry.value = null
+  mapParentLayers.value = []
   secteurForm.value = {
     nom: '',
     quartierId: '',
@@ -426,6 +515,17 @@ const fetchSecteurAgentCounts = async () => {
 }
 
 onMounted(async () => {
+  if (permissionService.isSuperviseur()) {
+    await fetchSupervisedZoneIds()
+    const qResponse = await quartierService.getAllQuartiers()
+    const allQ = qResponse.data || []
+    const filteredQ = allQ.filter(q =>
+      supervisedZoneIds.value.includes(q.zoneId) ||
+      supervisedZoneNames.value.includes(q.zoneNom)
+    )
+    supervisedQuartierIds.value = filteredQ.map(q => q.id)
+    supervisedQuartierNames.value = filteredQ.map(q => q.nom)
+  }
   await Promise.all([fetchSecteurs(), fetchQuartiers()])
   await fetchSecteurAgentCounts()
 })

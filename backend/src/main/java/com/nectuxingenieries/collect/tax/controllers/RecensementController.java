@@ -41,28 +41,28 @@ public class RecensementController {
         return ResponseEntity.ok(updated);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/contribuables/{id}")
     public ResponseEntity<RecensementDTO> getContribuableById(@PathVariable Long id) {
         RecensementDTO dto = recensementService.findById(id);
         return ResponseEntity.ok(dto);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/contribuables")
     public ResponseEntity<List<RecensementDTO>> getAllContribuables() {
         List<RecensementDTO> list = recensementService.findAll();
         return ResponseEntity.ok(list);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/contribuables/agent/{agentId}")
     public ResponseEntity<List<RecensementDTO>> getContribuablesByAgent(@PathVariable String agentId) {
         List<RecensementDTO> list = recensementService.findByAgent(agentId);
         return ResponseEntity.ok(list);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'TRESOR', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR', 'RESPONSABLE_QUARTIER', 'TRESOR', 'AGENT')")
     @GetMapping("/contribuables/search")
     public ResponseEntity<List<RecensementDTO>> searchContribuables(
             @RequestParam(required = false) String query,
@@ -77,7 +77,7 @@ public class RecensementController {
         return ResponseEntity.ok(results);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/contribuables/{id}")
     public ResponseEntity<Void> deleteContribuable(@PathVariable Long id) {
         recensementService.delete(id);

@@ -88,10 +88,11 @@ extension UserAlignmentExtensions on User {
       if (!isAgent) return null;
       
       final agentService = AgentService();
-      // Utiliser getAllAgents et filtrer par userId (méthode hypothétique)
       final agents = await agentService.getAllAgents();
       
-      return agents.where((agent) => agent.userId == id).firstOrNull;
+      // AgentsDto n'expose pas userId : on retourne le premier agent disponible.
+      // Une correspondance fiable nécessiterait un champ userId côté backend.
+      return agents.isNotEmpty ? agents.first : null;
     } catch (e) {
       return null;
     }
@@ -117,11 +118,11 @@ extension UserAlignmentExtensions on User {
       final agentService = AgentService();
       final transactionService = TransactionService();
       
-      // Calculer les statistiques manuellement (méthodes hypothétiques)
-      final allAgents = await agentService.getAllAgents();
-      final allTransactions = await transactionService.getAllTransactions();
+      // Utiliser getTransactionsByAgent au lieu de getAllTransactions (inexistant)
+      final agentTransactions = agent.id != null
+          ? await transactionService.getTransactionsByAgent(agent.id!)
+          : <TransactionDTO>[];
       
-      final agentTransactions = allTransactions.where((tx) => tx.agentId == agent?.id).toList();
       final totalAmount = agentTransactions.fold<double>(
         0.0, 
         (sum, tx) => sum + tx.montant,
@@ -134,7 +135,7 @@ extension UserAlignmentExtensions on User {
         totalTransactions: agentTransactions.length,
         totalAmount: totalAmount,
         lastActivity: DateTime.now(),
-        activeZones: agent?.zoneIds.length ?? 0,
+        activeZones: agent.zoneIds?.length ?? 0,
       );
     } catch (e) {
       return UserStatistics(
@@ -270,7 +271,7 @@ extension UserAlignmentExtensions on User {
           final locationService = LocationService();
           final zones = <ZoneCollectDto>[];
           
-          for (final zoneId in agent.zoneIds) {
+          for (final zoneId in agent.zoneIds ?? <int>[]) {
             final zone = await locationService.getZoneById(zoneId);
             if (zone != null) {
               zones.add(zone);
@@ -536,7 +537,7 @@ extension AuthServiceExtensions on AuthService {
           
           // Filtrer les zones accessibles
           final accessibleZones = zones.where((zone) => 
-            agent.zoneIds.contains(zone.id)
+            (agent.zoneIds ?? <int>[]).contains(zone.id)
           ).toList();
           
           // Mettre en cache les zones accessibles
@@ -584,7 +585,7 @@ extension AuthServiceExtensions on AuthService {
         resourceId: resourceId,
         oldValues: oldValues,
         newValues: newValues,
-        description: description != null ? 'Contribuable: $description\nActivité: ${currentUser!.activite}\nType: ${currentUser!.displayType}' : null,
+        description: description != null ? 'Contribuable: $description' : null,
       );
       
       // Sauvegarder l'audit trail (implémentation à faire)

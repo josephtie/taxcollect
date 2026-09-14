@@ -178,15 +178,17 @@ class TransactionService {
     }
   }
   
-  /// Annuler une transaction
+  /// Annuler une transaction.
+  /// Le backend expose une route dédiée POST /api/transactions/{id}/cancel
+  /// qui valide que la transaction peut être annulée (pas déjà annulée/validée).
   Future<TransactionDTO> cancelTransaction(int id, {String? motif}) async {
     try {
       final apiService = ApiService();
-      final response = await apiService.put<TransactionDTO>(
-        '${AppConfig.transactionsEndpoint}/$id/cancel',
-        data: {'motif': motif},
+      final response = await apiService.dio.post(
+        '${AppConfig.baseUrl}${AppConfig.transactionsEndpoint}/$id/cancel',
+        data: motif != null ? {'motif': motif} : null,
       );
-      return response;
+      return TransactionDTO.fromJson(response.data);
     } catch (e) {
       _logger.e('Error cancelling transaction $id: $e');
       rethrow;
@@ -309,7 +311,7 @@ class TransactionService {
       if (endDate != null) queryParams['fin'] = endDate.toIso8601String();
       
       final response = await apiService.get<TransactionStatistics>(
-        '${AppConfig.transactionsEndpoint}/statistics',
+        '${AppConfig.transactionsEndpoint}/stats',
         queryParameters: queryParams,
       );
       return response;
@@ -344,17 +346,31 @@ class TransactionService {
       };
       
       if (agentId != null) queryParams['agentId'] = agentId.toString();
-      if (status != null) queryParams['statut'] = status.code;
-      
-      final response = await apiService.get<List<dynamic>>(
-        '${AppConfig.transactionsEndpoint}/range',
+
+      // GET /api/transactions/filter renvoie une Page<TransactionDTO>.
+      final response = await apiService.get<Map<String, dynamic>>(
+        '${AppConfig.transactionsEndpoint}/filter',
         queryParameters: queryParams,
       );
-      return response.map((json) => TransactionDTO.fromJson(json)).toList();
+      final transactions = _extractPageContent(response);
+      // Le backend ne filtre pas par statut sur /filter : on l'applique localement.
+      if (status == null) return transactions;
+      return transactions.where((t) => t.statut == status).toList();
     } catch (e) {
       _logger.e('Error getting transactions in date range: $e');
       return [];
     }
+  }
+
+  /// Extrait le contenu d'une réponse paginée Spring (`{content: [...]}`),
+  /// en tolérant une liste brute.
+  List<TransactionDTO> _extractPageContent(dynamic response) {
+    final content = response is Map<String, dynamic> ? response['content'] : response;
+    if (content is! List) return [];
+    return content
+        .whereType<Map<String, dynamic>>()
+        .map((json) => TransactionDTO.fromJson(json))
+        .toList();
   }
   
   /// Rechercher des transactions
@@ -372,22 +388,33 @@ class TransactionService {
     try {
       final apiService = ApiService();
       Map<String, dynamic> queryParams = {};
-      
-      if (numeroRecu != null) queryParams['numeroRecu'] = numeroRecu;
-      if (contribuableNom != null) queryParams['contribuableNom'] = contribuableNom;
-      if (agentNom != null) queryParams['agentNom'] = agentNom;
-      if (minMontant != null) queryParams['minMontant'] = minMontant.toString();
-      if (maxMontant != null) queryParams['maxMontant'] = maxMontant.toString();
+
+      // GET /api/transactions/filter n'accepte que debut, fin, agentId et
+      // paymentMethod. Les autres critères sont appliqués côté client.
       if (startDate != null) queryParams['debut'] = startDate.toIso8601String();
       if (endDate != null) queryParams['fin'] = endDate.toIso8601String();
-      if (status != null) queryParams['statut'] = status.code;
-      if (modePaiement != null) queryParams['modePaiement'] = modePaiement.code;
-      
-      final response = await apiService.get<List<dynamic>>(
-        '${AppConfig.transactionsEndpoint}/search',
+      if (modePaiement != null) queryParams['paymentMethod'] = modePaiement.code;
+
+      final response = await apiService.get<Map<String, dynamic>>(
+        '${AppConfig.transactionsEndpoint}/filter',
         queryParameters: queryParams,
       );
-      return response.map((json) => TransactionDTO.fromJson(json)).toList();
+
+      return _extractPageContent(response).where((t) {
+        if (numeroRecu != null && !(t.numeroRecu?.contains(numeroRecu) ?? false)) return false;
+        if (contribuableNom != null &&
+            !(t.contribuableNom?.toLowerCase().contains(contribuableNom.toLowerCase()) ?? false)) {
+          return false;
+        }
+        if (agentNom != null &&
+            !(t.agentNom?.toLowerCase().contains(agentNom.toLowerCase()) ?? false)) {
+          return false;
+        }
+        if (minMontant != null && t.montant < minMontant) return false;
+        if (maxMontant != null && t.montant > maxMontant) return false;
+        if (status != null && t.statut != status) return false;
+        return true;
+      }).toList();
     } catch (e) {
       _logger.e('Error searching transactions: $e');
       return [];

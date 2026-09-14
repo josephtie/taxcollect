@@ -17,6 +17,7 @@ import org.locationtech.jts.geom.MultiPolygon;
 )
 public interface QuartierMapper {
 
+    @Mapping(source = "zone.id", target = "zoneId")
     @Mapping(source = "zone.nom", target = "zoneNom")
     @Mapping(source = "zone.commune.nom", target = "communeNom")
     @Mapping(source = "geometry", target = "geometryGeoJson", qualifiedByName = "multiPolygonToGeoJson")

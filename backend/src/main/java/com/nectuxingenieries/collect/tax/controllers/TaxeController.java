@@ -30,7 +30,7 @@ public class TaxeController {
     private TaxeService taxeService;
 
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody TaxeDto taxeDto, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
@@ -51,7 +51,7 @@ public class TaxeController {
         }
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<TaxeDto> update(@PathVariable Long id,
                                           @RequestBody TaxeDto taxeDto) {
@@ -96,7 +96,7 @@ public class TaxeController {
         return ResponseEntity.ok(page);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         taxeService.delete(id);
@@ -161,7 +161,7 @@ public class TaxeController {
                 .body(exportData);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISEUR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/duplicate")
     public ResponseEntity<TaxeDto> duplicateTaxe(@PathVariable Long id) {
         TaxeDto duplicated = taxeService.duplicateTaxe(id);

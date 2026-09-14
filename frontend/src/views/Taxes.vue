@@ -888,49 +888,7 @@ const fetchTaxes = async () => {
     taxes.value = response.data || []
   } catch (error) {
     console.error('Erreur chargement taxes:', error)
-    // Fallback avec données mock
-    taxes.value = [
-      {
-        id: 1,
-        nom: 'Taxe de Marché Central',
-        description: 'Taxe pour les commerçants du marché central',
-        taux: 0.10,
-        montantFixe: null,
-        typeCalcul: 'TAUX',
-        categorie: 'MARCHE_PLACE',
-        periodicite: 'MENSUELLE'
-      },
-      {
-        id: 2,
-        nom: 'Taxe Ambulante',
-        description: 'Taxe pour les marchands ambulants',
-        taux: null,
-        montantFixe: 5000,
-        typeCalcul: 'MONTANT',
-        categorie: 'MARCHAND_AMBULANT',
-        periodicite: 'JOURNALIERE'
-      },
-      {
-        id: 3,
-        nom: 'Taxe Commerçant',
-        description: 'Taxe fixe pour les commerçants',
-        taux: null,
-        montantFixe: 25000,
-        typeCalcul: 'MONTANT',
-        categorie: 'COMMERCANT',
-        periodicite: 'MENSUELLE'
-      },
-      {
-        id: 4,
-        nom: 'Taxe Foncière',
-        description: 'Taxe sur la propriété',
-        taux: 0.15,
-        montantFixe: null,
-        typeCalcul: 'TAUX',
-        categorie: 'PROPRIETAIRE_FONCIER',
-        periodicite: 'ANNUELLE'
-      }
-    ]
+    taxes.value = []
   } finally {
     loading.value = false
   }

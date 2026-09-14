@@ -103,4 +103,13 @@ public class QuartierServiceImpl implements QuartierService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuartierDto> findByZoneId(Long zoneId) {
+        return quartierRepository.findByZoneId(zoneId)
+                .stream()
+                .map(quartierMapper::toDto)
+                .toList();
+    }
+
 }

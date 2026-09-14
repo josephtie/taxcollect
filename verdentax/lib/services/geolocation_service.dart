@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logger/logger.dart';
@@ -201,9 +201,7 @@ class GeolocationService {
 
   Future<void> _processPositionUpdate(Position position, String source) async {
     try {
-      final authService = Provider.of<AuthService>(
-          GetMaterialApp().navigatorKey.currentContext!, 
-          listen: false);
+      final authService = AuthService();
       
       final gpsPoint = GpsPoint(
         id: _uuid.v4(),
@@ -254,9 +252,7 @@ class GeolocationService {
     String color = '#1976D2',
   }) async {
     try {
-      final authService = Provider.of<AuthService>(
-          GetMaterialApp().navigatorKey.currentContext!, 
-          listen: false);
+      final authService = AuthService();
       
       final zone = GeoZone(
         id: _uuid.v4(),
@@ -455,8 +451,8 @@ class GeolocationService {
       _updatePointsOfInterestMarkers();
     }
     
-    // Notify map controller if available
-    _mapController?.notifyListeners();
+    // Notify listeners via stream
+    _statsStreamController.add(await getStatistics());
   }
 
   void _updateZoneVisualization(GeoZone zone) {

@@ -19,6 +19,7 @@ public class AgentsDto {
     private LocalDate dateNaissance;
     private String fonction;
     private List<Long> zoneIds;
+    private List<String> zoneNoms;
 
     // Getters & setters
     public Long getId() { return id; }
@@ -45,5 +46,7 @@ public class AgentsDto {
     public void setFonction(String fonction) { this.fonction = fonction; }
     public List<Long> getZoneIds() { return zoneIds; }
     public void setZoneIds(List<Long> zoneIds) { this.zoneIds = zoneIds; }
+    public List<String> getZoneNoms() { return zoneNoms; }
+    public void setZoneNoms(List<String> zoneNoms) { this.zoneNoms = zoneNoms; }
 }
 

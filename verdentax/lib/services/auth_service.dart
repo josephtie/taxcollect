@@ -204,19 +204,19 @@ class AuthService with ChangeNotifier {
       _logger.i('Username envoyé: "$username"');
       _logger.i('Password envoyé: "${password.isNotEmpty ? "***" : "EMPTY"}"');
       
-      // Le backend attend application/x-www-form-urlencoded
-      final formData = FormData.fromMap({
+      // Le backend attend application/json
+      final requestData = {
         'username': username,
         'password': password,
-      });
+      };
       
-      _logger.i('FormData créé: ${formData.fields}');
+      _logger.i('Request body: $requestData');
       
       final response = await _dio.post(
         AppConfig.loginEndpoint,
-        data: formData,
+        data: requestData,
         options: Options(
-          contentType: 'application/x-www-form-urlencoded',
+          contentType: 'application/json',
         ),
       );
       
@@ -225,9 +225,15 @@ class AuthService with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = response.data;
         
-        // Store token (backend returns Keycloak token)
+        // Store tokens (backend returns Keycloak tokens)
         _token = data['access_token'];
         await _secureStorage.write(key: AppConfig.authTokenKey, value: _token!);
+
+        // Store refresh token for subsequent refreshes
+        final refreshToken = data['refresh_token'];
+        if (refreshToken != null) {
+          await _secureStorage.write(key: AppConfig.refreshTokenKey, value: refreshToken);
+        }
 
         // Extract user info from token or backend response
         Map<String, dynamic> userData;
@@ -397,10 +403,16 @@ class AuthService with ChangeNotifier {
     try {
       _logger.i('Logging out user: ${_currentUser?.username}');
 
-      // Call backend logout if online
+      // Call backend logout if online (sends refresh_token to invalidate Keycloak session)
       if (_token != null && !_isOffline) {
         try {
-          await _dio.post(AppConfig.logoutEndpoint);
+          final storedRefreshToken = await _secureStorage.read(key: AppConfig.refreshTokenKey);
+          if (storedRefreshToken != null) {
+            await _dio.post(
+              AppConfig.logoutEndpoint,
+              data: {'refresh_token': storedRefreshToken},
+            );
+          }
         } catch (e) {
           _logger.w('Backend logout failed (this is normal): $e');
         }
@@ -436,13 +448,30 @@ class AuthService with ChangeNotifier {
         return false;
       }
 
-      // Call backend refresh endpoint
-      final response = await _dio.post(AppConfig.refreshTokenEndpoint);
+      // Retrieve stored refresh token
+      final storedRefreshToken = await _secureStorage.read(key: AppConfig.refreshTokenKey);
+      if (storedRefreshToken == null || storedRefreshToken.isEmpty) {
+        _logger.w('No refresh token available, cannot refresh');
+        return false;
+      }
+
+      // Call backend refresh endpoint with refresh_token in body
+      final response = await _dio.post(
+        AppConfig.refreshTokenEndpoint,
+        data: {'refresh_token': storedRefreshToken},
+      );
       
       if (response.statusCode == 200) {
-        _token = response.data['access_token'];
+        final data = response.data;
+        _token = data['access_token'];
         await _secureStorage.write(key: AppConfig.authTokenKey, value: _token!);
-        _dio.options.headers['Authorization'] = 'Bearer $token';
+        _dio.options.headers['Authorization'] = 'Bearer $_token';
+        
+        // Store new refresh token if provided
+        final newRefreshToken = data['refresh_token'];
+        if (newRefreshToken != null) {
+          await _secureStorage.write(key: AppConfig.refreshTokenKey, value: newRefreshToken);
+        }
         
         _lastLoginTime = DateTime.now();
         await _secureStorage.write(

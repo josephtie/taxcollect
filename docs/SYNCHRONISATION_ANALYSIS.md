@@ -1,5 +1,9 @@
 # 📊 Analyse Synchronisation Vues vs Services JS
 
+> **⚠️ Document historique** — Cette analyse date d'avant l'alignement des
+> endpoints et services. Certaines affirmations (notamment l'absence de
+> `Users.vue`) sont obsolètes. Pour l'état courant, voir `ARCHITECTURE.md`.
+
 ## 🔍 Vue d'ensemble
 
 Cette analyse identifie les écarts entre les fonctionnalités des vues frontend et les services JavaScript correspondants.

@@ -16,6 +16,12 @@ public interface QuartierRepository extends BaseRepository<Quartier, Long>, JpaS
     @Query("SELECT q FROM Quartier q WHERE q.zone.id = ?1 AND q.deletedAt IS NULL")
     List<Quartier> findByZoneId(Long zoneId);
     
+    @Query("SELECT q FROM Quartier q WHERE q.zone.id IN :zoneIds AND q.deletedAt IS NULL")
+    List<Quartier> findByZoneIdIn(@Param("zoneIds") List<Long> zoneIds);
+
+    @Query("SELECT q FROM Quartier q WHERE q.responsableId = :responsableId AND q.deletedAt IS NULL")
+    List<Quartier> findByResponsableId(@Param("responsableId") String responsableId);
+    
     @Query("SELECT q FROM Quartier q WHERE q.zone.id = ?1 AND q.deletedAt IS NULL")
     Page<Quartier> findByZoneId(Long zoneId, Pageable pageable);
     

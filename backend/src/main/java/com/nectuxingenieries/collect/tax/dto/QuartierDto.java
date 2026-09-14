@@ -11,6 +11,7 @@ public class QuartierDto {
     private String zoneNom;
     private String communeNom;
     private Boolean statut;
+    private String responsableId;
     private String geometryGeoJson;
 
     // Getters & setters
@@ -26,6 +27,8 @@ public class QuartierDto {
     public void setCommuneNom(String communeNom) { this.communeNom = communeNom; }
     public Boolean getStatut() { return statut; }
     public void setStatut(Boolean statut) { this.statut = statut; }
+    public String getResponsableId() { return responsableId; }
+    public void setResponsableId(String responsableId) { this.responsableId = responsableId; }
     public String getGeometryGeoJson() { return geometryGeoJson; }
     public void setGeometryGeoJson(String geometryGeoJson) { this.geometryGeoJson = geometryGeoJson; }
 }

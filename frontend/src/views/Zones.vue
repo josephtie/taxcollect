@@ -56,77 +56,75 @@
           />
         </div>
 
-        <!-- Zones Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div
-            v-for="zone in zones"
-            :key="zone.id"
-            class="bg-white rounded-lg shadow-soft border border-gray-100 p-6 hover:shadow-medium transition-shadow"
-          >
-            <div class="flex items-start justify-between mb-4">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900">{{ zone.nom }}</h3>
-                <p class="text-sm text-gray-500">{{ zone.communeNom || 'Non spécifiée' }}</p>
-              </div>
-              <StatusBadge 
-                :status="zone.statut ? 'ACTIF' : 'INACTIF'" 
-                type="zone"
-              />
-            </div>
+        <!-- Zones Table -->
+        <div class="bg-white rounded-lg shadow-soft border border-gray-100 overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nom</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Commune</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Agents</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr v-for="zone in paginatedZones" :key="zone.id" class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">{{ zone.nom }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-500">{{ zone.communeNom || 'Non spécifiée' }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <button
+                    @click="openAgentsModal(zone)"
+                    class="text-sm font-medium text-primary-600 hover:text-primary-900 flex items-center"
+                  >
+                    <UserPlus class="w-3.5 h-3.5 mr-1" />
+                    {{ zoneAgentCounts[zone.id] ?? zone.agents?.length ?? 0 }} agent(s)
+                  </button>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <StatusBadge :status="zone.statut ? 'ACTIF' : 'INACTIF'" type="zone" />
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                  <div class="flex items-center justify-end space-x-2">
+                    <button @click="editZone(zone)" class="text-warning-600 hover:text-warning-900" title="Modifier">
+                      <Edit class="w-4 h-4" />
+                    </button>
+                    <LogicalDeletionActions
+                      :entity="zone"
+                      endpoint="zone"
+                      entity-name="la zone"
+                      :can-delete="canDeleteZone"
+                      :can-restore="canRestoreZone"
+                      :display-field="'nom'"
+                      @deleted="handleZoneDeleted"
+                      @restored="handleZoneRestored"
+                    />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Agents assignés</span>
-                <button
-                  @click="openAgentsModal(zone)"
-                  class="text-sm font-medium text-primary-600 hover:text-primary-900 flex items-center"
-                >
-                  <UserPlus class="w-3.5 h-3.5 mr-1" />
-                  {{ zoneAgentCounts[zone.id] ?? zone.agents?.length ?? 0 }} agent(s)
-                </button>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Taxes collectées</span>
-                <span class="text-sm font-medium text-gray-900">{{ zone.taxes?.length || 0 }}</span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Statut</span>
-                <span class="text-sm font-medium" :class="zone.statut ? 'text-green-600' : 'text-red-600'">
-                  {{ zone.statut ? 'Actif' : 'Inactif' }}
-                </span>
-              </div>
-            </div>
-
-            <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between">
-              <button
-                @click="viewZoneDetails(zone)"
-                class="text-primary-600 hover:text-primary-900 text-sm font-medium"
-              >
-                Voir détails
-              </button>
-              <div class="flex items-center space-x-2">
-                <button
-                  @click="editZone(zone)"
-                  class="text-warning-600 hover:text-warning-900"
-                >
-                  <Edit class="w-4 h-4" />
-                </button>
-                
-                <!-- Actions de suppression logique -->
-                <LogicalDeletionActions
-                  :entity="zone"
-                  endpoint="zone"
-                  entity-name="la zone"
-                  :can-delete="canDeleteZone"
-                  :can-restore="canRestoreZone"
-                  :display-field="'nom'"
-                  @deleted="handleZoneDeleted"
-                  @restored="handleZoneRestored"
-                />
-              </div>
-            </div>
+        <!-- Pagination -->
+        <div v-if="zones.length > itemsPerPage" class="flex items-center justify-between mt-4">
+          <div class="text-sm text-gray-500">
+            Affichage {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, zones.length) }} sur {{ zones.length }}
+          </div>
+          <div class="flex items-center space-x-2">
+            <select v-model="itemsPerPage" @change="currentPage = 1" class="text-sm border border-gray-300 rounded-lg px-2 py-1">
+              <option :value="5">5</option>
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+            </select>
+            <button @click="currentPage--" :disabled="currentPage === 1" class="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Précédent</button>
+            <span class="text-sm text-gray-600">{{ currentPage }} / {{ totalPages }}</span>
+            <button @click="currentPage++" :disabled="currentPage === totalPages" class="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Suivant</button>
           </div>
         </div>
 
@@ -227,7 +225,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { zoneService, communeService, affectationService, permissionService } from '@/services'
+import { zoneService, communeService, affectationService, permissionService, supervisionService } from '@/services'
 import Sidebar from '@/components/Sidebar.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
@@ -250,6 +248,9 @@ const saving = ref(false)
 
 const zones = ref([])
 const communes = ref([])
+
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
 
 // Agent management state
 const showAgentsModal = ref(false)
@@ -275,6 +276,12 @@ const totalAssignedAgents = computed(() => {
     zones.value.reduce((sum, zone) => sum + (zone.agents?.length || 0), 0)
 })
 
+const totalPages = computed(() => Math.ceil(zones.value.length / itemsPerPage.value) || 1)
+const paginatedZones = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  return zones.value.slice(start, start + itemsPerPage.value)
+})
+
 // Methods
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('fr-FR', {
@@ -288,34 +295,22 @@ const formatCurrency = (amount) => {
 const fetchZones = async () => {
   try {
     loading.value = true
-    const response = await zoneService.getAllZones()
-    zones.value = response.data
+    if (permissionService.isSuperviseur()) {
+      const response = await supervisionService.getSupervisedZones()
+      zones.value = (response.data || []).map(z => ({
+        id: z.id,
+        nom: z.nom,
+        communeNom: z.communeNom,
+        statut: z.statut,
+        agents: z.agents || []
+      }))
+    } else {
+      const response = await zoneService.getAllZones()
+      zones.value = response.data
+    }
   } catch (error) {
     console.error('Erreur chargement zones:', error)
-    // Fallback avec données mock pour Grand-Bassam
-    zones.value = [
-      {
-        id: 1,
-        nom: 'Zone Nord',
-        communeId: 1,
-        communeNom: 'Grand-Bassam',
-        statut: true,
-        agents: [
-          { id: 1, nom: 'Kouadio Konan', contact: 'kouadio@tax.ci' },
-          { id: 2, nom: 'Awa Touré', contact: 'awa@tax.ci' }
-        ],
-        taxes: []
-      },
-      {
-        id: 2,
-        nom: 'Zone Sud',
-        communeId: 1,
-        communeNom: 'Grand-Bassam',
-        statut: true,
-        agents: [],
-        taxes: []
-      }
-    ]
+    zones.value = []
   } finally {
     loading.value = false
   }
@@ -327,9 +322,7 @@ const fetchCommunes = async () => {
     communes.value = response.data
   } catch (error) {
     console.error('Erreur chargement communes:', error)
-    communes.value = [
-      { id: 1, nom: 'Grand-Bassam' }
-    ]
+    communes.value = []
   }
 }
 

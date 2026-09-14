@@ -346,7 +346,10 @@
                       <div class="text-xs text-gray-500">{{ agent.telephone }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {{ agent.zoneCollecte?.nom || 'Non assigné' }}
+                      <span v-if="agent.zoneNoms && agent.zoneNoms.length > 0">
+                        {{ agent.zoneNoms.join(', ') }}
+                      </span>
+                      <span v-else class="text-gray-400">Non assigné</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <StatusBadge 
@@ -513,7 +516,7 @@
               <p class="text-sm text-gray-500">{{ detailsAgent.email }} · {{ detailsAgent.telephone }}</p>
               <div class="flex items-center gap-2 mt-1">
                 <StatusBadge :status="detailsAgent.statut || 'ACTIF'" type="agent" />
-                <span v-if="detailsAgent.zoneCollecte" class="text-xs text-gray-500">Zone: {{ detailsAgent.zoneCollecte.nom }}</span>
+                <span v-if="detailsAgent.zoneNoms && detailsAgent.zoneNoms.length > 0" class="text-xs text-gray-500">Zone: {{ detailsAgent.zoneNoms.join(', ') }}</span>
               </div>
             </div>
           </div>
@@ -662,7 +665,7 @@ const paginatedAgents = computed(() => {
   }
   
   if (zoneFilter.value) {
-    agents = agents.filter(agent => agent.zoneCollecte?.id == zoneFilter.value)
+    agents = agents.filter(agent => agent.zoneIds && agent.zoneIds.includes(Number(zoneFilter.value)))
   }
   
   return agents
@@ -909,7 +912,7 @@ const exportExcel = async () => {
       'Téléphone': a.telephone || '',
       'Fonction': a.fonction || '',
       'Statut': a.statut || '',
-      'Zone': a.zoneCollecte?.nom || 'Non assigné',
+      'Zone': (a.zoneNoms && a.zoneNoms.length > 0) ? a.zoneNoms.join(', ') : 'Non assigné',
       'Date de naissance': a.dateNaissance ? formatDate(a.dateNaissance) : '',
     }))
     

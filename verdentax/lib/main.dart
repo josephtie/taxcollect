@@ -113,6 +113,28 @@ Map<String, WidgetBuilder> _buildRoutes() {
     '/dashboard': (context) => const DashboardScreen(),
     '/recensement': (context) => const RecensementScreen(),
     '/transaction': (context) => const TransactionScreen(),
+    // Agent P0 routes
+    '/agent-dashboard': (context) => const AgentDashboardScreen(),
+    '/agent-contribuables': (context) => const AgentContribuableListScreen(),
+    '/agent-contribuable-detail': (context) => const AgentContribuableDetailScreen(),
+    '/agent-visite': (context) => const AgentVisiteScreen(),
+    '/agent-encaissement': (context) => const AgentEncaissementScreen(),
+    '/agent-recu': (context) => const AgentRecuScreen(),
+    '/agent-impayes': (context) => const AgentImpayesScreen(),
+    '/agent-sync': (context) => const AgentSyncScreen(),
+    '/agent-journal': (context) => const AgentJournalScreen(),
+    '/agent-nearby': (context) => const AgentNearbyScreen(),
+    '/agent-tournee': (context) => const AgentTourneeScreen(),
+    '/agent-promesse': (context) => const AgentPromesseScreen(),
+    '/agent-nouveau-contribuable': (context) => const AgentNouveauContribuableScreen(),
+    '/agent-caisse': (context) => const AgentCaisseScreen(),
+    '/agent-evaluation': (context) => const AgentEvaluationScreen(),
+    '/agent-notifications': (context) => const AgentNotificationsScreen(),
+    '/agent-stats': (context) => const AgentStatsScreen(),
+    '/agent-messagerie': (context) => const AgentMessagerieScreen(),
+    '/agent-verif-recu': (context) => const AgentVerifRecuScreen(),
+    '/agent-conflict': (context) => const AgentConflictScreen(),
+    '/agent-remise-caisse': (context) => const AgentRemiseCaisseScreen(),
     // '/geolocation': (context) => const GeolocationScreen(), // Temporarily disabled
   };
 }
@@ -137,6 +159,111 @@ Route<dynamic>? _generateRoute(RouteSettings settings) {
     case '/transaction':
       return MaterialPageRoute(
         builder: (context) => const TransactionScreen(),
+        settings: settings,
+      );
+    case '/agent-dashboard':
+      return MaterialPageRoute(
+        builder: (context) => const AgentDashboardScreen(),
+        settings: settings,
+      );
+    case '/agent-contribuables':
+      return MaterialPageRoute(
+        builder: (context) => const AgentContribuableListScreen(),
+        settings: settings,
+      );
+    case '/agent-contribuable-detail':
+      return MaterialPageRoute(
+        builder: (context) => const AgentContribuableDetailScreen(),
+        settings: settings,
+      );
+    case '/agent-visite':
+      return MaterialPageRoute(
+        builder: (context) => const AgentVisiteScreen(),
+        settings: settings,
+      );
+    case '/agent-encaissement':
+      return MaterialPageRoute(
+        builder: (context) => const AgentEncaissementScreen(),
+        settings: settings,
+      );
+    case '/agent-recu':
+      return MaterialPageRoute(
+        builder: (context) => const AgentRecuScreen(),
+        settings: settings,
+      );
+    case '/agent-impayes':
+      return MaterialPageRoute(
+        builder: (context) => const AgentImpayesScreen(),
+        settings: settings,
+      );
+    case '/agent-sync':
+      return MaterialPageRoute(
+        builder: (context) => const AgentSyncScreen(),
+        settings: settings,
+      );
+    case '/agent-journal':
+      return MaterialPageRoute(
+        builder: (context) => const AgentJournalScreen(),
+        settings: settings,
+      );
+    case '/agent-nearby':
+      return MaterialPageRoute(
+        builder: (context) => const AgentNearbyScreen(),
+        settings: settings,
+      );
+    case '/agent-tournee':
+      return MaterialPageRoute(
+        builder: (context) => const AgentTourneeScreen(),
+        settings: settings,
+      );
+    case '/agent-promesse':
+      return MaterialPageRoute(
+        builder: (context) => const AgentPromesseScreen(),
+        settings: settings,
+      );
+    case '/agent-nouveau-contribuable':
+      return MaterialPageRoute(
+        builder: (context) => const AgentNouveauContribuableScreen(),
+        settings: settings,
+      );
+    case '/agent-caisse':
+      return MaterialPageRoute(
+        builder: (context) => const AgentCaisseScreen(),
+        settings: settings,
+      );
+    case '/agent-evaluation':
+      return MaterialPageRoute(
+        builder: (context) => const AgentEvaluationScreen(),
+        settings: settings,
+      );
+    case '/agent-notifications':
+      return MaterialPageRoute(
+        builder: (context) => const AgentNotificationsScreen(),
+        settings: settings,
+      );
+    case '/agent-stats':
+      return MaterialPageRoute(
+        builder: (context) => const AgentStatsScreen(),
+        settings: settings,
+      );
+    case '/agent-messagerie':
+      return MaterialPageRoute(
+        builder: (context) => const AgentMessagerieScreen(),
+        settings: settings,
+      );
+    case '/agent-verif-recu':
+      return MaterialPageRoute(
+        builder: (context) => const AgentVerifRecuScreen(),
+        settings: settings,
+      );
+    case '/agent-conflict':
+      return MaterialPageRoute(
+        builder: (context) => const AgentConflictScreen(),
+        settings: settings,
+      );
+    case '/agent-remise-caisse':
+      return MaterialPageRoute(
+        builder: (context) => const AgentRemiseCaisseScreen(),
         settings: settings,
       );
     case '/geolocation':

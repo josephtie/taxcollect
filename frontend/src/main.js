@@ -159,6 +159,151 @@ const routes = [
     }
   },
   {
+    path: '/dashboard-superviseur',
+    name: 'DashboardSuperviseur',
+    component: () => import('./views/DashboardSuperviseur.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['supervision.view']
+    }
+  },
+  {
+    path: '/anomalies',
+    name: 'Anomalies',
+    component: () => import('./views/Anomalies.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['anomalies.view']
+    }
+  },
+  {
+    path: '/recouvrement',
+    name: 'Recouvrement',
+    component: () => import('./views/Recouvrement.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['recouvrement.view']
+    }
+  },
+  {
+    path: '/promesses',
+    name: 'Promesses',
+    component: () => import('./views/Promesses.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['promesses.view']
+    }
+  },
+  {
+    path: '/tournees',
+    name: 'Tournees',
+    component: () => import('./views/Tournees.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['tournees.view']
+    }
+  },
+  {
+    path: '/reclamations',
+    name: 'Reclamations',
+    component: () => import('./views/Reclamations.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['reclamations.view']
+    }
+  },
+  {
+    path: '/audit',
+    name: 'Audit',
+    component: () => import('./views/Audit.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['audit.view']
+    }
+  },
+  {
+    path: '/synchronisation',
+    name: 'Synchronisation',
+    component: () => import('./views/Synchronisation.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['sync.view']
+    }
+  },
+  // ─── Routes Responsable de Quartier / Chef d'Équipe ──────────
+  {
+    path: '/dashboard-responsable',
+    name: 'DashboardResponsable',
+    component: () => import('./views/DashboardResponsable.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['quartiers.view']
+    }
+  },
+  {
+    path: '/responsable-agents',
+    name: 'ResponsableAgents',
+    component: () => import('./views/ResponsableAgents.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['agents.view']
+    }
+  },
+  {
+    path: '/responsable-visites',
+    name: 'ResponsableVisites',
+    component: () => import('./views/ResponsableVisites.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['visites.view']
+    }
+  },
+  {
+    path: '/responsable-anomalies',
+    name: 'ResponsableAnomalies',
+    component: () => import('./views/ResponsableAnomalies.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['anomalies.view']
+    }
+  },
+  {
+    path: '/responsable-contribuables',
+    name: 'ResponsableContribuables',
+    component: () => import('./views/ResponsableContribuables.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['contribuables.view']
+    }
+  },
+  {
+    path: '/responsable-collectes',
+    name: 'ResponsableCollectes',
+    component: () => import('./views/ResponsableCollectes.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['payments.view']
+    }
+  },
+  {
+    path: '/responsable-rapports',
+    name: 'ResponsableRapports',
+    component: () => import('./views/ResponsableRapports.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['reports.view']
+    }
+  },
+  {
+    path: '/supervision-responsables',
+    name: 'SupervisionResponsables',
+    component: () => import('./views/SupervisionResponsables.vue'),
+    meta: {
+      requiresAuth: true,
+      permissions: ['quartiers.assign_responsable']
+    }
+  },
+  {
     path: '/taxes',
     name: 'Taxes',
     component: () => import('./views/Taxes.vue'),

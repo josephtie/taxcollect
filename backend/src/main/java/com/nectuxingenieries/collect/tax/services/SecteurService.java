@@ -14,4 +14,5 @@ public interface SecteurService {
     void restore(Long id);
     List<SecteurDto> findAllIncludingDeleted();
     Optional<SecteurDto> locateByGps(double latitude, double longitude);
+    List<SecteurDto> findByQuartierId(Long quartierId);
 }

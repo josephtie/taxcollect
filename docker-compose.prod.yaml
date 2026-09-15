@@ -1,5 +1,3 @@
-version: "3.8"
-
 # ============================================================
 # TaxCollect - Production Docker Compose for VPS / Portainer
 #
@@ -162,6 +160,7 @@ services:
 
     command:
       - start-dev
+      - --import-realm
 
     environment:
 
@@ -198,6 +197,7 @@ services:
 
     volumes:
       - keycloak_data:/opt/keycloak/data
+      - ./realm-mairie.json:/opt/keycloak/data/import/realm-mairie.json
 
     networks:
       - internal
@@ -363,6 +363,28 @@ services:
 
     networks:
       - internal
+
+
+  # ============================================================
+  # PROMETHEUS
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: taxcollect-prometheus
+    restart: always
+
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+    ports:
+      - "19095:9090"
+
+    networks:
+      - internal
+
+    depends_on:
+      backend:
+        condition: service_started
 
 
   # ============================================================

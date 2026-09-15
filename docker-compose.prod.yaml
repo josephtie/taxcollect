@@ -376,8 +376,9 @@ services:
     container_name: taxcollect-prometheus
     restart: always
 
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
 
     ports:
       - "19095:9090"
@@ -429,6 +430,27 @@ volumes:
 
   # Données Keycloak
   keycloak_data:
+
+
+# ============================================================
+# CONFIGS
+# ============================================================
+configs:
+
+  prometheus_config:
+    content: |
+      global:
+        scrape_interval: 15s
+
+      scrape_configs:
+        - job_name: 'ldap'
+          static_configs:
+            - targets: ['ldap-exporter:9330']
+
+        - job_name: 'taxcollect-backend'
+          metrics_path: '/actuator/prometheus'
+          static_configs:
+            - targets: ['backend:9091']
 
 
 # ============================================================

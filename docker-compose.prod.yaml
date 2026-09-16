@@ -252,6 +252,7 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       JPA_DDL_AUTO: update
       JPA_SHOW_SQL: "false"
+      FLYWAY_ENABLED: "true"
 
       # --------------------------------------------------------
       # SWAGGER

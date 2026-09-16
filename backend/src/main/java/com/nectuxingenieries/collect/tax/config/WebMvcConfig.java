@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -40,5 +41,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + absolutePath + "/")
                 .setCachePeriod(3600);
+        // Alias: /api/uploads/** -> same as /uploads/** (frontend compatibility)
+        registry.addResourceHandler("/api/uploads/**")
+                .addResourceLocations("file:" + absolutePath + "/")
+                .setCachePeriod(3600);
+    }
+
+    @Override
+    public void configurePathMatch(PathMatchConfigurer configurer) {
+        // Permet aux @GetMapping sans path de matcher aussi avec un slash final
+        // ex: /api/taxcollect/tournee/ matche /api/taxcollect/tournee
+        configurer.setUseTrailingSlashMatch(true);
     }
 }

@@ -33,6 +33,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**","/auth/login","/auth/refresh","/auth/logout","/actuator/health","/actuator/info").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/uploads/**").permitAll()
                         .requestMatchers("/api/payments/webhooks/**").permitAll()
                         .requestMatchers("/api/transactions/**").hasAnyRole("ADMIN", "TRESOR", "AGENT", "SUPERVISEUR")
                         .requestMatchers("/api/cloture-caisse/**").hasAnyRole("ADMIN", "TRESOR", "AGENT", "SUPERVISEUR")

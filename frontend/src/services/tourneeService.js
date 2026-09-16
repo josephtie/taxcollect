@@ -11,7 +11,7 @@ class TourneeService extends BaseService {
 
   // Lister toutes les tournées
   async getTournees() {
-    return this.get('/')
+    return this.get('')
   }
 
   // Détails d'une tournée
@@ -31,7 +31,7 @@ class TourneeService extends BaseService {
 
   // Créer une tournée
   async createTournee(data) {
-    return this.post('/', data)
+    return this.post('', data)
   }
 
   // Mettre à jour une tournée

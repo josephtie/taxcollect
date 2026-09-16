@@ -321,7 +321,7 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
                         <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-3 overflow-hidden">
-                          <img v-if="agent.photo" :src="agent.photo.startsWith('http') ? agent.photo : `/api${agent.photo}`" :alt="agent.nom" class="w-full h-full object-cover" />
+                          <img v-if="agent.photo" :src="agent.photo.startsWith('http') ? agent.photo : (agent.photo.startsWith('/uploads') ? agent.photo : `/uploads/${agent.photo.replace(/^\/+/, '')}`)" :alt="agent.nom" class="w-full h-full object-cover" />
                           <span v-else class="text-sm font-medium text-gray-600">
                             {{ agent.nom[0] }}{{ agent.prenom[0] }}
                           </span>

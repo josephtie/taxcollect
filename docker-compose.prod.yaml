@@ -107,7 +107,7 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       JPA_DDL_AUTO: update
       JPA_SHOW_SQL: "false"
-      FLYWAY_ENABLED: "true"
+      FLYWAY_ENABLED: "false"
       SPRINGDOC_SWAGGER_UI_ENABLED: "false"
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       REDIS_HOST: redis

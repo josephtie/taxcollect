@@ -191,7 +191,7 @@ services:
     container_name: taxcollect-frontend
     restart: always
     ports:
-      - 3000:80
+      - 4000:80
     networks:
       - internal
     depends_on:

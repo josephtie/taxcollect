@@ -38,7 +38,7 @@ ON CONFLICT DO NOTHING;
 INSERT INTO contribuable (nom, prenom, telephone, email, adresse, latitude, longitude, numero_contribuable, type_contribuable, activite, marche, quartier, quartier_id, secteur_id, zone_id, type_piece_identite, numero_piece, statut_contribuable, necessite_validation, is_active, base_imposable, created_at, updated_at)
 SELECT
   CASE (n % 20)
-    WHEN 0 THEN 'KOUASSI' WHEN 1 THEN 'N'GUESSAN' WHEN 2 THEN 'BROU' WHEN 3 THEN 'YAO' WHEN 4 THEN 'KONAN'
+    WHEN 0 THEN 'KOUASSI' WHEN 1 THEN 'N''GUESSAN' WHEN 2 THEN 'BROU' WHEN 3 THEN 'YAO' WHEN 4 THEN 'KONAN'
     WHEN 5 THEN 'TRAORE' WHEN 6 THEN 'DIABATE' WHEN 7 THEN 'COULIBALY' WHEN 8 THEN 'TOURE' WHEN 9 THEN 'CISSE'
     WHEN 10 THEN 'BAMBA' WHEN 11 THEN 'KONE' WHEN 12 THEN 'SORO' WHEN 13 THEN 'OUATTARA' WHEN 14 THEN 'Fofana'
     WHEN 15 THEN 'ZADI' WHEN 16 THEN 'TANO' WHEN 17 THEN 'ASSI' WHEN 18 THEN 'GBAGBO' WHEN 19 THEN 'AKE'
@@ -66,7 +66,7 @@ SELECT
   'CNI' || lpad((n + 1000)::text, 8, '0'),
   'ACTIF', FALSE, TRUE,
   75000.00 + (n % 5) * 25000,
-  NOW() - (n % 30)::int, NOW()
+  NOW() - (n % 30)::int * interval '1 day', NOW()
 FROM generate_series(1, 140) AS n
 ON CONFLICT (numero_contribuable) DO NOTHING;
 
@@ -96,7 +96,7 @@ SELECT
   'RC' || lpad((n + 2000)::text, 8, '0'),
   'ACTIF', FALSE, TRUE,
   150000.00,
-  NOW() - (n % 25)::int, NOW()
+  NOW() - (n % 25)::int * interval '1 day', NOW()
 FROM generate_series(1, 70) AS n
 ON CONFLICT (numero_contribuable) DO NOTHING;
 
@@ -125,7 +125,7 @@ SELECT
   'CNI' || lpad((n + 3100)::text, 8, '0'),
   'ACTIF', FALSE, TRUE,
   100000.00,
-  NOW() - (n % 20)::int, NOW()
+  NOW() - (n % 20)::int * interval '1 day', NOW()
 FROM generate_series(1, 52) AS n
 ON CONFLICT (numero_contribuable) DO NOTHING;
 
@@ -154,7 +154,7 @@ SELECT
   'CNI' || lpad((n + 3620)::text, 8, '0'),
   'ACTIF', FALSE, TRUE,
   200000.00,
-  NOW() - (n % 15)::int, NOW()
+  NOW() - (n % 15)::int * interval '1 day', NOW()
 FROM generate_series(1, 52) AS n
 ON CONFLICT (numero_contribuable) DO NOTHING;
 
@@ -183,7 +183,7 @@ SELECT
   'RC' || lpad((n + 4140)::text, 8, '0'),
   'ACTIF', FALSE, TRUE,
   300000.00,
-  NOW() - (n % 10)::int, NOW()
+  NOW() - (n % 10)::int * interval '1 day', NOW()
 FROM generate_series(1, 36) AS n
 ON CONFLICT (numero_contribuable) DO NOTHING;
 
@@ -226,7 +226,7 @@ SELECT
   CASE WHEN n < 5 THEN 35000 + (n % 5) * 8000 ELSE 0 END,
   20 + (n % 10),
   CASE WHEN n < 5 THEN 15 + (n % 8) ELSE 0 END,
-  NOW() - (n % 7)::int,
+  NOW() - (n % 7)::int * interval '1 day',
   TRUE
 FROM generate_series(1, 10) AS n
 ON CONFLICT DO NOTHING;
@@ -238,23 +238,23 @@ INSERT INTO visite (tournee_id, contribuable_id, date_visite, latitude, longitud
 SELECT
   (SELECT id FROM tournee WHERE agent_id = CASE (v.n % 5) WHEN 0 THEN 1 WHEN 1 THEN 2 WHEN 2 THEN 3 WHEN 3 THEN 4 ELSE 5 END ORDER BY date_tournee DESC LIMIT 1),
   c.id,
-  NOW() - (v.n % 7)::int - (v.n % 5)::int * interval '1 hour',
+  NOW() - (v.n % 7)::int * interval '1 day' - (v.n % 5)::int * interval '1 hour',
   c.latitude,
   c.longitude,
   CASE (v.n % 7)
-    WHEN 0 THEN 'REALISEE' WHEN 1 THEN 'REALISEE' WHEN 2 THEN 'REALISEE'
+    WHEN 0 THEN 'VISITE' WHEN 1 THEN 'VISITE' WHEN 2 THEN 'VISITE'
     WHEN 3 THEN 'ABSENT' WHEN 4 THEN 'REFUS'
-    WHEN 5 THEN 'A_REVISITER' ELSE 'REALISEE'
+    WHEN 5 THEN 'A_REVOIR' ELSE 'VISITE'
   END,
-  CASE (v.n % 4) WHEN 0 THEN 'CONTROLE' WHEN 1 THEN 'ENCAISSEMENT' WHEN 2 THEN 'RELANCE' ELSE 'RECONNAISSANCE' END,
+  CASE (v.n % 4) WHEN 0 THEN 'AUTRE' WHEN 1 THEN 'PAIEMENT_EFFECTUE' WHEN 2 THEN 'AUTRE' ELSE 'AUTRE' END,
   CASE (v.n % 7) WHEN 3 THEN 'Contribuable absent' WHEN 4 THEN 'Refus de paiement' ELSE NULL END,
   v.n,
   CASE (v.n % 5) WHEN 0 THEN 10 WHEN 1 THEN 15 WHEN 2 THEN 20 WHEN 3 THEN 5 ELSE 30 END,
   'SYNCED',
-  NOW() - (v.n % 7)::int,
+  NOW() - (v.n % 7)::int * interval '1 day',
   TRUE
 FROM generate_series(1, 200) AS v(n)
-JOIN contribuable c ON c.id = (v.n % 350) + 1
+JOIN contribuable c ON c.id = (SELECT id FROM contribuable ORDER BY id OFFSET (v.n % 450) LIMIT 1)
 WHERE c.id IS NOT NULL
 ON CONFLICT DO NOTHING;
 
@@ -262,30 +262,33 @@ ON CONFLICT DO NOTHING;
 -- 7. TRANSACTIONS (140 transactions avec différents statuts)
 -- 40% payés (VALIDE), 25% impayés, 10% promesses, reste divers
 -- ============================================================
-INSERT INTO transaction (date_transaction, montant, mode_paiement, statut, agent_id, contribuable_id, reference, transaction_reference, provider, currency, payment_method, initiated_at, completed_at, created_at, is_active)
+INSERT INTO transaction (date_creation, montant, mode_paiement, statut, agent_id, contribuable_id, numero_recu, transaction_reference, provider, currency, payment_method, initiated_at, completed_at, created_at, is_active, hash_transaction, offline, zone_id)
 SELECT
-  NOW() - (t.n % 14)::int - (t.n % 10)::int * interval '1 hour',
+  NOW() - (t.n % 14)::int * interval '1 day' - (t.n % 10)::int * interval '1 hour',
   CASE (t.n % 5)
     WHEN 0 THEN 10000 WHEN 1 THEN 15000 WHEN 2 THEN 20000 WHEN 3 THEN 25000 ELSE 30000
   END,
   CASE (t.n % 3) WHEN 0 THEN 'ESPECE' WHEN 1 THEN 'MOBILE_MONEY' ELSE 'MOBILE_MONEY' END,
   CASE (t.n % 10)
-    WHEN 0 THEN 'VALIDE' WHEN 1 THEN 'VALIDE' WHEN 2 THEN 'VALIDE' WHEN 3 THEN 'VALIDE'
-    WHEN 4 THEN 'EN_ATTENTE' WHEN 5 THEN 'EN_ATTENTE_VALIDATION'
-    WHEN 6 THEN 'REJETE' WHEN 7 THEN 'ANNULE'
-    WHEN 8 THEN 'VALIDE' ELSE 'EN_ATTENTE'
+    WHEN 0 THEN 'VALIDEE' WHEN 1 THEN 'VALIDEE' WHEN 2 THEN 'VALIDEE' WHEN 3 THEN 'VALIDEE'
+    WHEN 4 THEN 'EN_ATTENTE' WHEN 5 THEN 'EN_ATTENTE'
+    WHEN 6 THEN 'EN_ERREUR' WHEN 7 THEN 'ANNULEE'
+    WHEN 8 THEN 'VALIDEE' ELSE 'EN_ATTENTE'
   END,
   CASE (t.n % 5) WHEN 0 THEN 1 WHEN 1 THEN 2 WHEN 2 THEN 3 WHEN 3 THEN 4 ELSE 5 END,
-  (t.n % 350) + 1,
-  'PAY-202609' || lpad(t.n::text, 4, '0'),
+  (SELECT c.id FROM contribuable c ORDER BY c.id OFFSET (t.n % 450) LIMIT 1),
+  'RECU-DEMO-' || lpad(t.n::text, 5, '0'),
   'TXN-DEMO-' || lpad(t.n::text, 5, '0'),
   CASE (t.n % 3) WHEN 0 THEN 'STUB' WHEN 1 THEN 'ORANGE_MONEY' ELSE 'MTN_MONEY' END,
   'XOF',
   CASE (t.n % 3) WHEN 0 THEN 'ESPECE' WHEN 1 THEN 'MOBILE_MONEY' ELSE 'MOBILE_MONEY' END,
-  NOW() - (t.n % 14)::int,
-  CASE WHEN (t.n % 10) < 4 THEN NOW() - (t.n % 14)::int + interval '1 hour' ELSE NULL END,
-  NOW() - (t.n % 14)::int,
-  TRUE
+  NOW() - (t.n % 14)::int * interval '1 day',
+  CASE WHEN (t.n % 10) < 4 THEN NOW() - (t.n % 14)::int * interval '1 day' + interval '1 hour' ELSE NULL END,
+  NOW() - (t.n % 14)::int * interval '1 day',
+  TRUE,
+  md5('TXN-DEMO-' || t.n::text),
+  FALSE,
+  3
 FROM generate_series(1, 140) AS t(n)
 ON CONFLICT DO NOTHING;
 
@@ -316,8 +319,8 @@ INSERT INTO notification (agent_id, type, message, lu, created_at, is_active)
 SELECT
   (n % 5) + 1,
   CASE (n % 4)
-    WHEN 0 THEN 'TOURNEE_ASSIGNEE' WHEN 1 THEN 'PAIEMENT_RECU'
-    WHEN 2 THEN 'ANOMALIE_DETECTEE' ELSE 'RAPPEL_VISITE'
+    WHEN 0 THEN 'NOUVELLE_TOURNEE' WHEN 1 THEN 'PAIEMENT_CONFIRME'
+    WHEN 2 THEN 'ANOMALIE_DETECTEE' ELSE 'CONTRIBUABLE_A_REVOIR'
   END,
   CASE (n % 4)
     WHEN 0 THEN 'Une nouvelle tournée vous a été assignée'
@@ -342,12 +345,12 @@ SELECT
   c.nom || ' ' || c.prenom,
   3,
   'TRAORE Aminata',
-  'MONTANT_INHABITUEL',
+  'MONTANT_INCOHERENT',
   'Montant de 150000 FCFA au lieu de 10000 FCFA habituel',
   'Vérification des arriérés demandée',
   CASE (a.n % 3) WHEN 0 THEN 'OUVERTE' WHEN 1 THEN 'EN_COURS' ELSE 'CLOTUREE' END,
   'SUPERVISEUR',
-  NOW() - (a.n % 3)::int,
+  NOW() - (a.n % 3)::int * interval '1 day',
   TRUE
 FROM generate_series(1, 5) AS a(n)
 JOIN contribuable c ON c.id = (a.n * 50) + 10
@@ -356,9 +359,13 @@ ON CONFLICT DO NOTHING;
 -- ============================================================
 -- 11. AUDIT ENTRIES (30 entrées d'audit)
 -- ============================================================
-INSERT INTO audit_entry (agent_id, entity_type, entity_id, action, description, created_at, is_active)
+INSERT INTO audit_entry (agent_id, type, entity_type, entity_id, action, description, offline, created_at, is_active)
 SELECT
   (au.n % 5) + 1,
+  CASE (au.n % 5)
+    WHEN 0 THEN 'NOUVEAU_CONTRIBUABLE' WHEN 1 THEN 'VISITE_CONTRIBUABLE' WHEN 2 THEN 'PAIEMENT_ENREGISTRE'
+    WHEN 3 THEN 'AFFECTATION_AGENT' ELSE 'MODIFICATION'
+  END,
   CASE (au.n % 5)
     WHEN 0 THEN 'CONTRIBUABLE' WHEN 1 THEN 'VISITE' WHEN 2 THEN 'PAIEMENT'
     WHEN 3 THEN 'TOURNEE' ELSE 'CAISSE'
@@ -374,6 +381,7 @@ SELECT
     WHEN 3 THEN 'Tournée démarrée'
     ELSE 'Caisse ouverte'
   END,
+  FALSE,
   NOW() - (au.n % 7)::int * interval '1 hour',
   TRUE
 FROM generate_series(1, 30) AS au(n)
@@ -385,7 +393,7 @@ ON CONFLICT DO NOTHING;
 INSERT INTO signalement (agent_id, type, message, contribuable_id, latitude, longitude, statut, created_at, is_active)
 SELECT
   (s.n % 3) + 1,
-  CASE (s.n % 3) WHEN 0 THEN 'PROBLEME_TECHNIQUE' WHEN 1 THEN 'CONTRIBUABLE_DIFFICILE' ELSE 'ERREUR_ENCAISSEMENT' END,
+  CASE (s.n % 3) WHEN 0 THEN 'PROBLEME_APPLICATION' WHEN 1 THEN 'CONTRIBUABLE_CONTESTATAIRE' ELSE 'PROBLEME_PAIEMENT' END,
   CASE (s.n % 3)
     WHEN 0 THEN 'Application lente, saisie retardée'
     WHEN 1 THEN 'Contribuable refuse de fournir pièce identité'
@@ -395,7 +403,7 @@ SELECT
   -3.7300 + (s.n)::float / 100,
   5.1950 + (s.n)::float / 100,
   CASE WHEN s.n < 3 THEN 'OUVERT' ELSE 'TRAITE' END,
-  NOW() - (s.n % 3)::int,
+  NOW() - (s.n % 3)::int * interval '1 day',
   TRUE
 FROM generate_series(1, 5) AS s(n)
 ON CONFLICT DO NOTHING;

@@ -25,10 +25,15 @@
   "adminTheme": "keycloak",
   "emailTheme": "keycloak",
   "internationalizationEnabled": true,
-  "supportedLocales": ["en", "fr"],
+  "supportedLocales": [
+    "en",
+    "fr"
+  ],
   "defaultLocale": "fr",
   "eventsEnabled": false,
-  "eventsListeners": ["jboss-logging"],
+  "eventsListeners": [
+    "jboss-logging"
+  ],
   "adminEventsEnabled": false,
   "adminEventsDetailsEnabled": false,
   "passwordPolicy": "",
@@ -39,7 +44,11 @@
   "otpPolicyLookAheadWindow": 1,
   "otpPolicyPeriod": 30,
   "webAuthnPolicyRpEntityName": "keycloak",
-  "webAuthnPolicySignatureAlgorithms": ["ES256", "RS256", "EdDSA"],
+  "webAuthnPolicySignatureAlgorithms": [
+    "ES256",
+    "RS256",
+    "EdDSA"
+  ],
   "webAuthnPolicyRpId": "",
   "webAuthnPolicyAttestationConveyancePreference": "not specified",
   "webAuthnPolicyAuthenticatorAttachment": "not specified",
@@ -50,7 +59,6 @@
   "webAuthnPolicyAvoidSameAuthenticatorRegister": false,
   "offlineSessionMaxLifespanEnabled": false,
   "offlineSessionMaxLifespan": 2592000,
-  "clientOfflineSessionMaxLifespanEnabled": false,
   "clientOfflineSessionMaxLifespan": 0,
   "accessTokenLifespan": 300,
   "accessTokenLifespanForImplicitFlow": 900,
@@ -71,7 +79,7 @@
   "refreshTokenMaxReuse": 0,
   "users": [
     {
-      "id": "admin-user-id",
+      "id": "387acaf6-6420-5a66-94c5-d941dc75f415",
       "createdTimestamp": 1642694400000,
       "username": "admin",
       "enabled": true,
@@ -84,12 +92,14 @@
       "requiredActions": [],
       "notBefore": 0,
       "credentials": [],
-      "realmRoles": ["ADMIN"],
+      "realmRoles": [
+        "ADMIN"
+      ],
       "clientRoles": {},
       "attributes": {}
     },
     {
-      "id": "tresor-user-id",
+      "id": "f49ef566-7a73-59ef-bb05-e547327ad251",
       "createdTimestamp": 1642694400000,
       "username": "tresor",
       "enabled": true,
@@ -102,12 +112,14 @@
       "requiredActions": [],
       "notBefore": 0,
       "credentials": [],
-      "realmRoles": ["TRESOR"],
+      "realmRoles": [
+        "TRESOR"
+      ],
       "clientRoles": {},
       "attributes": {}
     },
     {
-      "id": "agent-user-id",
+      "id": "1752f4f0-2c56-5367-a32a-8270cde85fda",
       "createdTimestamp": 1642694400000,
       "username": "agent",
       "enabled": true,
@@ -120,12 +132,14 @@
       "requiredActions": [],
       "notBefore": 0,
       "credentials": [],
-      "realmRoles": ["AGENT"],
+      "realmRoles": [
+        "AGENT"
+      ],
       "clientRoles": {},
       "attributes": {}
     },
     {
-      "id": "superviseur-user-id",
+      "id": "7d166563-dfa5-57fb-97e6-39458382eb46",
       "createdTimestamp": 1642694400000,
       "username": "superviseur",
       "enabled": true,
@@ -138,12 +152,14 @@
       "requiredActions": [],
       "notBefore": 0,
       "credentials": [],
-      "realmRoles": ["SUPERVISEUR"],
+      "realmRoles": [
+        "SUPERVISEUR"
+      ],
       "clientRoles": {},
       "attributes": {}
     },
     {
-      "id": "service-account-keycloak-admin-client",
+      "id": "1bc6ad2e-584a-5235-bc4f-dafc222cec30",
       "createdTimestamp": 1642694400000,
       "username": "service-account-keycloak-admin-client",
       "enabled": true,
@@ -174,7 +190,7 @@
   "roles": {
     "realm": [
       {
-        "id": "admin-role-id",
+        "id": "8d5f39da-bf78-5fbd-846b-b0607b82a8ae",
         "name": "ADMIN",
         "description": "Administrateur système avec accès complet",
         "composite": false,
@@ -183,7 +199,7 @@
         "attributes": {}
       },
       {
-        "id": "tresor-role-id",
+        "id": "b0193a05-9480-5df1-9182-b223fd278f12",
         "name": "TRESOR",
         "description": "Agent du Trésor Public avec droits de validation",
         "composite": false,
@@ -192,7 +208,7 @@
         "attributes": {}
       },
       {
-        "id": "agent-role-id",
+        "id": "78879c86-2d40-5973-b6d0-260193d3e1f5",
         "name": "AGENT",
         "description": "Agent de collecte avec droits de création de transactions",
         "composite": false,
@@ -201,7 +217,7 @@
         "attributes": {}
       },
       {
-        "id": "superviseur-role-id",
+        "id": "c5820370-0590-5856-9604-dc95b3289707",
         "name": "SUPERVISEUR",
         "description": "Superviseur de zones avec droits d'affectation d'agents",
         "composite": false,
@@ -210,7 +226,7 @@
         "attributes": {}
       },
       {
-        "id": "responsable-quartier-role-id",
+        "id": "a96e098a-a684-54d8-8feb-88c0845508d3",
         "name": "RESPONSABLE_QUARTIER",
         "description": "Responsable de quartier: contrôle opérationnel de son quartier, propose les affectations d'agents",
         "composite": false,
@@ -219,7 +235,7 @@
         "attributes": {}
       },
       {
-        "id": "contribuable-role-id",
+        "id": "1b9f9311-d5d6-515e-8559-409aa94b8a69",
         "name": "CONTRIBUABLE",
         "description": "Contribuable: consultation de ses avis, paiement en ligne et vérification de ses reçus",
         "composite": false,
@@ -316,8 +332,18 @@
           }
         }
       ],
-      "defaultClientScopes": ["web-origins", "roles", "profile", "email"],
-      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+      "defaultClientScopes": [
+        "web-origins",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
     },
     {
       "clientId": "keycloak-admin-client",
@@ -325,9 +351,13 @@
       "description": "Client pour l'administration Keycloak",
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
-      "secret": "UWyD30VzrHMYOdmgDTsaxaFmuYzMB9eP",
-      "redirectUris": ["http://localhost:8080/*"],
-      "webOrigins": ["http://localhost:8080"],
+      "secret": "L4kARi9SZe0AdjVGG4suLInRhE3st893",
+      "redirectUris": [
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8080"
+      ],
       "bearerOnly": false,
       "consentRequired": false,
       "standardFlowEnabled": true,
@@ -341,8 +371,18 @@
       "attributes": {
         "tls.client.certificate.bound.access.tokens": "false"
       },
-      "defaultClientScopes": ["web-origins", "roles", "profile", "email"],
-      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+      "defaultClientScopes": [
+        "web-origins",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
     },
     {
       "clientId": "tax-frontend",
@@ -359,7 +399,11 @@
         "http://83.171.249.150/*",
         "verdentax://callback"
       ],
-      "webOrigins": ["http://localhost:3000", "http://83.171.249.150:3000", "http://83.171.249.150"],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://83.171.249.150:3000",
+        "http://83.171.249.150"
+      ],
       "bearerOnly": false,
       "consentRequired": false,
       "standardFlowEnabled": true,
@@ -427,8 +471,18 @@
           }
         }
       ],
-      "defaultClientScopes": ["web-origins", "roles", "profile", "email"],
-      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+      "defaultClientScopes": [
+        "web-origins",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
     }
   ],
   "clientScopeMappings": {
@@ -471,7 +525,9 @@
         "providerId": "max-clients",
         "subType": "anonymous",
         "config": {
-          "max-clients": ["200"]
+          "max-clients": [
+            "200"
+          ]
         }
       },
       {
@@ -501,7 +557,12 @@
         "providerId": "trusted-hosts",
         "subType": "anonymous",
         "config": {
-          "host-sending-registration-request-must-match": ["true"]
+          "host-sending-registration-request-must-match": [
+            "true"
+          ],
+          "client-uris-must-match": [
+            "true"
+          ]
         }
       },
       {

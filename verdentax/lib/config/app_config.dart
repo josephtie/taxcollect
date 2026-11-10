@@ -11,7 +11,7 @@ class AppConfig {
   //   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:9091
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://83.171.249.150:9091',
+    defaultValue: 'http://13.140.180.9:9091',
   );
   static const String apiUrl = '$baseUrl/api';
   static const String authUrl = '$baseUrl/auth';
@@ -19,7 +19,7 @@ class AppConfig {
   // Keycloak Configuration
   static const String keycloakUrl = String.fromEnvironment(
     'KEYCLOAK_URL',
-    defaultValue: 'http://83.171.249.150:18080',
+    defaultValue: 'http://13.140.180.9:18080',
   );
   static const String keycloakRealm = 'mairie';
   static const String clientId = 'tax-frontend';

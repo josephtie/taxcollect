@@ -87,7 +87,7 @@
       "emailVerified": true,
       "firstName": "Admin",
       "lastName": "Mairie",
-      "email": "admin@mairie.com",
+      "email": "admin@mairie.ci",
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
@@ -113,14 +113,14 @@
       "emailVerified": true,
       "firstName": "Agent",
       "lastName": "Trésor",
-      "email": "tresor@mairie.com",
+      "email": "tresor@mairie.ci",
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
       "credentials": [
         {
           "type": "password",
-          "value": "admin123",
+          "value": "tresor123",
           "temporary": false
         }
       ],
@@ -139,14 +139,14 @@
       "emailVerified": true,
       "firstName": "Agent",
       "lastName": "Collecte",
-      "email": "agent@mairie.com",
+      "email": "agent@mairie.ci",
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
       "credentials": [
         {
           "type": "password",
-          "value": "admin123",
+          "value": "agent123",
           "temporary": false
         }
       ],
@@ -165,14 +165,14 @@
       "emailVerified": true,
       "firstName": "Superviseur",
       "lastName": "Zone",
-      "email": "superviseur@mairie.com",
+      "email": "superviseur@mairie.ci",
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
       "credentials": [
         {
           "type": "password",
-          "value": "admin123",
+          "value": "superviseur123",
           "temporary": false
         }
       ],

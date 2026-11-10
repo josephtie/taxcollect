@@ -353,7 +353,7 @@ SELECT
   NOW() - (a.n % 3)::int * interval '1 day',
   TRUE
 FROM generate_series(1, 5) AS a(n)
-JOIN contribuable c ON c.id = (a.n * 50) + 10
+JOIN contribuable c ON c.id = (SELECT id FROM contribuable ORDER BY id OFFSET (a.n * 50) LIMIT 1)
 ON CONFLICT DO NOTHING;
 
 -- ============================================================
@@ -399,7 +399,7 @@ SELECT
     WHEN 1 THEN 'Contribuable refuse de fournir pièce identité'
     ELSE 'Erreur lors de la saisie du montant'
   END,
-  (s.n * 30) + 5,
+  (SELECT id FROM contribuable ORDER BY id OFFSET (s.n * 30) LIMIT 1),
   -3.7300 + (s.n)::float / 100,
   5.1950 + (s.n)::float / 100,
   CASE WHEN s.n < 3 THEN 'OUVERT' ELSE 'TRAITE' END,

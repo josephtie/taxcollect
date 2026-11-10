@@ -82,7 +82,9 @@ public class WebSecurityConfig {
             "http://localhost:*",
             "http://127.0.0.1:*",
             "http://83.171.249.150:*",
-            "https://83.171.249.150:*"
+            "https://83.171.249.150:*",
+            "http://13.140.180.9:*",
+            "https://13.140.180.9:*"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

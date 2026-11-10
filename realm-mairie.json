@@ -91,7 +91,13 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "credentials": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
       "realmRoles": [
         "ADMIN"
       ],
@@ -111,7 +117,13 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "credentials": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
       "realmRoles": [
         "TRESOR"
       ],
@@ -131,7 +143,13 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "credentials": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
       "realmRoles": [
         "AGENT"
       ],
@@ -151,7 +169,13 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0,
-      "credentials": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
       "realmRoles": [
         "SUPERVISEUR"
       ],
@@ -254,16 +278,16 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "ZSRrPMfQYuHkTjeTT46LBuvCgBAss6oW",
       "redirectUris": [
+        "http://13.140.180.9:9091/*",
         "http://localhost:9091/*",
-        "http://localhost:3000/*",
-        "http://83.171.249.150:9091/*",
-        "http://83.171.249.150:3000/*"
+        "http://13.140.180.9:3001/*",
+        "http://localhost:3000/*"
       ],
       "webOrigins": [
+        "http://13.140.180.9:9091",
         "http://localhost:9091",
-        "http://localhost:3000",
-        "http://83.171.249.150:9091",
-        "http://83.171.249.150:3000"
+        "http://13.140.180.9:3001",
+        "http://localhost:3000"
       ],
       "bearerOnly": false,
       "consentRequired": false,
@@ -388,21 +412,20 @@
       "clientId": "tax-frontend",
       "name": "Tax Collect Frontend",
       "description": "Frontend Vue.js pour la collecte de taxes",
-      "rootUrl": "http://localhost:3000",
+      "rootUrl": "http://13.140.180.9:3001",
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
       "secret": "",
       "redirectUris": [
+        "http://13.140.180.9:3001/*",
+        "http://13.140.180.9:3001/callback",
         "http://localhost:3000/*",
         "http://localhost:3000/callback",
-        "http://83.171.249.150:3000/*",
-        "http://83.171.249.150/*",
         "verdentax://callback"
       ],
       "webOrigins": [
-        "http://localhost:3000",
-        "http://83.171.249.150:3000",
-        "http://83.171.249.150"
+        "http://13.140.180.9:3001",
+        "http://localhost:3000"
       ],
       "bearerOnly": false,
       "consentRequired": false,

@@ -172,6 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
             
             // Username field
             TextFormField(
+              key: const Key('email-field'),
               controller: _usernameController,
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.next,
@@ -200,6 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
             
             // Password field
             TextFormField(
+              key: const Key('password-field'),
               controller: _passwordController,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
@@ -237,6 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
               width: double.infinity,
               height: 50.h,
               child: ElevatedButton(
+                key: const Key('login-button'),
                 onPressed: _isLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
